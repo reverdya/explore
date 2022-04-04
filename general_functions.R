@@ -1,3 +1,10 @@
+# Alix Reverdy
+# Explore 2
+# 04/04/2022
+# general data science function and data representations
+
+
+
 library(svglite) #save svg
 library(ggplot2) #plots
 library(ncdf4) #netcdf
