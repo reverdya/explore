@@ -152,4 +152,44 @@ rle2 <- function (x)  {
   ), class = 'rle')
 }
 
+#######
+## read and fortify for ggplot plotting shp file
 
+read_shp=function(path){
+  shp=readOGR(path,encoding = "UTF-8") ## parameters allows reading
+  shp$id <- row.names(shp)
+  shp_fort=fortify(shp)
+  shp_fort <- left_join(shp_fort, shp@data, by="id")
+}
+
+######
+## Make a ggplot2 base map of France with SIM2 outlets as dots and val_name the name of the column for the color scale, that can be customized afterwards
+## Data has at least longitude in x, latitude in y and a numeric filling value in val_name
+path_river="C:/Users/reverdya/Documents/Docs/2_data/SIG/processed/CoursEau_idx1_wgs84.shp"
+path_fr="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/IGN/contours_FR/gadm36_FRA_0.shp"
+river=read_shp(path_river)
+fr=read_shp(path_fr)
+
+base_map_outlets=function(data,val_name){
+  plt=ggplot(data=data)+
+    geom_polygon(data=fr,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.5)+
+    geom_path(data=river,aes(x=long,y=lat,group=group),colour="dodgerblue2",size=0.3)+
+    geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21)+
+    coord_equal(ratio=111/78,xlim = c(-6, 9.75),ylim = c(41.25,52),expand=F)+## ratio of 1lat by 1long at 45N
+    scale_x_continuous("")+
+    scale_y_continuous("")+
+    theme_bw(base_size = 10)+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    theme(axis.ticks =element_blank(),axis.text = element_blank() )+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
+    theme(strip.text = element_text(size = 12, face = "bold"))+
+    guides(fill = guide_colourbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  return(plt)
+}
+
+#####
+##IPCC colors
+
+yellow_blue_5=c(rgb(255,255,204,maxColorValue=255),rgb(161,218,180,maxColorValue=255),rgb(65,182,196,maxColorValue=255),rgb(44,127,184,maxColorValue=255),rgb(37,52,148,maxColorValue=255))
+precip_5=c(rgb(166,97,26,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(1,133,113,maxColorValue=255))
+temp_5=c(rgb(202,0,32,maxColorValue=255),rgb(244,165,130,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(5,113,176,maxColorValue=255))
