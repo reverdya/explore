@@ -107,7 +107,7 @@ calc_indic=function(chain,indic_name,stat,agreg_day){
   rm(fut)
   gc()
   
-  #Only stations with no NA
+  #Only stations with no NA and coordinates
   data=data[,c(1,watershed_select+1)]#+1 because of date
   if(any(is.na(data))){stop("This chain has NA")}
   
