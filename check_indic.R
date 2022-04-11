@@ -1,6 +1,6 @@
 # Alix Reverdy
 # Explore 2
-# Last ran : 05/04/2022
+# Last ran : 11/04/2022
 # check hydrological indicators: normality of residuals, 0, outliers and visual inspection
 
 rm(list=ls())
