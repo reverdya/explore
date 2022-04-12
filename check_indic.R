@@ -59,6 +59,8 @@ sim_stations=sim_stations[!sim_stations$Num_ordre_Modcou %in% c(626,669,763,764,
 
 select_stations=read.xlsx(paste0(path_data,"raw/SIM2/selection_bassins_SIM2.xlsx"))# Sample of watersheds with a diversity of characteristic for plotting
 idx=which(sim_stations$Num_ordre_Modcou%in%select_stations$Numero_Modcou)
+select_stations=select_stations[order(select_stations$Numero_Modcou),]#because idx is reordered
+select_stations$idx=idx
 
 load(file=paste0(path_data,"processed/simu_lst.Rdata"))
 
@@ -149,8 +151,7 @@ for (i in 1:length(lst_indic)){# for each indicator
   
   
   for(w in 1:nrow(select_stations)){
-    idx=which(sim_stations$Num_ordre_Modcou==select_stations$Numero_Modcou[w])
-    data2=data.frame(val=c(resid[,w,]))
+    data2=data.frame(val=c(resid[,select_stations$idx[w],]))
     plt3=ggplot(data2)+
       geom_qq(aes(sample=val))+
       geom_abline(slope=1)+
@@ -185,7 +186,7 @@ for (i in 1:length(lst_indic)){# for each indicator
   for(c in 1:nrow(simu_lst)){# for each chain
     
     load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
-    res=res[,c(1,idx)]
+    res=res[,c(1,select_stations$idx+1)]
     
     res_smooth=cbind(res[,1],apply(res[,-1],2,rollmean,k=nb_year_mean,align="center",fill=NA))#30 years rolling mean
     zz = !is.na(res_smooth[,2])
@@ -200,8 +201,6 @@ for (i in 1:length(lst_indic)){# for each indicator
     clim_resp_smooth[[c]]=res_smooth
     clim_resp_spline[[c]]=res_spline
   }
-  
-  basin_name=select_stations[order(select_stations$Numero_Modcou),]$Nom# watch out for reordering of basins name due to idx
   
   for (w in 2:ncol(clim_resp_smooth[[1]])){
     for (r in lst_names_eff$rcp){
@@ -242,30 +241,30 @@ for (i in 1:length(lst_indic)){# for each indicator
 
 
 #################################################################################################################################
-## Percentage of discharge value <0.1 m3/s  and of outliers (chain of worst casefor each basin) in indicators
+## Percentage of discharge value <0.001 (m3/s,days...)  and of outliers (chain of worst casefor each basin) in indicators
 
 for (i in 1:length(lst_indic)){# for each indicator
   nr=nrow(sim_stations)
-  perc_0.1=data.frame(matrix(ncol = nr, nrow = nrow(simu_lst)))#percentage values <0.1
+  perc_0001=data.frame(matrix(ncol = nr, nrow = nrow(simu_lst)))#percentage values <0.001
   perc_out=data.frame(matrix(ncol = nr, nrow = nrow(simu_lst)))#percentage of outliers
   for(c in 1:nrow(simu_lst)){# for each chain
     load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
-    perc_0.1[c,]=as.vector(apply(res[,-1],MARGIN = 2,function(x) sum(x<0.1)/length(x)*100))
+    perc_0001[c,]=as.vector(apply(res[,-1],MARGIN = 2,function(x) sum(x<0.001)/length(x)*100))
     perc_out[c,]=as.vector(apply(res[,-1],MARGIN = 2,function(x) if(length(tsoutliers(x)$index)!=0){length(tsoutliers(x)$index)/length(x)*100}else{0}))
   }
   
-  data=data.frame(perc_0.1=vector(length=nr),perc_out=vector(length=nr))
+  data=data.frame(perc_0001=vector(length=nr),perc_out=vector(length=nr))
   data$x=as.numeric(sim_stations$Lon)
   data$y=as.numeric(sim_stations$Lat)
-  data$perc_0.1=apply(perc_0.1,MARGIN = 2,function(x) max(x) )#worst case
+  data$perc_0001=apply(perc_0001,MARGIN = 2,function(x) max(x) )#worst case
   data$perc_out=apply(perc_out,MARGIN = 2,function(x) max(x) )#worst case
   
-  plt1=base_map_outlets(data,"perc_0.1")+
-    scale_fill_stepsn("Values <0.1 (%)",colours=yellow_blue_5,limits=c(0,1),breaks=c(0,0.01,0.02,0.05,0.5,1))+#oob_censor puts <0.05 as NA
-    ggtitle(paste0("Percentage of values <0.1 for ",lst_indic[i],"\n(worst chain for each watershed)"))
-  save.plot(plt1,Filename = paste0(lst_indic[i],"_perc0.1"),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
+  plt1=base_map_outlets(data,"perc_0001")+
+    scale_fill_gradientn("Values <0.001 (%)",colors=parula(100),limits=c(0,25),oob=oob_squish)+
+    ggtitle(paste0("Percentage of values <0.001 for ",lst_indic[i],"\n(worst chain for each watershed)"))
+  save.plot(plt1,Filename = paste0(lst_indic[i],"_perc0001"),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
   plt2=base_map_outlets(data,"perc_out")+
-    scale_fill_stepsn("Outliers (%)",colours=yellow_blue_5,limits=c(0,1),breaks=c(0,0.01,0.02,0.05,0.5,1))+#oob_censor puts <0.05 as NA
+    scale_fill_gradientn("Outliers (%)",colors=parula(100),limits=c(0,25),oob=oob_squish)+
     ggtitle(paste0("Percentage of outliers (from tsoutliers) for ",lst_indic[i],"\n(worst chain for each watershed)"))
   save.plot(plt2,Filename = paste0(lst_indic[i],"_percout"),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
   
