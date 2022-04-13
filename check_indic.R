@@ -1,6 +1,6 @@
 # Alix Reverdy
 # Explore 2
-# Last ran : 11/04/2022
+# Last ran : 13/04/2022
 # check hydrological indicators: normality of residuals, 0, outliers and visual inspection
 
 rm(list=ls())
@@ -180,7 +180,7 @@ for (i in 1:length(lst_indic)){# for each indicator
 ## Climate response not climate change response
 
 for (i in 1:length(lst_indic)){# for each indicator
-  clim_resp_smooth=vector(length=nrow(simu_lst),mode="list")
+  clim_resp=vector(length=nrow(simu_lst),mode="list")
   clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
   dir.create(paste0(path_fig,lst_indic[i],"/plot_chains/"))
   for(c in 1:nrow(simu_lst)){# for each chain
@@ -198,18 +198,18 @@ for (i in 1:length(lst_indic)){# for each indicator
     }
     colnames(res)[1]="year"
     colnames(res_spline)[1]="year"
-    clim_resp_smooth[[c]]=res
+    clim_resp[[c]]=res
     clim_resp_spline[[c]]=res_spline
   }
   
-  for (w in 2:ncol(clim_resp_smooth[[1]])){
+  for (w in 2:ncol(clim_resp[[1]])){
     for (r in lst_names_eff$rcp){
       
       chain_r=which(simu_lst$rcp==r)#chains with the right rcp
-      smooth=clim_resp_smooth[[chain_r[1]]][,c(1,w)]#first iteration outside loop
+      smooth=clim_resp[[chain_r[1]]][,c(1,w)]#first iteration outside loop
       spline=clim_resp_spline[[chain_r[1]]][,c(1,w)]
       for (R in 2:length(chain_r)){
-        smooth=merge(smooth,clim_resp_smooth[[chain_r[R]]][,c(1,w)],by="year",all=T)
+        smooth=merge(smooth,clim_resp[[chain_r[R]]][,c(1,w)],by="year",all=T)
         spline=merge(spline,clim_resp_spline[[chain_r[R]]][,c(1,w)],by="year",all=T)
         ## Warnings okay
       }
@@ -220,18 +220,21 @@ for (i in 1:length(lst_indic)){# for each indicator
       spline=gather(spline,key = "model",value = "val",-year)
       spline$type="spline"
       data=rbind(smooth,spline)
+      data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
+      data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
       
       plt=ggplot(data)+#Warnings okay
-        geom_line(aes(x=year,y=val,size=type,color=model))+
+        geom_line(aes(x=year,y=val,size=type,color=rcm))+
         scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
-        scale_color_manual("",values=kovesi.rainbow(length(chain_r)))+
+        scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
         theme_bw(base_size = 18)+
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
         theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
         ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
         scale_x_continuous("")+
         scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
-        guides(color = guide_legend(override.aes = list(size = 1.7)))
+        guides(color = guide_legend(override.aes = list(size = 1.7)))+
+        facet_wrap(vars(gcm))
       save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
       
     }
@@ -241,7 +244,7 @@ for (i in 1:length(lst_indic)){# for each indicator
 
 
 #################################################################################################################################
-## Percentage of discharge value <0.001 (m3/s,days...)  and of outliers (chain of worst casefor each basin) in indicators
+## Percentage of discharge value <0.001 (m3/s,days...)  and of outliers (chain of worst case for each basin) in indicators
 
 for (i in 1:length(lst_indic)){# for each indicator
   nr=nrow(sim_stations)
