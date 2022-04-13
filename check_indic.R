@@ -88,13 +88,13 @@ for (i in 1:length(lst_indic)){# for each indicator
     load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
     nr=ncol(res)-1
     
-    res_smooth=cbind(res[,1],apply(res[,-1],2,rollmean,k=nb_year_mean,align="center",fill=NA))#30 years rolling mean
-    zz = !is.na(res_smooth[,2])
-    vecYears=res_smooth[zz,1]
+    #res_smooth=cbind(res[,1],apply(res[,-1],2,rollmean,k=nb_year_mean,align="center",fill=NA))#30 years rolling mean
+    zz = !is.na(res[,2])
+    vecYears=res[zz,1]
     #spline
-    res_spline=res_smooth
-    for(j in 2:ncol(res_smooth)){
-      res_spline[zz,j]=smooth.spline(x=vecYears,y=res_smooth[zz,j],spar = spar)$y
+    res_spline=res
+    for(j in 2:ncol(res)){
+      res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = spar)$y
       if(typeChangeVar=='abs'){
         res_spline[zz,j]=res_spline[zz,j]-res_spline[which(res_spline[,1]==centr_ref_year),j]
       }else if(typeChangeVar=='rel'){
@@ -188,17 +188,17 @@ for (i in 1:length(lst_indic)){# for each indicator
     load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
     res=res[,c(1,select_stations$idx+1)]
     
-    res_smooth=cbind(res[,1],apply(res[,-1],2,rollmean,k=nb_year_mean,align="center",fill=NA))#30 years rolling mean
-    zz = !is.na(res_smooth[,2])
-    vecYears=res_smooth[zz,1]
+    #res=cbind(res[,1],apply(res[,-1],2,rollmean,k=nb_year_mean,align="center",fill=NA))#30 years rolling mean
+    zz = !is.na(res[,2])
+    vecYears=res[zz,1]
     #spline
-    res_spline=res_smooth
-    for(j in 2:ncol(res_smooth)){
-      res_spline[zz,j]=smooth.spline(x=vecYears,y=res_smooth[zz,j],spar = spar)$y
+    res_spline=res
+    for(j in 2:ncol(res)){
+      res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = spar)$y
     }
-    colnames(res_smooth)[1]="year"
+    colnames(res)[1]="year"
     colnames(res_spline)[1]="year"
-    clim_resp_smooth[[c]]=res_smooth
+    clim_resp_smooth[[c]]=res
     clim_resp_spline[[c]]=res_spline
   }
   
@@ -223,7 +223,7 @@ for (i in 1:length(lst_indic)){# for each indicator
       
       plt=ggplot(data)+#Warnings okay
         geom_line(aes(x=year,y=val,size=type,color=model))+
-        scale_size_manual("",values=c(0.7,1.7),label=c("30 years rolling mean","Spline fit"))+
+        scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
         scale_color_manual("",values=kovesi.rainbow(length(chain_r)))+
         theme_bw(base_size = 18)+
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
