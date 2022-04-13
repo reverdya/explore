@@ -237,9 +237,13 @@ for (i in 1:length(lst_indic)){# for each indicator
         facet_wrap(vars(gcm))+
         theme(panel.spacing.x = unit(2, "lines"))
       save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
-      plt2=plt+coord_trans(y="log10")
-      save.plot(plt2,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
-        
+      if(min(data$val,na.rm=T)>0){
+        plt2=plt+coord_trans(y="log10")
+        save.plot(plt2,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+      }else{
+        print(paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log is impossible because of null or negative values in spline"))
+      }
+              
     }
   }
   
