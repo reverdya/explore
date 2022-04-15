@@ -1,6 +1,6 @@
 # Alix Reverdy
 # Explore 2
-# Last ran : 14/04/2022
+# Last ran : 15/04/2022
 # Run Qualypso with time then global temperature predictor
 
 rm(list=ls())
