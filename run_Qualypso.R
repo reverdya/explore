@@ -86,7 +86,7 @@ for (indc in lst_indic){
     lst.QUALYPSOOUT_temp[[i-1]] = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
                                            scenAvail=scenAvail,
                                            X = mat_Globaltas,
-                                           Xref = min(mat_Globaltas),
+                                           Xref = min(mat_Globaltas),# need to be changed
                                            Xfut=vec_futGlobaltas,
                                            listOption=listOption)# no iFut because we want all values
     
