@@ -193,3 +193,42 @@ base_map_outlets=function(data,val_name){
 yellow_blue_5=c(rgb(255,255,204,maxColorValue=255),rgb(161,218,180,maxColorValue=255),rgb(65,182,196,maxColorValue=255),rgb(44,127,184,maxColorValue=255),rgb(37,52,148,maxColorValue=255))
 precip_5=c(rgb(166,97,26,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(1,133,113,maxColorValue=255))
 temp_5=c(rgb(202,0,32,maxColorValue=255),rgb(244,165,130,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(5,113,176,maxColorValue=255))
+
+
+###################################
+## Format Global temperature for use in Qualypso, to be used inside code run_QUalypso
+## Difference to 1850-1900 average and rcp/gcm matching
+## path_data the root of the path
+##simu_lst the list of simulations
+#first_full year and last_full_year the first an last years with data for all simu all year round
+
+format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst){
+  
+  ## Format global temperature: difference to 1850-1900 
+  paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
+  for ( i in 1:length(paths)){
+    tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
+    tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))
+    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1850 & tas_glob$year<=1900])
+    tas_glob$tas=tas_glob$tas-pre_indus_tas
+    tas_glob=tas_glob[tas_glob$year>=first_full_year&tas_glob$year<=last_full_year,]
+    colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
+    if(i==1){
+      mat_Globaltas_gcm=tas_glob
+    }else{
+      mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
+    }
+  }
+  
+  ## Format global temperature for Qualypso
+  mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
+  vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm),function(x) strsplit(x,"_")[[1]][2]))
+  vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm),function(x) strsplit(x,"_")[[1]][1]))
+  for (i in 1:nrow(simu_lst)){
+    mat_Globaltas[[i]]=mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]
+  }
+  mat_Globaltas=t(do.call(cbind,mat_Globaltas))
+  return(mat_Globaltas)
+}
+
+
