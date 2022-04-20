@@ -1,6 +1,5 @@
 # Alix Reverdy
 # Explore 2
-# Last ran : 04/04/2022
 # Calculate hydrological indicators from hydrological projections (sample of indicators on SIM2). Checks for Na in raw projections
 
 rm(list=ls())
@@ -69,6 +68,8 @@ for (v in var){
   }
 }
 simu_lst=data.frame(simu_lst)
+simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMI have been signaled as identical
+simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
 save(simu_lst,file=paste0(path_data,"processed/simu_lst.Rdata"))
 
 ######################################################################################
