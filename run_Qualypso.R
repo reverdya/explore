@@ -1,6 +1,5 @@
 # Alix Reverdy
 # Explore 2
-# Last ran : 15/04/2022
 # Run Qualypso with time then global temperature predictor
 
 rm(list=ls())
@@ -16,6 +15,8 @@ dev.off()
 ########
 
 source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R')
+#View(QUALYPSO.ANOVA)
+#lsf.str("package:QUALYPSO")
 
 ####################
 #DEFAULT PARAMETERS#
@@ -34,6 +35,8 @@ lst_indic=c("Q_mean_year","Q_q95_year","VCN10","VCN10_day")
 spar=1.1
 typeChangeVar="rel"
 ref_year=1990# central year of 1975-2005 reference period
+first_ref_year=1975
+last_ref_year=2005
 first_full_year=1972# from raw data filenames
 last_full_year=2098# from raw data filenames
 vecYears = seq(first_full_year,last_full_year,1)
@@ -41,7 +44,7 @@ vecYears = seq(first_full_year,last_full_year,1)
 select_gcm=c("CNRM-CM5-LR","EC-EARTH","IPSL-CM5A-MR")
 
 #ref_GlobalTas=0
-vec_futGlobaltas=c(1,1.5,2,2.5,3,4,5)
+vec_futGlobaltas=c(1,1.5,2,2.5,3,3.5,4,4.5,5)
 
 
 ######
@@ -52,7 +55,9 @@ load(file = paste0(path_data,"processed/simu_lst.Rdata"))
 simu_lst=simu_lst[simu_lst$gcm %in% select_gcm,]
 scenAvail=simu_lst[,c("rcp","gcm","rcm")]
 
-mat_Globaltas=format_global_tas(path_data,first_full_year,last_full_year,simu_lst)
+tmp=format_global_tas(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year)
+mat_Globaltas=tmp[[1]]
+ref_Globaltas=tmp[[2]]
 
 ##Loop Qualypso on indexes
 for (indc in lst_indic){
@@ -75,8 +80,8 @@ for (indc in lst_indic){
     Y=t(do.call(cbind,ClimateProjections))
 
     # call main function QUALYPSO
-    listOption = list(typeChangeVariable=typeChangeVar,nBurn=1000,nKeep=5000,nCluster=nbcore,
-                      parSmooth=spar,quantileCompress=c(0.05,0.5,0.95))
+    listOption = list(spar=spar,typeChangeVariable=typeChangeVar,ANOVAmethod="QUALYPSO",nBurn=1000,nKeep=5000,nCluster=nbcore,
+                      parSmooth=spar,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
     ##Time predictor
     lst.QUALYPSOOUT_time[[i-1]] = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
                                       scenAvail=scenAvail,
@@ -87,7 +92,7 @@ for (indc in lst_indic){
     lst.QUALYPSOOUT_temp[[i-1]] = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
                                            scenAvail=scenAvail,
                                            X = mat_Globaltas,
-                                           Xref = min(mat_Globaltas),# need to be changed
+                                           Xref = ref_Globaltas,
                                            Xfut=vec_futGlobaltas,
                                            listOption=listOption)# no iFut because we want all values
     
