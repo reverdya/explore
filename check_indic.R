@@ -1,6 +1,5 @@
 # Alix Reverdy
 # Explore 2
-# Last ran : 13/04/2022
 # check hydrological indicators: normality of residuals, 0, outliers and visual inspection
 
 rm(list=ls())
@@ -175,7 +174,7 @@ for (i in 1:length(lst_indic)){# for each indicator
 
 
 ###############################################################################################
-## Plot 30 year rolling mean, and its spline for all models and selection of watersheds by RCP
+## Plot raw indicator, and its spline for all models and selection of watersheds by RCP
 ## Check for coherence of using spline and possible chains that are outlying
 ## checks particularly that data is not cyclical
 ## Climate response not climate change response
