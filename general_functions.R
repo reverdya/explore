@@ -386,7 +386,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred_name,ind
   plt=ggplot(data)+
     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.8)+
     geom_line(aes(x=Xfut,y=mean,color="black"))+
-    scale_fill_discrete("Partition\nde la variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
+    scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
     scale_color_discrete("",type="black",label="Moyenne lissee")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = c(min(data$Xfut),max(data$Xfut)),expand=c(0,0))+
     theme_bw(base_size = 18)+
@@ -514,7 +514,7 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   plt=ggplot(data)+
     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.8)+
     geom_line(aes(x=Xfut,y=mean,color="black"))+
-    scale_fill_discrete("Partition\nde la variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
+    scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
     scale_color_discrete("",type="black",label="Moyenne lissee")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = c(min(data$Xfut),max(data$Xfut)),expand=c(0,0))+
     theme_bw(base_size = 18)+
