@@ -178,7 +178,10 @@ for (i in 1:length(lst_indic)){# for each indicator
 ## Check for coherence of using spline and possible chains that are outlying
 ## checks particularly that data is not cyclical
 ## Climate response not climate change response
-for (SPAR in c(0.5,0.8,0.9,1,1.1,1.2,1.5)){
+
+
+##Merge data frame warnings are okay
+for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
   for (i in 1:length(lst_indic)){# for each indicator
     clim_resp=vector(length=nrow(simu_lst),mode="list")
     clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
@@ -206,20 +209,20 @@ for (SPAR in c(0.5,0.8,0.9,1,1.1,1.2,1.5)){
       for (r in lst_names_eff$rcp){
         
         chain_r=which(simu_lst$rcp==r)#chains with the right rcp
-        smooth=clim_resp[[chain_r[1]]][,c(1,w)]#first iteration outside loop
+        raw=clim_resp[[chain_r[1]]][,c(1,w)]#first iteration outside loop
         spline=clim_resp_spline[[chain_r[1]]][,c(1,w)]
         for (R in 2:length(chain_r)){
-          smooth=merge(smooth,clim_resp[[chain_r[R]]][,c(1,w)],by="year",all=T)
+          raw=merge(raw,clim_resp[[chain_r[R]]][,c(1,w)],by="year",all=T)
           spline=merge(spline,clim_resp_spline[[chain_r[R]]][,c(1,w)],by="year",all=T)
           ## Warnings okay
         }
-        colnames(smooth)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
+        colnames(raw)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
         colnames(spline)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
-        smooth=gather(smooth,key = "model",value = "val",-year)
-        smooth$type="smooth"
+        raw=gather(raw,key = "model",value = "val",-year)
+        raw$type="raw"
         spline=gather(spline,key = "model",value = "val",-year)
         spline$type="spline"
-        data=rbind(smooth,spline)
+        data=rbind(raw,spline)
         data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
         data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
         
@@ -237,6 +240,7 @@ for (SPAR in c(0.5,0.8,0.9,1,1.1,1.2,1.5)){
           facet_wrap(vars(gcm))+
           theme(panel.spacing.x = unit(2, "lines"))
         save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+        if(SPAR==1){save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")}#just to ease file sorting
         # if(min(data$val,na.rm=T)>0){
         #   plt2=plt+coord_trans(y="log10")
         #   save.plot(plt2,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
