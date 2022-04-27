@@ -110,7 +110,7 @@ for (i in 1:length(lst_indic)){
     map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
     map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out)
     map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
-    map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "RCM",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+    map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   }
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_time.RData"))
   map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT_time,horiz=2085,ind_name = lst_indic[i],folder_out = folder_out)
@@ -200,8 +200,69 @@ for (i in 1:length(lst_indic)){
     map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
     map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out)
     map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
-    map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "RCM",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+    map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   }
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
   map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT_time,horiz=2085,ind_name = lst_indic[i],folder_out = folder_out)
+}
+
+
+
+############################################
+## Plot GCM temperature
+
+load(file = paste0(path_data,"processed/simu_lst.Rdata"))
+first_ref_year=1975
+last_ref_year=2005
+first_full_year=1972# from raw data filenames
+last_full_year=2098# from raw data filenames
+vecYears=seq(first_full_year,last_full_year,1)
+
+tmp=format_global_tas(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year)
+mat_Globaltas_gcm=tmp[[3]]
+mat_Globaltas_gcm=data.frame(apply(mat_Globaltas_gcm,MARGIN = 2,function(x) smooth.spline(x=vecYears,y=x,spar = 1)$y))
+mat_Globaltas_gcm$year=vecYears
+
+data=gather(mat_Globaltas_gcm,key = "chain",value = "val",-year)
+data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
+data$gcm=unlist(lapply(strsplit(data$chain,"_"),function(x) x[2]))
+
+plt=ggplot(data)+
+  geom_line(aes(x=year,y=val,col=rcp,lty=gcm),size=1.2)+
+  xlab("")+
+  ylab("Changement de température planétaire (deg C)")+
+  theme_bw(base_size = 18)+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+  scale_color_discrete("",type = col_3rcp,labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+  scale_linetype_discrete("GCM")+
+  ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1850-1900 (1860-1900 pour HadGEM2)")
+save.plot(plt,Filename = "global_tas",Folder = path_fig,Format = "jpeg")
+
+
+
+
+##################################################################################
+## Plot map of reference (1990) value of indicator for continuous positive indicator (of discharge)
+
+ref_year=1990
+scale_col=0.2
+bin_col=c(250,500,50)
+lst_indic2=lst_indic[lst_indic!="VCN10_day"]
+for (i in 1:length(lst_indic2)){
+    load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic2[i],"_list_QUALYPSOOUT_3GCM_time.RData"))
+    lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+    exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
+    exut$val=unlist(lapply(lst.QUALYPSOOUT, function(x) mean(x$CLIMATEESPONSE$phi[,which(x$Xfut==ref_year)])))
+    colnames(exut)=c("Num_ordre_Modcou","y","x","val")
+    
+    q995=quantile(exut$val[exut$val>=0],probs=0.995)
+    lim_col=q995
+    lim_col=round(lim_col/bin_col[i])*bin_col[i]#arrondi au bin_col[i] le plus proche
+    
+    plt=base_map_outlets(data = exut,val_name = "val")
+    plt=plt+
+      scale_fill_gradientn("",colours = rescale_col(brewer.blues(100),exut$val,scale_col),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col[i]),oob=squish,labels=c(seq(0,lim_col-bin_col[i],bin_col[i]),paste0("> ",lim_col)))+
+      ggtitle(paste0("Valeurs de reference (1990) de ",lst_indic2[i],"\n(moyenne des fonctions de reponse disponibles)"))
+    save.plot(plt,Filename = paste0("ref1990_response_",lst_indic2[i]),Folder = path_fig,Format = "jpeg")
 }
