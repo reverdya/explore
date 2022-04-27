@@ -22,6 +22,8 @@ library(scales)#squish
 library(ggformula)#geom_spline
 library(tidyr)#pivot_longer
 library(parallel) #detectCores
+library(plotly)#interactive plot
+library(htmlwidgets)#save interactive plot
 
 
 #####
@@ -218,6 +220,25 @@ rescale_divergent_col=function(pal=warmcool(100),values,param){
   return(pal(c(0, col_spacing,1)))
 }
 
+################################################
+## Reformat a color scale
+## Takes a color palette (pal) and a vector of values (values) that should be represented with this color palette centered on 0 
+# param is between 0 and 1, the closest it is to 0 the more colors are attributed to the central values, for 1 the palette is unchanged
+
+# ref=seq(0,1,0.01)
+# plot(x=ref,y=ref,type = "l",col="black")
+# lines(x=ref,y=(ref)^(0.75),col="red")
+# lines(x=ref,y=(ref)^(0.5),col="blue")
+# lines(x=ref,y=(ref)^(0.25),col="forestgreen")
+# lines(x=ref,y=(ref)^(0.1),col="purple")
+# legend("bottomright",legend=c("1","0.75","0.5","0.25","0.1"),col=c("black","red","blue","forestgreen","purple"),lty=1)
+
+rescale_col=function(pal=brewer.blues(100),values,param){
+  pal <- gradient_n_pal(pal)
+  tmp=rescale(seq_along(values))
+  col_spacing=rescale(tmp^param)
+  return(pal(c(0, col_spacing,1)))
+}
 
 ###################################
 ## Format Global temperature for use in Qualypso, to be used inside code run_QUalypso
@@ -233,8 +254,11 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
   paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
   for ( i in 1:length(paths)){
     tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
-    tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))
+    tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
     pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1850 & tas_glob$year<=1900])
+    if(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4]=="HadGEM2-ES"){
+      pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data or negative
+    }
     tas_glob$tas=tas_glob$tas-pre_indus_tas
     tas_glob=tas_glob[tas_glob$year>=first_full_year&tas_glob$year<=last_full_year,]
     colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
@@ -255,7 +279,7 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
   mat_Globaltas=do.call(cbind,mat_Globaltas)
   mat_Globaltas=t(apply(mat_Globaltas,MARGIN = 2,function(x) smooth.spline(x=vecYears,y=x,spar = 1)$y))
   ref_Globaltas=apply(mat_Globaltas,MARGIN = 1,function(x) mean(x[which(vecYears==first_ref_year):which(vecYears==last_ref_year)]))
-  return(list(mat_Globaltas,ref_Globaltas))
+  return(list(mat_Globaltas,ref_Globaltas,mat_Globaltas_gcm))
 }
 
 
@@ -821,4 +845,66 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,folder_out,
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
   save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_temps_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+}
+
+
+#####################################################
+## Compare results out of QUALYSPO and LM method
+## lm the list of QUALYPSOOUT for all watersheds and the lm method
+## qu the list of QUALYPSOOUT for all watersheds and the qualypso method
+## type the variable of interest (one of resvar,grandmean or eff)
+## nameEff in the case of eff the name of the effect considered as in QUALYPSOOUT
+## pred_name the name of the predictor used
+## ind_name the name of the indicator used
+## var_name the plain language name of the variable of interest (Effet RCP, Moyenne d'ensemble...)
+## folder_out the saving folder
+
+plot_comp_anova=function(LM,QU,type,nameEff=NULL,pred_name,ind_name,var_name,folder_out,interactive_plt=F){
+  if (type=="resvar"){
+    x=unlist(lapply(LM,function(x) x$RESIDUALVAR$MEAN))
+    y=unlist(lapply(QU,function(x) x$RESIDUALVAR$MEAN))
+    data=data.frame(x=x,y=y)
+  }
+  if (type=="grandmean"){
+    x=unlist(lapply(LM,function(x) x$GRANDMEAN$MEAN))
+    y=unlist(lapply(QU,function(x) x$GRANDMEAN$MEAN))
+    data=data.frame(x=x,y=y)
+  }
+  if (type=="eff"){
+    ieff=which(colnames(LM[[1]]$listScenarioInput$scenAvail)==nameEff)
+    
+    x=lapply(LM,function(x) x$MAINEFFECT[[nameEff]]$MEAN)
+    x=lapply(x,"colnames<-",LM[[1]]$listScenarioInput$listEff[[ieff]])
+    x=lapply(x,function(z) gather(data.frame(z),key="eff",value="x"))
+    x=do.call("rbind",x)
+    
+    y=lapply(QU,function(y) y$MAINEFFECT[[nameEff]]$MEAN)
+    y=lapply(y,"colnames<-",LM[[1]]$listScenarioInput$listEff[[ieff]])
+    y=lapply(y,function(z) gather(data.frame(z),key="eff",value="y"))
+    y=do.call("rbind",y)
+    data=cbind(x,y$y)#merge does not work because too many rows
+    colnames(data)=c("eff","x","y")
+  }
+  
+  plt=ggplot(data)+
+    geom_point(aes(x=x,y=y),size=0.5)+
+    geom_abline(slope=1,size=0.3,col="red")+
+    xlab("Linear method")+
+    ylab("Qualypso")+
+    theme_bw(base_size = 18)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    ggtitle(paste0("Comparaison methodes ANOVA (tous les bassins et dates)\npour le predicteur ",pred_name,", l'indicateur ",ind_name,"\net la grandeur ",var_name))
+  if (type=="eff"){
+    plt=plt+
+      facet_wrap(~eff,ncol=3)
+  }
+  save.plot(plt,Filename = paste0("comparison_anova_",ind_name,"_",pred_name,"_",type,nameEff),Folder = folder_out,Format = "jpeg")
+  if (interactive_plt){
+    pltly=ggplotly(plt,tooltip = c("x","y"))
+    setwd(folder_out)
+    saveWidget(pltly,paste0("comparison_anova_",ind_name,"_",pred_name,"_",type,nameEff,".html"))
+  }
+
+
 }
