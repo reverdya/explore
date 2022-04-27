@@ -178,76 +178,78 @@ for (i in 1:length(lst_indic)){# for each indicator
 ## Check for coherence of using spline and possible chains that are outlying
 ## checks particularly that data is not cyclical
 ## Climate response not climate change response
-
-for (i in 1:length(lst_indic)){# for each indicator
-  clim_resp=vector(length=nrow(simu_lst),mode="list")
-  clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
-  dir.create(paste0(path_fig,lst_indic[i],"/plot_chains/"))
-  for(c in 1:nrow(simu_lst)){# for each chain
-    
-    load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
-    res=res[,c(1,select_stations$idx+1)]
-    
-    #res=cbind(res[,1],apply(res[,-1],2,rollmean,k=nb_year_mean,align="center",fill=NA))#30 years rolling mean
-    zz = !is.na(res[,2])
-    vecYears=res[zz,1]
-    #spline
-    res_spline=res
-    for(j in 2:ncol(res)){
-      res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = spar)$y
-    }
-    colnames(res)[1]="year"
-    colnames(res_spline)[1]="year"
-    clim_resp[[c]]=res
-    clim_resp_spline[[c]]=res_spline
-  }
-  
-  for (w in 2:ncol(clim_resp[[1]])){
-    for (r in lst_names_eff$rcp){
+for (SPAR in c(0.5,0.8,0.9,1,1.1,1.2,1.5)){
+  for (i in 1:length(lst_indic)){# for each indicator
+    clim_resp=vector(length=nrow(simu_lst),mode="list")
+    clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
+    dir.create(paste0(path_fig,lst_indic[i],"/plot_chains/"))
+    for(c in 1:nrow(simu_lst)){# for each chain
       
-      chain_r=which(simu_lst$rcp==r)#chains with the right rcp
-      smooth=clim_resp[[chain_r[1]]][,c(1,w)]#first iteration outside loop
-      spline=clim_resp_spline[[chain_r[1]]][,c(1,w)]
-      for (R in 2:length(chain_r)){
-        smooth=merge(smooth,clim_resp[[chain_r[R]]][,c(1,w)],by="year",all=T)
-        spline=merge(spline,clim_resp_spline[[chain_r[R]]][,c(1,w)],by="year",all=T)
-        ## Warnings okay
-      }
-      colnames(smooth)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
-      colnames(spline)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
-      smooth=gather(smooth,key = "model",value = "val",-year)
-      smooth$type="smooth"
-      spline=gather(spline,key = "model",value = "val",-year)
-      spline$type="spline"
-      data=rbind(smooth,spline)
-      data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
-      data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
+      load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
+      res=res[,c(1,select_stations$idx+1)]
       
-      plt=ggplot(data)+#Warnings okay
-        geom_line(aes(x=year,y=val,size=type,color=rcm))+
-        scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
-        scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
-        theme_bw(base_size = 18)+
-        theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-        theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-        ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
-        scale_x_continuous("")+
-        scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
-        guides(color = guide_legend(override.aes = list(size = 1.7)))+
-        facet_wrap(vars(gcm))+
-        theme(panel.spacing.x = unit(2, "lines"))
-      save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
-      if(min(data$val,na.rm=T)>0){
-        plt2=plt+coord_trans(y="log10")
-        save.plot(plt2,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
-      }else{
-        print(paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log is impossible because of null or negative values in spline"))
+      #res=cbind(res[,1],apply(res[,-1],2,rollmean,k=nb_year_mean,align="center",fill=NA))#30 years rolling mean
+      zz = !is.na(res[,2])
+      vecYears=res[zz,1]
+      #spline
+      res_spline=res
+      for(j in 2:ncol(res)){
+        res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = SPAR)$y
       }
-              
+      colnames(res)[1]="year"
+      colnames(res_spline)[1]="year"
+      clim_resp[[c]]=res
+      clim_resp_spline[[c]]=res_spline
     }
+    
+    for (w in 2:ncol(clim_resp[[1]])){
+      for (r in lst_names_eff$rcp){
+        
+        chain_r=which(simu_lst$rcp==r)#chains with the right rcp
+        smooth=clim_resp[[chain_r[1]]][,c(1,w)]#first iteration outside loop
+        spline=clim_resp_spline[[chain_r[1]]][,c(1,w)]
+        for (R in 2:length(chain_r)){
+          smooth=merge(smooth,clim_resp[[chain_r[R]]][,c(1,w)],by="year",all=T)
+          spline=merge(spline,clim_resp_spline[[chain_r[R]]][,c(1,w)],by="year",all=T)
+          ## Warnings okay
+        }
+        colnames(smooth)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
+        colnames(spline)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
+        smooth=gather(smooth,key = "model",value = "val",-year)
+        smooth$type="smooth"
+        spline=gather(spline,key = "model",value = "val",-year)
+        spline$type="spline"
+        data=rbind(smooth,spline)
+        data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
+        data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
+        
+        plt=ggplot(data)+#Warnings okay
+          geom_line(aes(x=year,y=val,size=type,color=rcm))+
+          scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
+          scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
+          theme_bw(base_size = 18)+
+          theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+          theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+          ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
+          scale_x_continuous("")+
+          scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
+          guides(color = guide_legend(override.aes = list(size = 1.7)))+
+          facet_wrap(vars(gcm))+
+          theme(panel.spacing.x = unit(2, "lines"))
+        save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+        # if(min(data$val,na.rm=T)>0){
+        #   plt2=plt+coord_trans(y="log10")
+        #   save.plot(plt2,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+        # }else{
+        #   print(paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log is impossible because of null or negative values in spline"))
+        # }
+        
+      }
+    }
+    
   }
-  
 }
+
 
 
 #################################################################################################################################
