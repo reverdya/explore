@@ -612,7 +612,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred_unit,ind_na
       ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==r)
       chg_mean=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,ieff_this_rcp]
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut, -ieff_rcp]
-      Vtot = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut], lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])
+      Vtot = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])
       probCI = lst.QUALYPSOOUT[[i]]$listOption$probCI
       chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
       chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
@@ -682,7 +682,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
       idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==h)
       chg_mean=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,ieff_this_rcp]
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut, -ieff_rcp]
-      Vtot = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut], lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])
+      Vtot = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])
       probCI = lst.QUALYPSOOUT[[i]]$listOption$probCI
       chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
       chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
