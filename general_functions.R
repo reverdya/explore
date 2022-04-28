@@ -199,6 +199,8 @@ precip_5=c(rgb(166,97,26,maxColorValue=255),rgb(223,194,125,maxColorValue=255),r
 temp_5=c(rgb(202,0,32,maxColorValue=255),rgb(244,165,130,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(5,113,176,maxColorValue=255))
 #For rcp
 col_3rcp=c("#0000FF","#79BCFF","#FF0000")
+#For 2 plot or line charts
+ipcc_2col=c(rgb(0,0,0,maxColorValue=255),rgb(112,160,205,maxColorValue=255))
 
 ################################################
 ## Reformat a divergent (around 0) color scale
@@ -297,7 +299,7 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
 ## pre_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred_name,ind_name,bv_name,pred_unit,folder_out){
+plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim=c(1990,2100)){
   
   Xfut = QUALYPSOOUT$Xfut
   iEff = which(QUALYPSOOUT$namesEff == nameEff)
@@ -335,7 +337,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
 
   plt=ggplot(data)+
     geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1)+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"))+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim)+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))
@@ -382,7 +384,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred_name,ind_name,bv_name,pred_unit,folder_out){
+plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim=c(1990,2100)){
   
   probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
@@ -433,7 +435,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred_name,ind
     geom_line(aes(x=Xfut,y=mean,color="black"))+
     scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
     scale_color_discrete("",type="black",label="Moyenne lissee")+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = c(min(data$Xfut),max(data$Xfut)),expand=c(0,0))+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -452,7 +454,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred_name,ind
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred_name,ind_name,bv_name,pred_unit,folder_out){
+plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim=c(1990,2100)){
   
   Xfut = QUALYPSOOUT$Xfut
   nFut = length(Xfut)
@@ -482,7 +484,7 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred_name,ind
   plt=ggplot(data)+
     geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var),alpha=0.8)+
     scale_fill_discrete("Partition\nde la variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = c(min(data$Xfut),max(data$Xfut)),expand=c(0,0))+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -504,7 +506,7 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred_name,ind
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred_name,ind_name,bv_name,pred_unit,folder_out){
+plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim=c(1990,2100)){
   
   Xfut = QUALYPSOOUT$Xfut
   nFut = length(Xfut)
@@ -564,7 +566,7 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
     geom_line(aes(x=Xfut,y=mean,color="black"))+
     scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
     scale_color_discrete("",type="black",label="Moyenne lissee")+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = c(min(data$Xfut),max(data$Xfut)),expand=c(0,0))+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
