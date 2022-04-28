@@ -239,8 +239,45 @@ plt=ggplot(data)+
   ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1850-1900 (1860-1900 pour HadGEM2)")
 save.plot(plt,Filename = "global_tas",Folder = path_fig,Format = "jpeg")
 
+###########################################################################################################################
+## Scatter plot global temperature (smoothed or not) VS yearly mean discharge for reference watersheds (smoothed or not)
 
+mat_Globaltas_gcm=tmp[[3]]
+mat_Globaltas_spline=tmp[[1]]
+mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
+vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm),function(x) strsplit(x,"_")[[1]][2]))
+vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm),function(x) strsplit(x,"_")[[1]][1]))
+for (i in 1:nrow(simu_lst)){
+  mat_Globaltas[[i]]=mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]
+}
+mat_Globaltas=do.call(cbind,mat_Globaltas)
 
+load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/Q_mean_year_list_QUALYPSOOUT_3GCM_time.RData"))
+for (i in 1:nrow(select_stations)){
+  all_chains=vector(length=nrow(simu_lst),mode="list")
+  for (j in 1:nrow(simu_lst)){
+    load(paste0(path_data,"processed/indic_hydro/Q_mean_year_",simu_lst$rcp[j],"_",simu_lst$gcm[j],"_",simu_lst$rcm[j],"_",simu_lst$bc[j],"_",simu_lst$hm[j],".Rdata"))
+    all_chains[[j]]=res
+  }
+  ClimateProjections=lapply(all_chains, function(x) x[,c(1,select_stations$idx[i])])
+  ClimateProjections=lapply(ClimateProjections,function(x) x[x$year>=first_full_year & x$year<=last_full_year,][,2])
+  ClimateProjections=t(do.call(rbind,ClimateProjections))
+  ClimateProjections_spline=apply(ClimateProjections,MARGIN = 2,function(x) smooth.spline(x=vecYears,y=x,spar = 1.1)$y)
+  data=data.frame(tas=as.vector(mat_Globaltas),tas_spline=as.vector(mat_Globaltas_spline),q=as.vector(ClimateProjections),q_spline=as.vector(ClimateProjections_spline))
+  
+  plt=ggplot(data)+
+    geom_point(aes(x=tas,y=q,col="raw"),size=0.7,alpha=0.6)+
+    geom_point(aes(x=tas_spline,y=q_spline,col="spline"),size=0.7,alpha=0.6)+
+    scale_color_manual("",values = c("raw"=ipcc_2col[1],"spline"=ipcc_2col[2]),labels=c("Brut","Spline"))+
+    xlab("Changement de température planétaire (deg C)")+
+    ylab("Module annuel")+
+    theme_bw(base_size = 18)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    guides(colour = guide_legend(override.aes = list(size=3)))+
+    ggtitle(paste0("Module annuel du bassin ",select_stations$Nom[i],"\nen fonction du changeemnt de temperature planetaire"))
+  save.plot(plt,Filename = paste0("global_tasVSmodule_",select_stations$Nom[i]),Folder = path_fig,Format = "jpeg")
+}
 
 ##################################################################################
 ## Plot map of reference (1990) value of indicator for continuous positive indicator (of discharge)
