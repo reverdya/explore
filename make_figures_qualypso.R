@@ -29,7 +29,7 @@ bc=c("ADAMONT")
 hm=c("SIM2")
 
 lst_indic=c("Q_mean_year","Q_q95_year","VCN10","VCN10_day")
-predict=c("time","temp")
+predict=c("time","temp_3rcp","temp_2rcp")
 
 select_gcm=c("CNRM-CM5-LR","EC-EARTH","IPSL-CM5A-MR")
 
@@ -63,24 +63,28 @@ for (i in 1:length(lst_indic)){
       lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
       pred_name="temps"
       pred_unit=""
+      xlim=c(1990,2100)
     }else{
-      lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp
+      if(predict[p]=="temp_3rcp"){lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp_3rcp}
+      if(predict[p]=="temp_2rcp"){lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp_2rcp}
+      if(predict[p]=="temp_1rcp"){lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp_1rcp}
       pred_name="temperature"
       pred_unit="deg C"
+      xlim=c(0.5,max(lst.QUALYPSOOUT[[1]]$Xfut))
     }
     for(b in 1:nrow(select_stations)){
       idx=select_stations$idx[b]
       
-      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out)
-      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,includeMean = T)
-      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out)
-      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,includeMean = T)
-      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out)
-      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,includeMean = T)
+      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
+      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,includeMean = T,xlim=xlim)
+      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
+      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,includeMean = T,xlim=xlim)
+      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
+      plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,includeMean = T,xlim=xlim)
       
-      plotQUALYPSOMeanChangeAndUncertainties_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out)
-      plotQUALYPSOTotalVarianceDecomposition_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out)
-      plotQUALYPSOTotalVarianceByScenario_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out)
+      plotQUALYPSOMeanChangeAndUncertainties_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
+      plotQUALYPSOTotalVarianceDecomposition_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
+      plotQUALYPSOTotalVarianceByScenario_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
     }
   }
 }
@@ -94,26 +98,26 @@ for (i in 1:length(lst_indic)){
 for (i in 1:length(lst_indic)){
   folder_out=paste0(path_fig,"3GCM_all_basins/",lst_indic[i],"/maps/")
   dir.create(folder_out)
-  for(p in 1:length(predict)){
-    load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_",predict[p],"_lm.RData"))
-    if(predict[p]=="time"){
-      lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
-      pred_name="temps"
-      pred_unit=""
-      horiz=2085
-      horiz3=c(2030,2050,2085)
-    }else{
-      lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp
-      pred_name="temperature"
-      pred_unit="deg C"
-      horiz=2
-      horiz3=c(1.5,2,3)
-    }
-    map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
-    map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out)
-    map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
-    map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
-  }
+  
+  load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
+  lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+  pred_name="temps"
+  pred="time"
+  pred_unit=""
+  horiz=2085
+  horiz3=c(2030,2050,2085)
+  map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+  map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out,bin_col=5)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+  
+  load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_3rcp_lm.RData"))
+  load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_2rcp_lm.RData"))
+  map_3quant_1.5_2_3_degC(lst.QUALYPSOOUT3 = lst.QUALYPSOOUT_temp_3rcp,lst.QUALYPSOOUT2 = lst.QUALYPSOOUT_temp_2rcp,ind_name = lst_indic[i],folder_out = folder_out)
+    
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
   map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT_time,horiz=2085,ind_name = lst_indic[i],folder_out = folder_out)
 }
