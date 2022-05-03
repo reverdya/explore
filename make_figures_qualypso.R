@@ -219,3 +219,9 @@ for (i in 1:length(lst_indic2)){
       ggtitle(paste0("Valeurs de reference (1990) de ",lst_indic2[i],"\n(moyenne des fonctions de reponse disponibles)"))
     save.plot(plt,Filename = paste0("ref1990_response_",lst_indic2[i]),Folder = path_fig,Format = "jpeg")
 }
+
+#####################
+## Area of basins
+
+folder_out=paste0(path_fig,"3GCM_all_basins/")
+plot_bv_areas(folder_out)

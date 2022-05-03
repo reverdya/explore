@@ -464,7 +464,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Changement moyen (%)"))+
-    ggtitle(paste0("Changement moyen et partition de variance pour\nle predicteur ",pred_name," et l'indicateur ",ind_name," (",bv_name,")"))
+    ggtitle(paste0("Changement moyen et partition de variance pour\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
   save.plot(plt,Filename = paste0("meanchange_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
 }
 
@@ -1106,4 +1106,17 @@ plot_comp_anova=function(LM,QU,type,nameEff=NULL,pred_name,ind_name,var_name,fol
   }
 
 
+}
+
+#####################################################
+## Plot watershed areas
+
+plot_bv_areas=function(folder_out){
+  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon","Surf_mod")]
+  colnames(exut)=c("Num_ordre_Modcou","y","x","val")
+  plt=base_map_outlets(data = exut,val_name = "val")
+  plt=plt+
+    scale_fill_gradientn("Superficie (km2)",colours = parula(100),trans="log10")+
+    ggtitle("Superficie des bassins versants")
+  save.plot(plt,Filename = "superficie_bv",Folder = folder_out,Format = "jpeg")
 }
