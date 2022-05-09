@@ -28,7 +28,7 @@ rcp=c("historical","rcp2.6","rcp4.5","rcp8.5")
 bc=c("ADAMONT")
 hm=c("SIM2")
 
-lst_indic=c("Q_mean_year","Q_q95_year","VCN10","VCN10_day")
+load(file=paste0(path_data,"processed/lst_indic.Rdata"))
 predict=c("time","temp_3rcp","temp_2rcp")
 
 select_gcm=c("CNRM-CM5-LR","EC-EARTH","IPSL-CM5A-MR")
@@ -109,6 +109,8 @@ for (i in 1:length(lst_indic)){
   map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out)
   map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out,bin_col=5)
@@ -116,7 +118,7 @@ for (i in 1:length(lst_indic)){
 
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_3rcp_lm.RData"))
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_2rcp_lm.RData"))
-  map_3quant_1.5_2_3_degC(lst.QUALYPSOOUT3 = lst.QUALYPSOOUT_temp_3rcp,lst.QUALYPSOOUT2 = lst.QUALYPSOOUT_temp_2rcp,ind_name = lst_indic[i],folder_out = folder_out)
+  map_3quant_1.5_2_2.5_degC(lst.QUALYPSOOUT3 = lst.QUALYPSOOUT_temp_3rcp,lst.QUALYPSOOUT2 = lst.QUALYPSOOUT_temp_2rcp,ind_name = lst_indic[i],folder_out = folder_out)
 
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
   map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT_time,horiz=2085,ind_name = lst_indic[i],folder_out = folder_out)
@@ -150,10 +152,45 @@ plt=ggplot(data)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = col_3rcp,labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+  scale_color_discrete("",type = as.vector(col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
   scale_linetype_discrete("GCM")+
-  ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1850-1900 (1860-1900 pour HadGEM2)")
+  ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1860-1900")
 save.plot(plt,Filename = "global_tas",Folder = path_fig,Format = "jpeg")
+
+## Same but start earlier
+
+paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
+for ( i in 1:length(paths)){
+  tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
+  tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
+  pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])
+  tas_glob$tas=tas_glob$tas-pre_indus_tas
+  colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
+  if(i==1){
+    mat_Globaltas_gcm=tas_glob
+  }else{
+    mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
+  }
+}
+years=mat_Globaltas_gcm$year
+mat_Globaltas_gcm=data.frame(apply(mat_Globaltas_gcm,MARGIN = 2,function(x) smooth.spline(x=years,y=x,spar = 1)$y))
+mat_Globaltas_gcm$year=years
+
+data=gather(mat_Globaltas_gcm,key = "chain",value = "val",-year)
+data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
+data$gcm=unlist(lapply(strsplit(data$chain,"_"),function(x) x[2]))
+
+plt=ggplot(data)+
+  geom_line(aes(x=year,y=val,col=rcp,lty=gcm),size=1.2)+
+  xlab("")+
+  ylab("Changement de température planétaire (deg C)")+
+  theme_bw(base_size = 18)+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+  scale_color_discrete("",type = as.vector( col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+  scale_linetype_discrete("GCM")+
+  ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1860-1900")
+save.plot(plt,Filename = "global_tas_1861",Folder = path_fig,Format = "jpeg")
 
 ###########################################################################################################################
 ## Scatter plot global temperature (smoothed or not) VS yearly mean discharge for reference watersheds (smoothed or not)
