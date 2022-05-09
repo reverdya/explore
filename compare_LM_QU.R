@@ -28,7 +28,7 @@ rcp=c("historical","rcp2.6","rcp4.5","rcp8.5")
 bc=c("ADAMONT")
 hm=c("SIM2")
 
-lst_indic=c("Q_mean_year","Q_q95_year","VCN10","VCN10_day")
+load(file=paste0(path_data,"processed/lst_indic.Rdata"))
 predict=c("time","temp")
 
 ######

@@ -245,7 +245,7 @@ rescale_col=function(pal=brewer.blues(100),values,param){
 
 ###################################
 ## Format Global temperature for use in Qualypso, to be used inside code run_QUalypso
-## Difference to 1850-1900 average and rcp/gcm matching + spline smoothing
+## Difference to 1860-1900 average and rcp/gcm matching + spline smoothing
 ## path_data the root of the path
 ##simu_lst the list of simulations
 #first_full year and last_full_year the first an last years with data for all simu all year round
@@ -253,15 +253,12 @@ rescale_col=function(pal=brewer.blues(100),values,param){
 format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year){
   
   vecYears=seq(first_full_year,last_full_year,1)
-  ## Format global temperature: difference to 1850-1900 
+  ## Format global temperature: difference to 1860-1900 
   paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
   for ( i in 1:length(paths)){
     tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
     tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1850 & tas_glob$year<=1900])
-    if(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4]=="HadGEM2-ES"){
-      pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data or negative
-    }
+    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data or negative for Hadgem2-ES at least
     tas_glob$tas=tas_glob$tas-pre_indus_tas
     tas_glob=tas_glob[tas_glob$year>=first_full_year&tas_glob$year<=last_full_year,]
     colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
@@ -453,12 +450,15 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
   #These colors work only if the order of the effects does not move
   col_7var=c("orange","yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
   legend_var=c("Var. Int.","Var. Res.","RCM","GCM","RCP","BC","HM")
+  alpha_var=c(0.5,0.8,0.8,0.8,0.8,0.8,0.8)
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.8)+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
     geom_line(aes(x=Xfut,y=mean,color="black"))+
     scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
     scale_color_discrete("",type="black",label="Moyenne lissee")+
+    scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
+    guides(alpha = "none")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -605,14 +605,19 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   col_7var=c("orange","yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
   legend_var=c("Var. Int.","Var. Res.","RCM","GCM","RCP","BC","HM")
   legend_var_full=c("int","res","rcm","gcm","rcp","bc","hm")
+  alpha_var=c(0.5,0.8,0.8,0.8,0.8,0.8,0.8)
+  alpha_var=alpha_var[-which(legend_var_full==nameEff)]
   legend_var=legend_var[-which(legend_var_full==nameEff)]
   col_7var=col_7var[-which(legend_var_full==nameEff)]
   
+  
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.8)+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
     geom_line(aes(x=Xfut,y=mean,color="black"))+
     scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
     scale_color_discrete("",type="black",label="Moyenne lissee")+
+    scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
+    guides(alpha = "none")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -782,12 +787,12 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_1.5_2_3_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,folder_out,scale_col=1,bin_col=20){
+map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,folder_out,scale_col=1,bin_col=20){
   
   quant=c("5%","mean","95%")
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
-  horiz=c(1.5,2,3)
+  horiz=c(1.5,2,2.5)
   
   tmp=exut
   for (i in 1:8){
@@ -843,10 +848,10 @@ map_3quant_1.5_2_3_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,fold
   plt=plt+
     facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
     scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-    ggtitle(paste0("Changement relatif de ",ind_name," et son incertitude pour\ndifferents horizons de temperature planetaire (en deg C)\n(avec reference 1990)"))+
+    ggtitle(paste0("Changement relatif de ",ind_name," et son incertitude pour\ndifferents horizons de temperature planetaire (en deg C)\n(avec reference 1990, 3 RCP pour 1.5 degC et 2 RCP pour 2 et 3 deg C)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
-  save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_3_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_2.5_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
   
   
   
@@ -855,6 +860,7 @@ map_3quant_1.5_2_3_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,fold
 #######################################################################
 ## Map of effects GCM or RCM (temperature or time)
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
+## includeMean if true adds mean change to effect
 ## name_eff "gcm" ou "rcm"...
 ## pred_name the plain language name of the predictor
 ## pred the predictor name in the file
@@ -866,7 +872,7 @@ map_3quant_1.5_2_3_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,fold
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_main_effect=function(lst.QUALYPSOOUT,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,folder_out,scale_col=1,bin_col=20){
+map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,folder_out,scale_col=1,bin_col=20){
   
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
@@ -887,7 +893,11 @@ map_main_effect=function(lst.QUALYPSOOUT,horiz,name_eff,name_eff_plain,pred,pred
   
   for (i in 1:length(lst.QUALYPSOOUT)){
     idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-    chg=lst.QUALYPSOOUT[[i]]$MAINEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
+    if(includeMean){
+      chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
+    }else{
+      chg=lst.QUALYPSOOUT[[i]]$MAINEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
+    }
     for(j in 1:length(chg)){
       exut$val[exut$idx==i & exut$effs==j]=chg[j]
     }
@@ -903,14 +913,25 @@ map_main_effect=function(lst.QUALYPSOOUT,horiz,name_eff,name_eff_plain,pred,pred
   #lim_col=(lim_col%/%bin_col+1)*bin_col
   
   plt=base_map_outlets(data = exut,val_name = "val")
-  plt=plt+
-    facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-    scale_fill_gradientn("Effet principal (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-    ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour ",ind_name,"\net le predicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-    theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.5
-  save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
-  
+  if(includeMean){
+    plt=plt+
+      facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
+      scale_fill_gradientn("Changement (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      ggtitle(paste0("Changement des ",name_eff_plain,"s pour ",ind_name,"\net le predicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+      theme(panel.border = element_rect(colour = "black",fill=NA))
+    plt$layers[[3]]$aes_params$size= 1.5
+    save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    
+  }else{
+    plt=plt+
+      facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
+      scale_fill_gradientn("Effet principal (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour ",ind_name,"\net le predicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+      theme(panel.border = element_rect(colour = "black",fill=NA))
+    plt$layers[[3]]$aes_params$size= 1.5
+    save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    
+  }
 }
 
 
