@@ -44,6 +44,14 @@ period_agreg=c("date","year","season","month") #different periods of aggregation
 #MAIN#
 ######
 
+###########################################
+## Make list of calculated variables
+
+lst_indic=c("Q_mean_year","Q_q95_year","log10VCN10","VCN10_day")
+save(lst_indic,file=paste0(path_data,"processed/lst_indic.Rdata"))
+load(file=paste0(path_data,"processed/lst_indic.Rdata"))
+
+
 ###################################################
 ## Make table of available simulations
 
@@ -113,6 +121,12 @@ calc_indic=function(chain,indic_name,stat,agreg_day){
   data=data[,c(1,watershed_select+1)]#+1 because of date
   if(any(is.na(data))){stop("This chain has NA")}
   
+  # Set negative values to 0
+  if(any(data[,colnames(data)!="date"]<0)){
+    print("This chain has negative values")
+    data[,colnames(data)!="date"][data[,colnames(data)!="date"]<0]=0
+  }
+
   
   data$year=year(data$date)
   data$season=date_to_season(data$date)
@@ -127,13 +141,16 @@ calc_indic=function(chain,indic_name,stat,agreg_day){
   #Remove potential uncomplete first and last years
   if(mday(data$date[1])!=1 | data$month[1]!=1){
     data=data[-which(data$year==data$year[1]),]
-    data10=data10[-which(data10$year==data$year[1]),]
+    data10=data10[-which(data10$year==data10$year[1]),]
   }
   if(mday(data$date[nrow(data)])!=31 | data$month[nrow(data)]!=12){
     data=data[-which(data$year==data$year[nrow(data)]),]
-    data10=data10[-which(data10$year==data$year[nrow(data)]),]
+    data10=data10[-which(data10$year==data10$year[nrow(data10)]),]
   }
   
+  if(any(data10[,!colnames(data10) %in% period_agreg ]<0)){
+    data10[,!colnames(data10) %in% period_agreg ][data10[,!colnames(data10) %in% period_agreg ]<0]=0#for some reason roll mean of very small positive values produces very small negative values
+  }
   
   #Calculate statistic
   j=1
@@ -143,6 +160,16 @@ calc_indic=function(chain,indic_name,stat,agreg_day){
     }
     if(agreg_day[j]==1){
       res=st(data)
+    }
+    if(indic_name[j]=="log10VCN10"){
+      res[res==0]=1e-40 #to allow use of res
+      res[,!colnames(res) %in% "year"]=log10(res[,!colnames(res) %in% "year"])
+    }
+    if(any(is.na(res))){
+      print(i)
+      print(j)
+      stop("NA production")
+      #res[rowSums(res<0)>0,]
     }
     save(res,file = paste0(path_data,"processed/indic_hydro/",indic_name[j],"_",chain$rcp,"_",chain$gcm,"_",chain$rcm,"_",chain$bc,"_",chain$hm,".Rdata"))
     rm(res)
@@ -166,7 +193,6 @@ q95_year=function(data){aggregate(data[,-which(colnames(data) %in% period_agreg 
 vcn10=function(data){aggregate(data[,-which(colnames(data) %in% period_agreg )],by=list(year=data$year),min,na.rm=T)}# na.rm because potential NA from rolling mean if start on 1st jan. or ends on 31st dec. 
 vcn10_day=function(data){aggregate(data[,-which(colnames(data) %in% period_agreg )],by=list(year=data$year),which.min )}#day of year of VCN10
 
-
 #################################################################################
 ## In this loop old indicators can easily be commented and new ones created
 ## When adding something with month or season check for coherence as never ran
@@ -174,7 +200,7 @@ vcn10_day=function(data){aggregate(data[,-which(colnames(data) %in% period_agreg
 tic()
 
 for (i in 1:nrow(simu_lst)){
-  calc_indic(chain=simu_lst[i,],indic_name=c("Q_mean_year","Q_q95_year","VCN10","VCN10_day"),stat = list(mean_year,q95_year,vcn10,vcn10_day),agreg_day=c(1,1,10,10))
+  calc_indic(chain=simu_lst[i,],indic_name=lst_indic,stat = list(mean_year,q95_year,vcn10,vcn10_day),agreg_day=c(1,1,10,10))
   print(simu_lst[i,])
 }
 
