@@ -30,7 +30,7 @@ rcp=c("historical","rcp2.6","rcp4.5","rcp8.5")
 bc=c("ADAMONT")
 hm=c("SIM2")
 
-lst_indic=c("Q_mean_year","Q_q95_year","VCN10","VCN10_day")
+load(file=paste0(path_data,"processed/lst_indic.Rdata"))
 
 spar=1.1
 typeChangeVar="rel"
@@ -94,7 +94,7 @@ for (indc in lst_indic){
                                            scenAvail=scenAvail,
                                            X = mat_Globaltas,
                                            Xref = ref_Globaltas,
-                                           Xfut=seq(0.5,2,0.2),
+                                           Xfut=seq(0.5,1.5,0.01),
                                            listOption=listOption)# no iFut because we want all values
     
     idx_2rcp=which(scenAvail$rcp=="rcp4.5"|scenAvail$rcp=="rcp8.5")
@@ -102,7 +102,7 @@ for (indc in lst_indic){
                                                 scenAvail=scenAvail[idx_2rcp,],
                                                 X = mat_Globaltas[idx_2rcp,],
                                                 Xref = ref_Globaltas[idx_2rcp],
-                                                Xfut=seq(0.5,3,0.25),
+                                                Xfut=seq(0.5,2.5,0.01),
                                                 listOption=listOption)# no iFut because we want all values
     
     ##For now this problem is under-constrained(3 + 4 effects + intercept for 6 chains)
@@ -111,7 +111,7 @@ for (indc in lst_indic){
     #                                             scenAvail=scenAvail[idx_1rcp,c("gcm","rcm")],
     #                                             X = mat_Globaltas[idx_1rcp,],
     #                                             Xref = ref_Globaltas[idx_1rcp],
-    #                                             Xfut=seq(0.5,5,0.25),
+    #                                             Xfut=seq(0.5,5,0.05),
     #                                             listOption=listOption)# no iFut because we want all values
     
     if(((i-1) %% 100)==0){print(i-1)}
