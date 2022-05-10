@@ -245,22 +245,22 @@ rescale_col=function(pal=brewer.blues(100),values,param){
 
 ###################################
 ## Format Global temperature for use in Qualypso, to be used inside code run_QUalypso
-## Difference to 1860-1900 average and rcp/gcm matching + spline smoothing
+## Difference to 1861-1900 average and rcp/gcm matching + spline smoothing
 ## path_data the root of the path
 ##simu_lst the list of simulations
 #first_full year and last_full_year the first an last years with data for all simu all year round
 
 format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year){
   
-  vecYears=seq(first_full_year,last_full_year,1)
-  ## Format global temperature: difference to 1860-1900 
+  vecYears=seq(1861,last_full_year,1)#1861 first year for GFDL
+  ## Format global temperature: difference to 1861-1900 
   paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
   for ( i in 1:length(paths)){
     tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
     tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data or negative for Hadgem2-ES at least
+    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1861 & tas_glob$year<=1900])#because before no data or negative for Hadgem2-ES at least
     tas_glob$tas=tas_glob$tas-pre_indus_tas
-    tas_glob=tas_glob[tas_glob$year>=first_full_year&tas_glob$year<=last_full_year,]
+    tas_glob=tas_glob[tas_glob$year>=1861&tas_glob$year<=last_full_year,]
     colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
     if(i==1){
       mat_Globaltas_gcm=tas_glob
@@ -279,6 +279,9 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
   mat_Globaltas=do.call(cbind,mat_Globaltas)
   mat_Globaltas=t(apply(mat_Globaltas,MARGIN = 2,function(x) smooth.spline(x=vecYears,y=x,spar = 1)$y))
   ref_Globaltas=apply(mat_Globaltas,MARGIN = 1,function(x) mean(x[which(vecYears==first_ref_year):which(vecYears==last_ref_year)]))
+  idx=which(mat_Globaltas_gcm$year %in% seq(first_full_year,last_full_year))
+  mat_Globaltas=mat_Globaltas[,idx]
+  mat_Globaltas_gcm=mat_Globaltas_gcm[idx,]
   return(list(mat_Globaltas,ref_Globaltas,mat_Globaltas_gcm))
 }
 
