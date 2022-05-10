@@ -238,22 +238,22 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
           theme_bw(base_size = 18)+
           theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
           theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-          ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w]))+
+          ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
           scale_x_continuous("")+
           scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
           guides(color = guide_legend(override.aes = list(size = 1.7)))+
           facet_wrap(vars(gcm))+
           theme(panel.spacing.x = unit(2, "lines"))
         if(SPAR==1){
-          save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+          save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
           }else{#just to ease file sorting
-            save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+            save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
           }
         # if(min(data$val,na.rm=T)>0){
         #   plt2=plt+coord_trans(y="log10")
-        #   save.plot(plt2,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w],"_",r,"_log"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+        #   save.plot(plt2,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
         # }else{
-        #   print(paste0(lst_indic[i],"_chronique_",select_stations$Nom[w],"_",r,"_log is impossible because of null or negative values in spline"))
+        #   print(paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log is impossible because of null or negative values in spline"))
         # }
         
       }
@@ -300,7 +300,7 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
       clim_resp_spline[[c]]=res_spline
     }
     
-    for (w in 1:(ncol(clim_resp[[1]]-1))){
+    for (w in 1:(ncol(clim_resp[[1]])-1)){
       for (r in lst_names_eff$rcp){
         
         chain_r=which(simu_lst$rcp==r)#chains with the right rcp
