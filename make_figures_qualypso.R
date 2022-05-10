@@ -74,7 +74,7 @@ for (i in 1:length(lst_indic)){
     }
     for(b in 1:nrow(select_stations)){
       idx=select_stations$idx[b]
-      
+      # Warnings removed rows okay, due to xlim
       plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
       plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,includeMean = T,xlim=xlim)
       plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
@@ -154,7 +154,7 @@ plt=ggplot(data)+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
   scale_color_discrete("",type = as.vector(col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
   scale_linetype_discrete("GCM")+
-  ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1860-1900")
+  ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1861-1900")
 save.plot(plt,Filename = "global_tas",Folder = path_fig,Format = "jpeg")
 
 ## Same but start earlier
@@ -163,7 +163,7 @@ paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_ta
 for ( i in 1:length(paths)){
   tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
   tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-  pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])
+  pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1861 & tas_glob$year<=1900])
   tas_glob$tas=tas_glob$tas-pre_indus_tas
   colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
   if(i==1){
@@ -189,7 +189,7 @@ plt=ggplot(data)+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
   scale_color_discrete("",type = as.vector( col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
   scale_linetype_discrete("GCM")+
-  ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1860-1900")
+  ggtitle("Changement de temperature planetaire pour les differents RCP/GCM\npar rapport a la reference 1861-1900")
 save.plot(plt,Filename = "global_tas_1861",Folder = path_fig,Format = "jpeg")
 
 ###########################################################################################################################
@@ -238,7 +238,7 @@ for (i in 1:nrow(select_stations)){
 ref_year=1990
 scale_col=0.2
 bin_col=c(250,500,50)
-lst_indic2=lst_indic[lst_indic!="VCN10_day"]
+lst_indic2=lst_indic[!lst_indic %in% c("log10VCN10","VCN10_day")]
 for (i in 1:length(lst_indic2)){
     load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic2[i],"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
     lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
