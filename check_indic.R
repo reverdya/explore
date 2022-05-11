@@ -34,7 +34,7 @@ bc=c("ADAMONT")
 hm=c("SIM2")
 
 load(file=paste0(path_data,"processed/lst_indic.Rdata"))
-units=c("m3/s","m3/s","m3/s","day of year")
+units=c("m3/s","m3/s","log(m3/s)","day of year")
 
 last_full_year_smooth=2083#last year with complete data for a 30 years rolling mean and all chains
 spar=1.1
