@@ -300,8 +300,9 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
 ## bv_name the plain language name of the watershed if needed
 ## pre_unit the unit of the predictor
 ## folder_out the saving folder
+## incert=TRUE adds confidence interval equivalent to Vtot-Vint
 
-plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim){
+plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,incert=FALSE){
   
   Xfut = QUALYPSOOUT$Xfut
   iEff = which(QUALYPSOOUT$namesEff == nameEff)
@@ -342,43 +343,83 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
     data=merge(med,binf,by=c("pred","eff"))
     data=merge(data,bsup,by=c("pred","eff"))
   }else{
-    data=med
+    if(incert){
+      Veff = QUALYPSOOUT$EFFECTVAR[, -iEff]
+      Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN)
+      Vtot = colSums(Vbind)
+      Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vtot))
+      vNormRev = apply(Vnorm, 2, rev)
+      probCI = QUALYPSOOUT$listOption$probCI
+      binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
+      bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
+      binf=data.frame(apply(binf,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
+      bsup=data.frame(apply(bsup,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
+      colnames(binf)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+      colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+      binf$pred=Xfut
+      bsup$pred=Xfut
+      binf=gather(binf,key = "eff",value = "binf",-pred)
+      bsup=gather(bsup,key = "eff",value = "bsup",-pred)
+      data=merge(med,binf,by=c("pred","eff"))
+      data=merge(data,bsup,by=c("pred","eff"))
+    }else{
+      data=med
+    }
   }
 
   plt=ggplot(data)+
     geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1)+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim)+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))
   
-  if(add.CI){
+  if(add.CI|incert){
     plt=plt+
       geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+
       geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5,linetype="dotted")+
       geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5,linetype="dotted")
+    if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
+      plt=plt+
+        scale_color_discrete("Moyenne lissee et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("Moyenne lissee et\nintervalle de confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+    }else{
+      plt=plt+
+        scale_color_discrete("Moyenne lissee et\nintervalle de confiance",type = parula(nEff))+
+        scale_fill_discrete("Moyenne lissee et\nintervalle de confiance",type=parula(nEff))
+    }
+  }else{
+    if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
+      plt=plt+
+        scale_color_discrete("Moyenne lissee",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("Moyenne lissee",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+    }else{
+      plt=plt+
+        scale_color_discrete("Moyenne lissee",type = parula(nEff))+
+        scale_fill_discrete("Moyenne lissee",type=parula(nEff))
+    }
   }
 
-  if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
-    plt=plt+
-      scale_color_discrete("Moyenne lissee avec\nintervalle\nde confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-      scale_fill_discrete("Moyenne lissee avec\nintervalle\nde confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
-  }else{
-    plt=plt+
-      scale_color_discrete("Moyenne lissee avec\nintervalle\nde confiance",type = parula(nEff))+
-      scale_fill_discrete("Moyenne lissee avec\nintervalle\nde confiance",type=parula(nEff))
-  }
+  
 
   if(includeMean){
     plt=plt+
       scale_y_continuous(paste0("Changement (%)"))+
       ggtitle(paste0("Changement des ",plain_nameEff," pour le predicteur ",pred_name,"\net l'indicateur ",ind_name," (",bv_name,")"))
-    save.plot(plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+    if (is.na(folder_out)){
+      return(plt)
+    }else{
+      save.plot(plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+    }
   }else{
     plt=plt+
       scale_y_continuous(paste0("Effet principal (%)"))+
       ggtitle(paste0("Effet principaux des ",plain_nameEff," pour le predicteur ",pred_name,"\net l'indicateur ",ind_name," (",bv_name,")"))
-    save.plot(plt,Filename = paste0("effect_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+    if (is.na(folder_out)){
+      return(plt)
+    }else{
+      save.plot(plt,Filename = paste0("effect_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+    }
   }
   
 }
@@ -468,7 +509,11 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Changement moyen (%)"))+
     ggtitle(paste0("Changement moyen et partition de variance pour\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
-  save.plot(plt,Filename = paste0("meanchange_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("meanchange_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  }
 }
 
 ##############################################################################
@@ -524,7 +569,11 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
     ggtitle(paste0("Partition de variance pour\nle predicteur ",pred_name," et l'indicateur ",ind_name," (",bv_name,")"))
-  save.plot(plt,Filename = paste0("partition_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("partition_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  }
 }
 
 ##############################################################################
@@ -627,7 +676,11 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Changement moyen (%)"))+
     ggtitle(paste0("Changement et partition de variance pour les experiences ",plain_name_Scen,"\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
-  save.plot(plt,Filename = paste0("change_variance_",nameScenario,"_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("change_variance_",nameScenario,"_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  }
 }
 
 
