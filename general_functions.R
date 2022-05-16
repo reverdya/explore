@@ -1020,7 +1020,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
       chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]
     }
     if(vartype=="varres"){
-      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR[idx_Xfut]
+      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]
     }
     if(vartype=="vartot"){
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
