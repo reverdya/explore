@@ -1020,7 +1020,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
       chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]
     }
     if(vartype=="varres"){
-      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR[idx_Xfut]
+      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]
     }
     if(vartype=="vartot"){
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
@@ -1056,7 +1056,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
       ggtitle(paste0("Variabilite interne de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   
-  if(vartype=="varint"){
+  if(vartype=="varres"){
     q99=quantile(exut$val,probs=0.99)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
