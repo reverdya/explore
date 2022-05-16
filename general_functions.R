@@ -1019,6 +1019,9 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(vartype=="varint"){
       chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]
     }
+    if(vartype=="varres"){
+      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR[idx_Xfut]
+    }
     if(vartype=="vartot"){
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
       chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])
@@ -1051,6 +1054,14 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       scale_fill_gradientn("Variabilite\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       ggtitle(paste0("Variabilite interne de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+  }
+  
+  if(vartype=="varint"){
+    q99=quantile(exut$val,probs=0.99)
+    lim_col=round(q99/bin_col)*bin_col
+    plt=plt+
+      scale_fill_gradientn("Variabilite\nresiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      ggtitle(paste0("Variabilite residuelle de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
 
   save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
