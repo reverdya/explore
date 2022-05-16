@@ -116,7 +116,7 @@ for (r in lst_names_eff$rcp){
   data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
   
   plt_raw_time[[r]]=ggplot(data[data$type=="raw",])+#Warnings okay
-    geom_line(aes(x=year,y=val,color=rcm),size=0.7)+
+    geom_line(aes(x=year,y=val,color=rcm),size=1)+
     scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
     theme_bw(base_size = 18)+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -146,15 +146,12 @@ for (r in lst_names_eff$rcp){
 
 
 ###############################################################################################
-## Plot raw indicator, and its spline for all models and selection of watersheds by RCP for temperature
-## Check for coherence of using spline and possible chains that are outlying
-## checks particularly that data is not cyclical
-## Climate response not climate change response
+## raw and spline temperature series
 
 tmp=format_global_tas(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year)
 mat_Globaltas=tmp[[1]]
 
-SPAR=1.1
+SPAR=2
 i=1 # Qmean_year
 clim_resp=vector(length=nrow(simu_lst),mode="list")
 clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
@@ -204,7 +201,7 @@ for (r in lst_names_eff$rcp){
   data=data[!is.na(data$val),]
   
   plt_raw_temp[[r]]=ggplot(data[data$type=="raw",])+#Warnings okay
-    geom_line(aes(x=tas,y=val,color=rcm),size=0.7)+
+    geom_line(aes(x=tas,y=val,color=rcm),size=1)+
     scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
     theme_bw(base_size = 18)+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -290,8 +287,8 @@ plt_var_rcp8.5=plotQUALYPSOTotalVarianceByScenario_ggplot(QUALYPSOOUT = lst.QUAL
 #####################################
 ## Effet GCM, effet RCM
 
-plt_gcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "RCP",pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
-plt_rcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCP",pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_gcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_rcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
 
 
 ####################################
