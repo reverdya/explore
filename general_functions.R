@@ -991,8 +991,8 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
 }
 
 
-#######################################################################
-## Map mean change or internal variability or total variability
+############################################################################
+## Map mean change or internal variability or total variability or res var
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
 ## vartype the variable to be plotted (one of varint, mean, vartot)
 ## pred_name the plain language name of the predictor
@@ -1030,6 +1030,8 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   }
   
   colnames(exut)=c("Num_ordre_Modcou","y","x","idx","val")
+  
+  ## On représente les variabilités pas les incertitudes
   
   plt=base_map_outlets(data = exut,val_name = "val")
   if(vartype=="mean"){
