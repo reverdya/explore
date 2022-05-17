@@ -1,0 +1,3 @@
+[submodule "QUALYPSO"]
+	path = QUALYPSO
+	url = https://github.com/guillaumeevin/QUALYPSO

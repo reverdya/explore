@@ -2,13 +2,12 @@
 # Explore 2
 # general data science function and data representations
 
-
-
 library(svglite) #save svg
 library(ggplot2) #plots
 library(ncdf4) #netcdf
 library(tictoc) #runtime
 library(lubridate) #date management
+# install.packages(paste0(getwd(),"/QUALYPSO/"), repos = NULL, type="source")
 library(QUALYPSO) #Qualypso
 library(parallel) #detectCores
 library(zoo) #rollmean
