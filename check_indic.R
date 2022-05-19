@@ -4,7 +4,6 @@
 
 rm(list=ls())
 gc()
-dev.off()
 
 #########
 #LIBRARY#
@@ -270,78 +269,68 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
 ##Merge data frame warnings are okay
 SPAR=1.1
 for (i in 1:length(lst_indic)){# for each indicator
-  clim_resp=vector(length=nrow(simu_lst),mode="list")
-  clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
-  dir.create(paste0(path_fig,lst_indic[i],"/plot_chains/"))
-  for(c in 1:nrow(simu_lst)){# for each chain
-    
-    load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
+  dir.create(paste0(path_fig,lst_indic[i],"/plot_chains_relative/"))
+  
+  all_chains=vector(length=nrow(simu_lst),mode="list")
+  for (j in 1:nrow(simu_lst)){
+    load(paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[j],"_",simu_lst$gcm[j],"_",simu_lst$rcm[j],"_",simu_lst$bc[j],"_",simu_lst$hm[j],".Rdata"))
     res=res[,c(1,select_stations$idx+1)]
-    
-    #res=cbind(res[,1],apply(res[,-1],2,rollmean,k=nb_year_mean,align="center",fill=NA))#30 years rolling mean
     res=res[res$year>=first_full_year&res$year<=last_full_year,]
-    zz = !is.na(res[,2])
-    vecYears=res[zz,1]
-    #spline
-    res_spline=res
-    for(j in 2:ncol(res)){
-      res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = SPAR)$y
-    }
-    colnames(res)[1]="year"
-    colnames(res_spline)[1]="year"
-    clim_resp[[c]]=res
-    clim_resp_spline[[c]]=res_spline
+    all_chains[[j]]=res
   }
   
-  for (w in 2:ncol(clim_resp[[1]])){
+  n_bv=ncol(all_chains[[1]])-1
+  for(w in 2:(n_bv+1)){
+    
+    ClimateProjections=lapply(all_chains, function(x) x[,c(1,w)])
+    ClimateProjections=lapply(ClimateProjections,function(x) x[x$year>=first_full_year & x$year<=last_full_year,][,2])
+    Y=t(do.call(cbind,ClimateProjections))
+    nS=nrow(simu_lst)
+    X=seq(first_full_year,last_full_year)
+    clim_resp=fit.climate.response(Y=Y,spar=SPAR,Xmat=matrix(rep(X,nS),byrow=T,nrow=nS,ncol=length(X)),Xref=rep(1990,nS),Xfut=X,typeChangeVariable = "rel")
+    raw=data.frame(t(clim_resp$phiStar+clim_resp$etaStar))*100
+    colnames(raw)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
+    raw$year=X
+    raw=gather(raw,key="model",value="val",-year)
+    raw$type="raw"
+    spline=data.frame(t(clim_resp$phiStar))*100
+    colnames(spline)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
+    spline$year=X
+    spline=gather(spline,key="model",value="val",-year)
+    spline$type="spline"
+    data=rbind(raw,spline)
+    data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
+    data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
+    data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[3]))
+    
+    # IV=clim_resp$varInterVariability
+    # data$ivinf=data$val-IV
+    # data$ivsup=data$val+IV
+    # data$ciinf=qnorm(p = (1 - 0.9)/2, mean = data$val, sd = sqrt(IV))
+    # data$cisup = qnorm(p = 0.5 + 0.9/2, mean = data$val, sd = sqrt(IV))
+    # data[data$type=="raw",]$ivinf = data[data$type=="raw",]$ivsup = data[data$type=="raw",]$ciinf = data[data$type=="raw",]$cisup = NA
+    # 
+    
     for (r in lst_names_eff$rcp){
-      
-      chain_r=which(simu_lst$rcp==r)#chains with the right rcp
-      raw=clim_resp[[chain_r[1]]][,c(1,w)]#first iteration outside loop
-      spline=clim_resp_spline[[chain_r[1]]][,c(1,w)]
-      for (R in 2:length(chain_r)){
-        raw=merge(raw,clim_resp[[chain_r[R]]][,c(1,w)],by="year",all=T)
-        spline=merge(spline,clim_resp_spline[[chain_r[R]]][,c(1,w)],by="year",all=T)
-        ## Warnings okay
-      }
-      colnames(raw)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
-      colnames(spline)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
-      raw=gather(raw,key = "model",value = "val",-year)
-      raw$type="raw"
-      spline=gather(spline,key = "model",value = "val",-year)
-      spline$type="spline"
-      data=rbind(raw,spline)
-      data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
-      data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
-      
-      plt=ggplot(data)+#Warnings okay
+      plt=ggplot(data[data$rcp==r,])+#Warnings okay
         geom_line(aes(x=year,y=val,size=type,color=rcm))+
+        #geom_line(aes(x=year,y=ciinf,color=rcm))+
+        #geom_line(aes(x=year,y=cisup,color=rcm))+
         scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
         scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
         theme_bw(base_size = 18)+
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
         theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-        ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
+        ggtitle(paste0("Time series of relative change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
         scale_x_continuous("")+
-        scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
+        scale_y_continuous(paste0("Climate change response (%)"))+
         guides(color = guide_legend(override.aes = list(size = 1.7)))+
         facet_wrap(vars(gcm))+
         theme(panel.spacing.x = unit(2, "lines"))
-      if(SPAR==1){
-        save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
-      }else{#just to ease file sorting
-        save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
-      }
-      # if(min(data$val,na.rm=T)>0){
-      #   plt2=plt+coord_trans(y="log10")
-      #   save.plot(plt2,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
-      # }else{
-      #   print(paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log is impossible because of null or negative values in spline"))
-      # }
-      
+      plt
+     save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_rel_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_relative/"),Format = "jpeg")
     }
   }
-  
 }
 
 
