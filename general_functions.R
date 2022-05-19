@@ -7,6 +7,7 @@ library(ggplot2) #plots
 library(ncdf4) #netcdf
 library(tictoc) #runtime
 library(lubridate) #date management
+# git submodule update --remote # in terminal
 # install.packages(paste0(getwd(),"/QUALYPSO/"), repos = NULL, type="source")
 library(QUALYPSO) #Qualypso
 library(parallel) #detectCores
@@ -1013,24 +1014,24 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   for (i in 1:length(lst.QUALYPSOOUT)){
     idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
     if(vartype=="mean"){
-      chg=lst.QUALYPSOOUT[[i]]$GRANDMEAN$MEAN[idx_Xfut]
+      chg=lst.QUALYPSOOUT[[i]]$GRANDMEAN$MEAN[idx_Xfut]*100
     }
     if(vartype=="varint"){
-      chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]
+      chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]*100^2#because variance is square of standard deviation unit
     }
     if(vartype=="varres"){
-      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]
+      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]*100^2
     }
     if(vartype=="vartot"){
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
-      chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])
+      chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])*100^2
     }
-    exut$val[exut$idx==i]=chg*100
+    exut$val[exut$idx==i]=chg
   }
   
   colnames(exut)=c("Num_ordre_Modcou","y","x","idx","val")
   
-  ## On représente les variabilités pas les incertitudes
+  ## We show variances not uncertainties
   
   plt=base_map_outlets(data = exut,val_name = "val")
   if(vartype=="mean"){
