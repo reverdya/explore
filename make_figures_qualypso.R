@@ -47,11 +47,15 @@ idx=which(sim_stations$Num_ordre_Modcou%in%select_stations$Numero_Modcou)
 select_stations=select_stations[order(select_stations$Numero_Modcou),]#because idx is reordered
 select_stations$idx=idx
 
-
+load(file = paste0(path_data,"processed/simu_lst.Rdata"))
+first_ref_year=1975
+last_ref_year=2005
+first_full_year=1972# from raw data filenames
+last_full_year=2098# from raw data filenames
+vecYears=seq(first_full_year,last_full_year,1)
 
 #############################################################
 ## Times series Qualypso for selected basins Linear method
-
 
 for (i in 1:length(lst_indic)){
   folder_out=paste0(path_fig,"3GCM_all_basins/",lst_indic[i],"/")
@@ -69,7 +73,7 @@ for (i in 1:length(lst_indic)){
       if(predict[p]=="temp_1rcp"){lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp_1rcp}
       pred_name="temperature"
       pred_unit="deg C"
-      xlim=c(0.5,max(lst.QUALYPSOOUT[[1]]$Xfut))
+      xlim=c(0.7,max(lst.QUALYPSOOUT[[1]]$Xfut))
     }
     for(b in 1:nrow(select_stations)){
       idx=select_stations$idx[b]
@@ -82,8 +86,12 @@ for (i in 1:length(lst_indic)){
       plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,includeMean = T,xlim=xlim)
       
       plotQUALYPSOMeanChangeAndUncertainties_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
+      plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "sum")
+      plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "tot")
       plotQUALYPSOTotalVarianceDecomposition_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
       plotQUALYPSOTotalVarianceByScenario_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
+      plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "sum")
+      plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "tot")
     }
   }
 }
@@ -112,9 +120,10 @@ for (i in 1:length(lst_indic)){
   map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out)
   map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out,bin_col=5)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out,bin_col=2.5)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out,bin_col=10)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],folder_out = folder_out)
   
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_3rcp_lm.RData"))
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_2rcp_lm.RData"))
@@ -128,13 +137,6 @@ for (i in 1:length(lst_indic)){
 
 ############################################
 ## Plot GCM temperature
-
-load(file = paste0(path_data,"processed/simu_lst.Rdata"))
-first_ref_year=1975
-last_ref_year=2005
-first_full_year=1972# from raw data filenames
-last_full_year=2098# from raw data filenames
-vecYears=seq(first_full_year,last_full_year,1)
 
 tmp=format_global_tas(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year)
 mat_Globaltas_gcm=tmp[[3]]
@@ -228,7 +230,7 @@ for (i in 1:nrow(select_stations)){
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     guides(colour = guide_legend(override.aes = list(size=3)))+
-    ggtitle(paste0("Module annuel du bassin ",select_stations$Nom[i],"\nen fonction du changeemnt de temperature planetaire"))
+    ggtitle(paste0("Module annuel du bassin ",select_stations$Nom[i],"\nen fonction du changement de temperature planetaire"))
   save.plot(plt,Filename = paste0("global_tasVSmodule_",select_stations$Nom[i]),Folder = path_fig,Format = "jpeg")
 }
 
