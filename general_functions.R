@@ -302,7 +302,7 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
 ## folder_out the saving folder
 ## incert=TRUE adds confidence interval equivalent to Vtot-Vint
 
-plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,incert=FALSE){
+plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,incert=FALSE,no_loess=T){
   
   Xfut = QUALYPSOOUT$Xfut
   iEff = which(QUALYPSOOUT$namesEff == nameEff)
@@ -314,7 +314,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   }
   nEff = dim(EffHat$MEAN)[2]
   meanRaw = EffHat$MEAN
-  if(length(Xfut)<=6){#loess model is under constrained
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
     meanPred =meanRaw
   }else{
     meanPred = apply(meanRaw, 2, function(x) predict(loess(x ~ Xfut)))
@@ -327,7 +327,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   add.CI = QUALYPSOOUT$listOption$ANOVAmethod == "QUALYPSO"
   if (add.CI) {
     CIRaw = EffHat$CI
-    if(length(Xfut)<=6){#loess model is under constrained
+    if(length(Xfut)<=6|no_loess){#loess model is under constrained
       CIsmooth=CIRaw
     }else{
       CIsmooth = apply(CIRaw, c(2, 3), function(x) predict(loess(x ~ Xfut)))
@@ -436,13 +436,13 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim){
+plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,no_loess=T){
   
   probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
   nFut = length(Xfut)
   meanPred = QUALYPSOOUT$GRANDMEAN$MEAN
-  if(length(Xfut)<=6){#loess model is under constrained
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
     meanPred=meanPred
   }else{
     meanPred=predict(loess(meanPred ~ Xfut))
@@ -454,7 +454,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
   binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
   bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
   limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
-  if(length(Xfut)<=6){#loess model is under constrained
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
     limIntInf[1, ] =binf
     limIntSup[1, ] =bsup
   }else{
@@ -464,9 +464,9 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
   for (i in 1:(nEff + 1)) {
     binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
     bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
-    if(length(Xfut)<=6){#loess model is under constrained
+    if(length(Xfut)<=6|no_loess){#loess model is under constrained
       limIntInf[i + 1, ] =binfi
-      limIntSup[i + 1, ] =bsup
+      limIntSup[i + 1, ] =bsupi
     }else{
       limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
       limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
@@ -517,6 +517,132 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
 }
 
 ##############################################################################
+## Time series of mu + uncertainties without IV
+## returns a ggplot 2 object
+## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+## pred the predictor name in the file
+## pred_name the plain language name of the predictor
+## ind_name the plain language name of the indicator
+## bv_name the plain language name of the watershed if needed
+## pred_unit the unit of the predictor
+## folder_out the saving folder
+## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
+
+plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,iv_type="sum",no_loess=T){
+  
+  probCI = QUALYPSOOUT$listOption$probCI
+  Xfut = QUALYPSOOUT$Xfut
+  nFut = length(Xfut)
+  meanPred = QUALYPSOOUT$GRANDMEAN$MEAN
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
+    meanPred=meanPred
+  }else{
+    meanPred=predict(loess(meanPred ~ Xfut))
+  }
+  Veff = QUALYPSOOUT$EFFECTVAR
+  Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN)
+  nEff = nrow(Vbind) - 1
+  Vuncer = colSums(Vbind)
+  Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vuncer))
+  vNormRev = apply(Vnorm, 2, rev)
+  vNormRev[is.na(vNormRev)]=0 #year of reference where uncertainty without IV is 0
+  binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vuncer))
+  bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vuncer))
+  
+  Vbind_all=rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN,QUALYPSOOUT$INTERNALVAR)
+  Vtot=colSums(Vbind_all)
+  binf_tot = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
+  bsup_tot = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
+  
+  IV=QUALYPSOOUT$INTERNALVAR
+  binf_iv = binf+ qnorm(p = (1 - probCI)/2, mean = 0, sd = sqrt(IV))
+  bsup_iv = bsup+ qnorm(p = 0.5 + probCI/2, mean = 0, sd = sqrt(IV))
+  
+  limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
+    limIntInf[1, ] =binf
+    limIntSup[1, ] =bsup
+  }else{
+    limIntInf[1, ] = predict(loess(binf ~ Xfut))
+    limIntSup[1, ] = predict(loess(bsup ~ Xfut))
+    binf_tot=predict(loess(binf_tot ~ Xfut))
+    bsup_tot=predict(loess(bsup_tot ~ Xfut))
+    binf_iv=predict(loess(binf_iv ~ Xfut))
+    bsup_iv=predict(loess(bsup_iv ~ Xfut))
+  }
+  for (i in 1:(nEff + 0)) {
+    binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
+    bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
+    if(length(Xfut)<=6|no_loess){#loess model is under constrained
+      limIntInf[i + 1, ] =binfi
+      limIntSup[i + 1, ] =bsupi
+    }else{
+      limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
+      limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
+    }
+  }
+  if(iv_type=="sum"){
+    limIntInf[i + 2, ]=binf_iv
+    limIntSup[i + 2, ] =bsup_iv
+  }
+  if(iv_type=="tot"){
+    limIntInf[i + 2, ]=binf_tot
+    limIntSup[i + 2, ] = bsup_tot
+  }
+  
+  namesEff = QUALYPSOOUT$names
+  names_var=c("res",rev(namesEff))
+  
+  
+  data=data.frame(Xfut=Xfut,mean=meanPred)
+  data=cbind(data,t(limIntInf))
+  colnames(data)[-c(1:2)]=c(names_var,"iv_inf")
+  data2=gather(data,key = "var",value = "inf",-c(Xfut,mean,iv_inf))
+  data=data.frame(Xfut=Xfut)
+  data=cbind(data,t(limIntSup))
+  colnames(data)[-c(1)]=c(names_var,"iv_sup")
+  data3=gather(data,key = "var",value = "sup",-c(Xfut,iv_sup))
+  data=merge(data2,data3,by=c("Xfut","var"))
+  data$var=factor(data$var,levels=c(names_var))
+  data$mean=data$mean*100#pourcentage
+  data$inf=data$inf*100
+  data$sup=data$sup*100
+  data$iv_inf=data$iv_inf*100
+  data$iv_sup=data$iv_sup*100
+  
+  #These colors work only if the order of the effects does not move
+  #These colors work only if the order and the name of the effects does not move
+  col_6var=c("yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
+  legend_var=c("Var. Res.","RCM","GCM","RCP","BC","HM")
+  legend_var_full=c("res","rcm","gcm","rcp","bc","hm")
+  alpha_var=c(0.8,0.8,0.8,0.8,0.8,0.8)
+  
+  #warning from xlim
+  plt=ggplot(data)+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
+    geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"))+
+    geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
+    geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
+    scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
+    scale_color_discrete("",type=c("orange","black"),label=c("Intervalle avec\nvariabilite naturelle","Moyenne lissee"))+
+    scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
+    scale_linetype_manual("",values=c("dotted","solid"),label=c("Intervalle avec\nvariabilite naturelle","Moyenne lissee"))+
+    guides(alpha = "none")+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
+    theme_bw(base_size = 18)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    scale_y_continuous(paste0("Changement moyen (%)"))+
+    theme(legend.key.width = unit(1.5,"cm"))+
+    ggtitle(paste0("Changement moyen et partition de variance pour\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("meanchange_variance_",ind_name,"_",pred,"_",bv_name,"_",iv_type),Folder = folder_out,Format = "jpeg")
+  }
+}
+
+##############################################################################
 ## Time series of variance partition
 ## returns a ggplot 2 object
 ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
@@ -527,7 +653,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim){
+plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,no_loess=T){
   
   Xfut = QUALYPSOOUT$Xfut
   nFut = length(Xfut)
@@ -540,7 +666,7 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
   for (i in 1:(nEff + 2)) {
     cumPrevious = cum.smooth
     cum = cum + VARDECOMP[, i]
-    if(length(Xfut)<=6){#loess model is under constrained
+    if(length(Xfut)<=6|no_loess){#loess model is under constrained
       cum.smooth = cum
     }else{
       cum.smooth = predict(loess(cum ~ Xfut))
@@ -590,8 +716,9 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim){
+plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,no_loess=T){
   
+  probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
   nFut = length(Xfut)
   iEff = which(QUALYPSOOUT$namesEff == nameEff)
@@ -599,7 +726,7 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   iScenario = which(QUALYPSOOUT$listScenarioInput$listEff[[iEff]] == 
                       nameScenario)
   meanPred = QUALYPSOOUT$CHANGEBYEFFECT[[nameEff]]$MEAN[,iScenario]
-  if(length(Xfut)<=6){#loess model is under constrained
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
     meanPred=meanPred
   }else{
     meanPred=predict(loess(meanPred ~ Xfut))
@@ -610,11 +737,10 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   Vtot = colSums(Vbind)
   Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vtot))
   vNormRev = apply(Vnorm, 2, rev)
-  probCI = QUALYPSOOUT$listOption$probCI
   binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
   bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
   limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
-  if(length(Xfut)<=6){#loess model is under constrained
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
     limIntInf[1, ] =binf
     limIntSup[1, ] =bsup
   }else{
@@ -625,9 +751,9 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
     binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - 
                                                 binf)
     bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
-    if(length(Xfut)<=6){#loess model is under constrained
+    if(length(Xfut)<=6|no_loess){#loess model is under constrained
       limIntInf[i + 1, ] =binfi
-      limIntSup[i + 1, ] =bsup
+      limIntSup[i + 1, ] =bsupi
     }else{
       limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
       limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
@@ -683,7 +809,141 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   }
 }
 
+##############################################################################
+## Time series of one scenario + uncertainties without IV
+## returns a ggplot 2 object
+## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+## nameEff name of effect as in QUALYPSOOUT
+## nameScenario name of scenario as in nameEff
+## plain_name_Scen plain language name of scenario for legend
+## pred the predictor name in the file
+## pred_name the plain language name of the predictor
+## ind_name the plain language name of the indicator
+## bv_name the plain language name of the watershed if needed
+## pred_unit the unit of the predictor
+## folder_out the saving folder
+## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
 
+plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,iv_type="sum",no_loess=T){
+  
+  probCI = QUALYPSOOUT$listOption$probCI
+  Xfut = QUALYPSOOUT$Xfut
+  nFut = length(Xfut)
+  iEff = which(QUALYPSOOUT$namesEff == nameEff)
+  if (length(iEff) == 0){stop("wrong value for nameEff")}
+  iScenario = which(QUALYPSOOUT$listScenarioInput$listEff[[iEff]] == 
+                      nameScenario)
+  meanPred = QUALYPSOOUT$CHANGEBYEFFECT[[nameEff]]$MEAN[,iScenario]
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
+    meanPred=meanPred
+  }else{
+    meanPred=predict(loess(meanPred ~ Xfut))
+  }
+  Veff = QUALYPSOOUT$EFFECTVAR[, -iEff]
+  Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN)
+  nEff = nrow(Vbind) - 1
+  Vuncer = colSums(Vbind)
+  Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vuncer))
+  vNormRev = apply(Vnorm, 2, rev)
+  vNormRev[is.na(vNormRev)]=0 #year of reference where uncertainty without IV is 0
+  binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vuncer))
+  bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vuncer))
+  
+  Vbind_all=rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN,QUALYPSOOUT$INTERNALVAR)
+  Vtot=colSums(Vbind_all)
+  binf_tot = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
+  bsup_tot = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
+  
+  IV=QUALYPSOOUT$INTERNALVAR
+  binf_iv = binf+ qnorm(p = (1 - probCI)/2, mean = 0, sd = sqrt(IV))
+  bsup_iv = bsup+ qnorm(p = 0.5 + probCI/2, mean = 0, sd = sqrt(IV))
+  
+  limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
+    limIntInf[1, ] =binf
+    limIntSup[1, ] =bsup
+  }else{
+    limIntInf[1, ] = predict(loess(binf ~ Xfut))
+    limIntSup[1, ] = predict(loess(bsup ~ Xfut))
+    binf_tot=predict(loess(binf_tot ~ Xfut))
+    bsup_tot=predict(loess(bsup_tot ~ Xfut))
+    binf_iv=predict(loess(binf_iv ~ Xfut))
+    bsup_iv=predict(loess(bsup_iv ~ Xfut))
+  }
+  for (i in 1:(nEff + 0)) {
+    binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
+    bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
+    if(length(Xfut)<=6|no_loess){#loess model is under constrained
+      limIntInf[i + 1, ] =binfi
+      limIntSup[i + 1, ] =bsupi
+    }else{
+      limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
+      limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
+    }
+  }
+  if(iv_type=="sum"){
+    limIntInf[i + 2, ]=binf_iv
+    limIntSup[i + 2, ] =bsup_iv
+  }
+  if(iv_type=="tot"){
+    limIntInf[i + 2, ]=binf_tot
+    limIntSup[i + 2, ] = bsup_tot
+  }
+  
+  namesEff = QUALYPSOOUT$names
+  namesEff=namesEff[namesEff!=nameEff]
+  names_var=c("res",rev(namesEff))
+  
+  
+  data=data.frame(Xfut=Xfut,mean=meanPred)
+  data=cbind(data,t(limIntInf))
+  colnames(data)[-c(1:2)]=c(names_var,"iv_inf")
+  data2=gather(data,key = "var",value = "inf",-c(Xfut,mean,iv_inf))
+  data=data.frame(Xfut=Xfut)
+  data=cbind(data,t(limIntSup))
+  colnames(data)[-c(1)]=c(names_var,"iv_sup")
+  data3=gather(data,key = "var",value = "sup",-c(Xfut,iv_sup))
+  data=merge(data2,data3,by=c("Xfut","var"))
+  data$var=factor(data$var,levels=c(names_var))
+  data$mean=data$mean*100#pourcentage
+  data$inf=data$inf*100
+  data$sup=data$sup*100
+  data$iv_inf=data$iv_inf*100
+  data$iv_sup=data$iv_sup*100
+  
+  #These colors work only if the order and the name of the effects does not move
+  col_6var=c("yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
+  legend_var=c("Var. Res.","RCM","GCM","RCP","BC","HM")
+  legend_var_full=c("res","rcm","gcm","rcp","bc","hm")
+  alpha_var=c(0.8,0.8,0.8,0.8,0.8,0.8)
+  alpha_var=alpha_var[-which(legend_var_full==nameEff)]
+  legend_var=legend_var[-which(legend_var_full==nameEff)]
+  col_6var=col_6var[-which(legend_var_full==nameEff)]
+  
+  #warning from xlim
+  plt=ggplot(data)+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
+    geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"))+
+    geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
+    geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
+    scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
+    scale_color_discrete("",type=c("orange","black"),label=c("Intervalle avec\nvariabilite naturelle","Moyenne lissee"))+
+    scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
+    scale_linetype_manual("",values=c("dotted","solid"),label=c("Intervalle avec\nvariabilite naturelle","Moyenne lissee"))+
+    guides(alpha = "none")+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
+    theme_bw(base_size = 18)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    scale_y_continuous(paste0("Changement moyen (%)"))+
+    theme(legend.key.width = unit(1.5,"cm"))+
+    ggtitle(paste0("Changement et partition de variance pour les experiences ",plain_name_Scen,"\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("change_variance_",nameScenario,"_",ind_name,"_",pred,"_",bv_name,"_",iv_type),Folder = folder_out,Format = "jpeg")
+  }
+}
 
 
 #######################################################################
@@ -1018,20 +1278,28 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     }
     if(vartype=="varint"){
       chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]*100^2#because variance is square of standard deviation unit
+      chg=qnorm(p = 0.95, mean = 0, sd = sqrt(chg))
     }
     if(vartype=="varres"){
       chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]*100^2
+      chg=qnorm(p = 0.95, mean = 0, sd = sqrt(chg))
     }
     if(vartype=="vartot"){
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
       chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])*100^2
+      chg=qnorm(p = 0.95, mean = 0, sd = sqrt(chg))
+    }
+    if(vartype=="incert"){
+      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
+      chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])*100^2
+      chg=qnorm(p = 0.95, mean = 0, sd = sqrt(chg))
     }
     exut$val[exut$idx==i]=chg
   }
   
   colnames(exut)=c("Num_ordre_Modcou","y","x","idx","val")
   
-  ## We show variances not uncertainties
+  ## We show uncertainties not variances
   
   plt=base_map_outlets(data = exut,val_name = "val")
   if(vartype=="mean"){
@@ -1047,23 +1315,30 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     q99=quantile(exut$val,probs=0.99)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
-      scale_fill_gradientn("Variabilite\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Variabilite totale de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      scale_fill_gradientn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      ggtitle(paste0("Incertitude liee a la variabilite totale de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+  }
+  if(vartype=="incert"){
+    q99=quantile(exut$val,probs=0.99)
+    lim_col=round(q99/bin_col)*bin_col
+    plt=plt+
+      scale_fill_gradientn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      ggtitle(paste0("Incertitude liee a la variabilite (sauf interne) de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="varint"){
     q99=quantile(exut$val,probs=0.99)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
-      scale_fill_gradientn("Variabilite\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Variabilite interne de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      scale_fill_gradientn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      ggtitle(paste0("Incertitude liee a la variabilite interne de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   
   if(vartype=="varres"){
     q99=quantile(exut$val,probs=0.99)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
-      scale_fill_gradientn("Variabilite\nresiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Variabilite residuelle de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      scale_fill_gradientn("Incertitude\nresiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      ggtitle(paste0("Incertitude liee a la variabilite residuelle de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
 
   save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")

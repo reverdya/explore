@@ -46,7 +46,7 @@ period_agreg=c("date","year","season","month") #different periods of aggregation
 ###########################################
 ## Make list of calculated variables
 
-lst_indic=c("Q_mean_year","Q_q95_year","log10VCN10","VCN10_day")
+lst_indic=c("Q_mean_year","Q_q95_year","log10VCN10")
 save(lst_indic,file=paste0(path_data,"processed/lst_indic.Rdata"))
 load(file=paste0(path_data,"processed/lst_indic.Rdata"))
 
