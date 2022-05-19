@@ -4,7 +4,6 @@
 
 rm(list=ls())
 gc()
-dev.off()
 
 #########
 #LIBRARY#
