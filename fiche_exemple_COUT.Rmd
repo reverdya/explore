@@ -24,44 +24,13 @@ Le module annuel d'un bassin versant sera utilisé à titre illustratif, mais le
 \newpage
 
 ```{r}
-plt_raw_time[["rcp2.6"]]
-```
-
-On représente ici les valeurs du module annuel de la Seine à Poses au cours du temps pour les différentes combinaisons GCM/RCM disponibles pour le RCP2.6 entre 1972 et 2098 (période commune des modèles)
-
-On peut noter l'importante variabilité interannuelle à décennale (variabilité interne) qui complique l'extraction d'une tendance claire et rend difficile l'extraction d'une différence entre périodes même en envisageant une moyenne sur 30 ans.
-
-\newpage
-
-```{r}
-plt_raw_time[["rcp4.5"]]
-```
-
-Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 4.5
-
-\newpage
-
-```{r}
 plt_raw_time[["rcp8.5"]]
 ```
 
-Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 8.5
+On représente ici les valeurs du module annuel de la Seine à Poses au cours du temps pour les différentes combinaisons GCM/RCM disponibles pour le RCP8.5 entre 1972 et 2098 (période commune des modèles)
 
-\newpage
+On peut noter l'importante variabilité interannuelle à décennale (variabilité interne) qui complique l'extraction d'une tendance claire et rend difficile l'extraction d'une différence entre périodes même en envisageant une moyenne sur 30 ans.
 
-```{r}
-plt_spline_time[["rcp2.6"]]
-```
-
-Sur cette figure, on retrouve notre série temporelle du module annuel pour les différents couples GCM/RCM en RCP 2.6. Mais cette fois on s'intéresse au changement climatique indépendamment de la variabilité interne. Pour se faire, on utilise un modèle de spline afin d'extraire la fonction de réponse climatique de notre indicateur (ligne épaisse). On voit qu'ainsi on peut calculer en chaque date un changement climatique par rapport à la référence climatique de notre choix et ce sans impact du lien entre variabilité interne et période choisie. On peut aussi déterminer la variabilité interne, comme la dispersion de l'indicateur "brut" autour de sa fonction de réponse.
-
-\newpage
-
-```{r}
-plt_spline_time[["rcp4.5"]]
-```
-
-Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 4.5
 
 \newpage
 
@@ -69,85 +38,7 @@ Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 4.5
 plt_spline_time[["rcp8.5"]]
 ```
 
-Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 8.5
-
-\newpage
-
-```{r}
-plt_planet_temp
-```
-
-Au sein des rapports du GIEC les plus récents a été introduit le concept d'horizon de température planétaire. Ainsi, plutôt que de considérer le changement d'un indicateur pour un horizon temporel donné, on considère son changement pour une température globale donnée (1.5°C, 3°C...). On relie donc le changement de l'indicateur d'une chaîne à une date donnée à la température planétaire du GCM associée à la même date.
-
-Sur le graphique présenté ici, on voit ces valeurs de réchauffement par rapport à la référence pré-industrielle 1861-1900 pour les différents GCM et RCP.
-
-\newpage
-
-```{r}
-plt_raw_temp[["rcp2.6"]]
-```
-
-Ici de la même manière qu'on avait présenté les séries temporelles du module annuel de débit, on montre les séries de ce module en fonction de la température planétaire pour les différents couples GCM/RCM et le RCP 2.6 On note qu'en fonction du couple considéré, la température maximale atteinte n'est pas la même. Comme pour les séries temporelles, le signal de changement climatique est masqué par la variabilité interne.
-
-\newpage
-
-```{r}
-plt_raw_temp[["rcp4.5"]]
-```
-
-Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 4.5. On relève l'augmentation de la température planétaire maximale.
-
-\newpage
-
-```{r}
-plt_raw_temp[["rcp8.5"]]
-```
-
-Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 8.5. On relève l'augmentation de la température planétaire maximale.
-
-\newpage
-
-```{r}
-plt_spline_temp[["rcp2.6"]]
-```
-
-Comme pour les séries temporelles, on va chercher à extraire la fonction de réponse du module annuel en fonction de la température pour chaque chaîne, afin de différencier variabilité interne courte et moyen terme et tendance long terme. Ici, on montre le résultat du modèle spline (trait plein) pour les chaînes disponibles en RCP 2.6.
-
-\newpage
-
-```{r}
-plt_spline_temp[["rcp4.5"]]
-```
-
-Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 4.5.
-
-\newpage
-
-```{r}
-plt_spline_temp[["rcp8.5"]]
-```
-
-Pareil que précédemment mais pour les couples GCM/RCM disponibles en RCP 8.5.
-
-\newpage
-
-```{r}
-plt_var_rcp2.6
-```
-
-Une fois les fonctions de réponse extraites en temps (et en température) pour chaque chaîne disponible, on peut appliquer la méthode d'équilibrage d'ensemble et de partition d'incertitudes QUALYPSO. Cette méthode permet de reconstituer les combinaisons de modèles et expériences manquantes, afin d'obtenir un ensemble équilibré. On peut ensuite déterminer le changement moyen de l'ensemble, l'incertitude associée et sa partition entre les différentes étapes de modélisation, les changements moyens par GCM, RCM...
-
-
-Ici on présente pour le RCP 2.6 le changement relatif moyen projeté en fonction du temps (par rapport à la référence 1990). On montre également l'incertitude totale associée liée à la dispersion entre les chaînes de modélisation et la partition de cette incertitude entre les différentes étapes de modélisation. La variabilité interne correspond à la dispersion autour de la fonction de réponse évoquée précédemment. La variabilité résiduelle à la part d'incertitude qui n'est pas expliquée par une étape identifiée de la chaîne de modélisation (principalement les interactions entre modèles ou expériences GCM-RCM, RCP-GCM...). L'incertitude GCM et RCM correspondent respectivement à la part d'incertitude liée à la dispersion entre chaînes associée aux GCM ou aux RCM. On observe que l'incertitude totale augmente au cours du temps, principalement du fait d'une augmentation du désaccord entre les RCM. En 1990, la seule source d'incertitude est liée à l'importante variabilité interne observée précédemment.
-Le changement relatif moyen est à la baisse, de l'ordre de -5%, mais avec une gamme de possibles allant de +40% à -50% (sans prendre en compte la variabilité interne) du fait du désaccord entre les modèles.
-
-Cette analyse est aussi en cours de production pour les séries d'indicateurs en fonction de la température planétaire.
-
-```{r}
-plt_var_rcp4.5
-```
-
-Pareil que précédemment mais en RCP 4.5.
+Sur cette figure, on retrouve notre série temporelle du module annuel pour les différents couples GCM/RCM en RCP 8.6. Mais cette fois on s'intéresse au changement climatique indépendamment de la variabilité interne. Pour se faire, on utilise un modèle de spline afin d'extraire la fonction de réponse climatique de notre indicateur (ligne épaisse). On voit qu'ainsi on peut calculer en chaque date un changement climatique par rapport à la référence climatique de notre choix et ce sans impact du lien entre variabilité interne et période choisie. On peut aussi déterminer la variabilité interne, comme la dispersion de l'indicateur "brut" autour de sa fonction de réponse.
 
 \newpage
 
@@ -155,7 +46,13 @@ Pareil que précédemment mais en RCP 4.5.
 plt_var_rcp8.5
 ```
 
-Pareil que précédemment mais en RCP 8.5.
+Une fois les fonctions de réponse extraites en temps (et en température) pour chaque chaîne disponible, on peut appliquer la méthode d'équilibrage d'ensemble et de partition d'incertitudes QUALYPSO. Cette méthode permet de reconstituer les combinaisons de modèles et expériences manquantes, afin d'obtenir un ensemble équilibré. On peut ensuite déterminer le changement moyen de l'ensemble, l'incertitude associée et sa partition entre les différentes étapes de modélisation, les changements moyens par GCM, RCM...
+
+
+Ici on présente pour le RCP 8.5 le changement relatif moyen projeté en fonction du temps (par rapport à la référence 1990). On montre également l'incertitude totale associée liée à la dispersion entre les chaînes de modélisation et la partition de cette incertitude entre les différentes étapes de modélisation. La variabilité interne correspond à la dispersion autour de la fonction de réponse évoquée précédemment. La variabilité résiduelle à la part d'incertitude qui n'est pas expliquée par une étape identifiée de la chaîne de modélisation (principalement les interactions entre modèles ou expériences GCM-RCM, RCP-GCM...). L'incertitude GCM et RCM correspondent respectivement à la part d'incertitude liée à la dispersion entre chaînes associée aux GCM ou aux RCM. On observe que l'incertitude totale augmente au cours du temps, principalement du fait d'une augmentation du désaccord entre les RCM. En 1990, la seule source d'incertitude est liée à l'importante variabilité interne observée précédemment.
+Le changement relatif moyen est à la baisse, de l'ordre de -5%, mais avec une gamme de possibles allant de +40% à -50% (sans prendre en compte la variabilité interne) du fait du désaccord entre les modèles.
+
+Cette analyse est aussi en cours de production pour les séries d'indicateurs en fonction de la température planétaire.
 
 \newpage
 
@@ -220,24 +117,3 @@ plt_change_rcp_time
 Un dernier exemple de représentation est inspiré d'une représentation du changement relativement classique dans le rapport du GIEC. On montre le changement relatif de notre indicateur en fonction du temps pour les 3 RCP sélectionnés, ainsi que l'intervalle de confiance (incertitude sans la variabilité interne) associé.
 
 On observe par exemple ici que si les RCP 2.6 et 4.5 projettent une baisse du module annuel, en RCP 8.5 on assiste à une augmentation du module annuel. Néanmoins l'incertitude liée à la dispersion des chaînes de modélisation est importante et les projections des 3 RCP se recoupent donc fortement.
-
-\newpage
-
-```{r}
-plt_change_3rcp_temp
-```
-
-Cette représentation des 3 RCP peut aussi être effectuée pour les séries de module annuel en fonction de la température planétaire.
-
-On observe que pour un "monde à 1.5°C" le changement moyen est relativement faible quel que soit le RCP, mais l'incertitude reste conséquente avec un changement pouvant en réalité aller de -10 à +10%.
-
-\newpage
-
-```{r}
-plt_change_2rcp_temp
-```
-
-Afin d'explorer des horizons de réchauffement plus importants on peut conduire l'analyse QUALYSPO en excluant les chaînes issues du RCP 2.6 qui n'atteint pas de tels niveaux.
-
-On observe alors que dans un "monde à 2.5°C" le changement moyen est à nouveau proche de 0, quel que soit le scénario d'émission considéré pour y parvenir. L'incertitude est encore une fois importante avec des changements compris entre -20 et +20%.
-
