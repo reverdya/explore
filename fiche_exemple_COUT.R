@@ -120,22 +120,22 @@ for (r in lst_names_eff$rcp){
     theme_bw(base_size = 18)+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
+    ggtitle(paste0("Chronique du ",name_indic[i],"\npour le ",r," et ",select_stations$Nom_complet[w-1]))+
     scale_x_continuous("")+
-    scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
+    scale_y_continuous(paste0(name_indic[i]," ( ",units[i]," )"))+
     guides(color = guide_legend(override.aes = list(size = 1.7)))+
     facet_wrap(vars(gcm))+
     theme(panel.spacing.x = unit(2, "lines"))
   plt_spline_time[[r]]=ggplot(data)+#Warnings okay
     geom_line(aes(x=year,y=val,size=type,color=rcm))+
-    scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
+    scale_size_manual("",values=c(0.7,1.7),label=c("Réponse climatique","Spline"))+
     scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
     theme_bw(base_size = 18)+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
+    ggtitle(paste0("Chronique du ",name_indic[i],"\npour le ",r," et ",select_stations$Nom_complet[w-1]))+
     scale_x_continuous("")+
-    scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
+    scale_y_continuous(paste0(name_indic[i]," ( ",units[i]," )"))+
     guides(color = guide_legend(override.aes = list(size = 1.7)))+
     facet_wrap(vars(gcm))+
     theme(panel.spacing.x = unit(2, "lines"))
@@ -155,13 +155,13 @@ xlim=c(1990,2100)
 b=1
 idx=select_stations$idx[b]
 
-plt_var_rcp8.5=plotQUALYPSOTotalVarianceByScenario_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_var_rcp8.5=plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,iv_type = "sum")
 
 #####################################
 ## Effet GCM, effet RCM
 
-plt_gcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
-plt_rcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_gcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_rcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
 
 
 ####################################
@@ -178,14 +178,14 @@ plt_bc_effect=ggplot(data_bc)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("Moyenne lissee",type = coolwarm(2),labels=c("Correction A","Correction B"))+
+  scale_color_discrete("Moyenne lissée",type = coolwarm(2),labels=c("Correction A","Correction B"))+
   scale_y_continuous(paste0("Effet principal (%)"))+
-  ggtitle(paste0("Effet principaux des corrections de biais\npour le module annuel du débit (",select_stations$Nom[b],")"))
+  ggtitle(paste0("Effets principaux des corrections de biais\npour le module annuel du débit (",select_stations$Nom[b],")"))
 
 
 data_hm=data.frame(year=seq(1990,2100))
-data_hm$hm1=(data_hm$year-1990)^0.5
-data_hm$hm2=-data_hm$hm1
+data_hm$hm1=(data_hm$year-1990)^0.5*2
+data_hm$hm2=-data_hm$hm1*2
 data_hm=gather(data_hm,key = "hm",value = "val",-year)
 
 plt_hm_effect=ggplot(data_hm)+
@@ -194,20 +194,20 @@ plt_hm_effect=ggplot(data_hm)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("Moyenne lissee",type = coolwarm(2),labels=c("Modele A","Modele B"))+
+  scale_color_discrete("Moyenne lissée",type = coolwarm(2),labels=c("Modèle A","Modèle B"))+
   scale_y_continuous(paste0("Effet principal (%)"))+
-  ggtitle(paste0("Effet principaux des modèles hydrologiques\npour le module annuel du débit (",select_stations$Nom[b],")"))
+  ggtitle(paste0("Effets principaux des modèles hydrologiques\npour le module annuel du débit (",select_stations$Nom[b],")"))
 
 
 ########################################
 ## Variance partition
 
-plt_var_decomp=plotQUALYPSOTotalVarianceDecomposition_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_var_decomp=plotQUALYPSOTotalVarianceDecomposition_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
 
 ############################################
 ## Change by RCP + CI in time
 
-plt_change_rcp_time=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred="time",pred_name = pred_name,ind_name = lst_indic[i],bv_name = select_stations$Nom[b],pred_unit = pred_unit,folder_out=NA,includeMean = T,xlim=xlim,incert=T)
+plt_change_rcp_time=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,includeMean = T,xlim=xlim,incert=T)
 
 ##########
 #MARKDOWN#
