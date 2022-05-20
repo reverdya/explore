@@ -161,7 +161,7 @@ for (i in 1:length(lst_indic)){# for each indicator
       theme_bw(base_size = 18)+
       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-      ggtitle(paste0("Q-Q plot of manually calculated residuals for 20 last years ( ",select_stations$Nom[w]," )"))
+      ggtitle(paste0("Q-Q plot of manually calculated residuals for 20 last years ( ",select_stations$Nom_complet[w]," )"))
     save.plot(plt3,Filename = paste0(lst_indic[i],"_qqplot-resid_",select_stations$Nom[w]),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
     plt4=ggplot(data2)+
       geom_histogram(aes(x=val),bins=30,fill="cornflowerblue",color="black")+
@@ -169,7 +169,7 @@ for (i in 1:length(lst_indic)){# for each indicator
       theme_bw(base_size = 18)+
       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-      ggtitle(paste0("Histogram of manually calculated residuals for 20 last years ( ",select_stations$Nom[w]," )"))
+      ggtitle(paste0("Histogram of manually calculated residuals for 20 last years ( ",select_stations$Nom_complet[w]," )"))
     save.plot(plt4,Filename = paste0(lst_indic[i],"_hist-resid_",select_stations$Nom[w]),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
   }
 
@@ -232,14 +232,14 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         
         plt=ggplot(data)+#Warnings okay
           geom_line(aes(x=year,y=val,size=type,color=rcm))+
-          scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
+          scale_size_manual("",values=c(0.7,1.7),label=c("Réponse climatique","Spline"))+
           scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
           theme_bw(base_size = 18)+
           theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
           theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-          ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
+          ggtitle(paste0("Chronique du ",name_indic[i],"\npour le ",r," et ",select_stations$Nom_complet[w-1]))+
           scale_x_continuous("")+
-          scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
+          scale_y_continuous(paste0("Réponse climatique ( ",units[i]," )"))+
           guides(color = guide_legend(override.aes = list(size = 1.7)))+
           facet_wrap(vars(gcm))+
           theme(panel.spacing.x = unit(2, "lines"))
@@ -316,14 +316,14 @@ for (i in 1:length(lst_indic)){# for each indicator
         geom_line(aes(x=year,y=val,size=type,color=rcm))+
         #geom_line(aes(x=year,y=ciinf,color=rcm))+
         #geom_line(aes(x=year,y=cisup,color=rcm))+
-        scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
+        scale_size_manual("",values=c(0.7,1.7),label=c("Réponse climatique","Spline"))+
         scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
         theme_bw(base_size = 18)+
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
         theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-        ggtitle(paste0("Time series of relative change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w-1]))+
+        ggtitle(paste0("Chronique du changement relatif du ",name_indic[i],"\npour le ",r," et ",select_stations$Nom_complet[w-1]))+
         scale_x_continuous("")+
-        scale_y_continuous(paste0("Climate change response (%)"))+
+        scale_y_continuous(paste0("Réponse au changement climatique (%)"))+
         guides(color = guide_legend(override.aes = list(size = 1.7)))+
         facet_wrap(vars(gcm))+
         theme(panel.spacing.x = unit(2, "lines"))
@@ -399,14 +399,14 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         
         plt=ggplot(data)+#Warnings okay
           geom_line(aes(x=tas,y=val,size=type,color=rcm))+
-          scale_size_manual("",values=c(0.7,1.7),label=c("Climate response","Spline fit"))+
+          scale_size_manual("",values=c(0.7,1.7),label=c("Réponse climatique","Spline"))+
           scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
           theme_bw(base_size = 18)+
           theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
           theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-          ggtitle(paste0("Time series of absolute change of ",lst_indic[i],"\nfor ",r," at ",select_stations$Nom[w]))+
-          scale_x_continuous("Temperature (degC)")+
-          scale_y_continuous(paste0("Climate response ( ",units[i]," )"))+
+          ggtitle(paste0("Chronique du ",name_indic[i],"\npour le ",r," et ",select_stations$Nom_complet[w]))+
+          scale_x_continuous("Température (°C)")+
+          scale_y_continuous(paste0("Réponse climatique ( ",units[i]," )"))+
           guides(color = guide_legend(override.aes = list(size = 1.7)))+
           facet_wrap(vars(gcm))+
           theme(panel.spacing.x = unit(2, "lines"))
