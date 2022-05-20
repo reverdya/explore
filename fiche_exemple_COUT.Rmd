@@ -17,9 +17,9 @@ opts_chunk$set(echo = FALSE,warning = FALSE,message=FALSE,fig.width =30/2.54,fig
 ```
 
 
-Ce document a pour objectif d'illustrer par une série d'exemples les représentations graphiques produites en sortie de l'analyse de la partition d'incertitude entre les différentes chaînes de modélisation. Il a pour objectif de nourrir la discussion sur les choix graphiques et la compréhension des concepts illustrés sur les figures proposées. Les données utilisées ne doivent pas être interprétées en tant que telles, étant donné qu'elles sont issues d'un sous-ensemble arbitraire des chaînes de modélisation d'Explore 2 et encore soumises à des modifications futures.
+Ce document a pour objectif d’illustrer par une série d’exemples les représentations graphiques produites en sortie de l’analyse de la partition d’incertitude entre les différentes chaînes de modélisation. Il a pour objectif de nourrir la discussion sur les choix graphiques et la compréhension des concepts illustrés sur les figures proposées. Les données utilisées ne doivent pas être interprétées en tant que telles car elles sont issues d’un \textbf{sous-ensemble arbitraire des chaînes de modélisation d’Explore 2 et encore soumises à des modifications futures.}
 
-Le module annuel d'un bassin versant sera utilisé à titre illustratif, mais les représentations proposées sont valables pour d'autres séries temporelles d'indicateurs hydrologiques. De même, on a choisi ici le bassin de la Seine à Poses, mais les représentations graphiques sont transférables à un autre exutoire.
+Le module annuel d’un bassin versant sera utilisé à titre illustratif, mais les représentations proposées sont valables pour d’autres séries temporelles d’indicateurs hydrologiques. De même, on a choisi ici le bassin de la Seine à Poses, mais les représentations graphiques sont transférables à un autre exutoire.
 
 \newpage
 
@@ -27,10 +27,7 @@ Le module annuel d'un bassin versant sera utilisé à titre illustratif, mais le
 plt_raw_time[["rcp8.5"]]
 ```
 
-On représente ici les valeurs du module annuel de la Seine à Poses au cours du temps pour les différentes combinaisons GCM/RCM disponibles pour le RCP8.5 entre 1972 et 2098 (période commune des modèles)
-
-On peut noter l'importante variabilité interannuelle à décennale (variabilité interne) qui complique l'extraction d'une tendance claire et rend difficile l'extraction d'une différence entre périodes même en envisageant une moyenne sur 30 ans.
-
+Figure 1: Valeurs simulées du module annuel de la Seine à Poses au cours du temps pour les différentes combinaisons GCM/RCM disponibles pour le RCP 8.5 entre 1972 et 2098 (période commune des modèles). Chaque panel montre les chroniques pour un modèle GCM et un ou plusieurs modèles RCMs. On peut noter l’importante variabilité interannuelle à décennale (variabilité interne) qui “bruite” les tendances. Le module annuel de la Seine à Poses projeté avec le GCM HadGEM2-ES, le RCM REMO et le modèle hydrologique SIM2 pour l’année 2092 s’élève à 1300 m3/s.
 
 \newpage
 
@@ -38,21 +35,7 @@ On peut noter l'importante variabilité interannuelle à décennale (variabilit�
 plt_spline_time[["rcp8.5"]]
 ```
 
-Sur cette figure, on retrouve notre série temporelle du module annuel pour les différents couples GCM/RCM en RCP 8.6. Mais cette fois on s'intéresse au changement climatique indépendamment de la variabilité interne. Pour se faire, on utilise un modèle de spline afin d'extraire la fonction de réponse climatique de notre indicateur (ligne épaisse). On voit qu'ainsi on peut calculer en chaque date un changement climatique par rapport à la référence climatique de notre choix et ce sans impact du lien entre variabilité interne et période choisie. On peut aussi déterminer la variabilité interne, comme la dispersion de l'indicateur "brut" autour de sa fonction de réponse.
-
-\newpage
-
-```{r}
-plt_var_rcp8.5
-```
-
-Une fois les fonctions de réponse extraites en temps (et en température) pour chaque chaîne disponible, on peut appliquer la méthode d'équilibrage d'ensemble et de partition d'incertitudes QUALYPSO. Cette méthode permet de reconstituer les combinaisons de modèles et expériences manquantes, afin d'obtenir un ensemble équilibré. On peut ensuite déterminer le changement moyen de l'ensemble, l'incertitude associée et sa partition entre les différentes étapes de modélisation, les changements moyens par GCM, RCM...
-
-
-Ici on présente pour le RCP 8.5 le changement relatif moyen projeté en fonction du temps (par rapport à la référence 1990). On montre également l'incertitude totale associée liée à la dispersion entre les chaînes de modélisation et la partition de cette incertitude entre les différentes étapes de modélisation. La variabilité interne correspond à la dispersion autour de la fonction de réponse évoquée précédemment. La variabilité résiduelle à la part d'incertitude qui n'est pas expliquée par une étape identifiée de la chaîne de modélisation (principalement les interactions entre modèles ou expériences GCM-RCM, RCP-GCM...). L'incertitude GCM et RCM correspondent respectivement à la part d'incertitude liée à la dispersion entre chaînes associée aux GCM ou aux RCM. On observe que l'incertitude totale augmente au cours du temps, principalement du fait d'une augmentation du désaccord entre les RCM. En 1990, la seule source d'incertitude est liée à l'importante variabilité interne observée précédemment.
-Le changement relatif moyen est à la baisse, de l'ordre de -5%, mais avec une gamme de possibles allant de +40% à -50% (sans prendre en compte la variabilité interne) du fait du désaccord entre les modèles.
-
-Cette analyse est aussi en cours de production pour les séries d'indicateurs en fonction de la température planétaire.
+Figure 2: Valeurs simulées du module annuel de la Seine à Poses au cours du temps pour les différentes combinaisons GCM/RCM disponibles pour le RCP8.6 entre 1972 et 2098 (période commune des modèles). Chaque panel montre les chroniques brutes (traits fins) et les réponses climatiques associées (traits épais) pour un modèle GCM et un ou plusieurs modèles RCMs. Les réponses climatiques sont extraits des projections brutes à l’aide d’un modèle de spline afin d’extraire la fonction de réponse climatique de notre indicateur (ligne épaisse). La réponse climatique peut être interprétée comme la réponse du système aux forçages climatiques (par ex. les gaz à effet de serre) et est par définition la partie basse fréquence du signal avec une évolution lente. L’écart à la réponse climatique est considéré comme résultant de la variabilité inter-annuelle.
 
 \newpage
 
@@ -60,13 +43,13 @@ Cette analyse est aussi en cours de production pour les séries d'indicateurs en
 plt_gcm_effect
 ```
 
-Une autre sortie de l'analyse QUALYPSO inclut les effets principaux des modèles et scénarios. Un effet principal est la différence de changement qu'un modèle/scénario induit par rapport à la moyenne d'ensemble. La somme des effets principaux est donc toujours nulle.
+Figure 3: Une autre sortie de l’analyse QUALYPSO inclut les effets principaux des modèles et scénarios. Un effet principal est la différence de changement qu’un modèle/scénario induit par rapport à la moyenne d’ensemble. La somme des effets principaux est donc toujours nulle.
 
-On représente ici les effets principaux des GCM au cours du temps. Pour la référence de 1990, les modèles sont en accord et les effets principaux sont nuls. A l'horizon 2050 le modèle de l'IPSL a un effet principal d'environ 9%, cela veut dire que les chaînes contenant ce modèle présenteront en moyenne une valeur de changement relatif du module annuel de 9% de plus que la moyenne d'ensemble. A l'inverse, le modèle EC-EARTH a tendance à produire des modules annuels de débit plus faibles que la moyenne dans le futur et le modèle du CNRM est toujours très proche de la moyenne d'ensemble. Une valeur négative d'effet principal ne correspond pas forcément à une baisse de l'indicateur, dans le cas où le changement moyen de l'ensemble est fortement positif.
+On représente ici les effets principaux des GCM au cours du temps. Pour la référence de 1990, les modèles sont en accord et les effets principaux sont nuls. A l’horizon 2050 le modèle de l’IPSL a un effet principal d’environ 9%, cela veut dire que les chaînes contenant ce modèle présenteront en moyenne une valeur de changement relatif du module annuel de 9% de plus que la moyenne d’ensemble. A l’inverse, le modèle EC-EARTH a tendance à produire des modules annuels de débit plus faibles que la moyenne dans le futur et le modèle du CNRM est toujours très proche de la moyenne d’ensemble. Une valeur négative d’effet principal ne correspond pas forcément à une baisse de l’indicateur, dans le cas où le changement moyen de l’ensemble est fortement positif.
 
-De telles figures permettent d'orienter facilement le choix des chaînes de modélisation sélectionnées par un utilisateur terminal.
+De telles figures permettent d’orienter facilement le choix des chaînes de modélisation sélectionnées par un utilisateur terminal.
+Cette analyse est aussi en cours de production pour les séries d’indicateurs en fonction de la température planétaire.
 
-Cette analyse est aussi en cours de production pour les séries d'indicateurs en fonction de la température planétaire.
 
 \newpage
 
@@ -74,9 +57,10 @@ Cette analyse est aussi en cours de production pour les séries d'indicateurs en
 plt_rcm_effect
 ```
 
-Ce graphique montre sur le même principe les chroniques d'effets principaux, mais cette fois pour les RCM de notre sous-ensemble. On peut ainsi facilement relever par exemple que WRF381P produit des modules annuels bien plus importants que les autres RCM pour le futur.
+Figure 4: Ce graphique montre sur le même principe les chroniques d’effets principaux, mais cette fois pour les RCM de notre sous-ensemble. On peut ainsi facilement relever par exemple que WRF381P produit des modules annuels bien plus importants que les autres RCM pour le futur.
 
-Cette analyse est aussi en cours de production pour les séries d'indicateurs en fonction de la température planétaire.
+Cette analyse est aussi en cours de production pour les séries d’indicateurs en fonction de la température planétaire.
+
 
 \newpage
 
@@ -84,9 +68,10 @@ Cette analyse est aussi en cours de production pour les séries d'indicateurs en
 plt_bc_effect
 ```
 
-On s'intéresse ici aux effets principaux des méthodes des corrections de biais (ici fictives). On peut voir que la méthode A induit des modules annuels plus forts que la méthode B dans le futur.
+Figure 5: On s’intéresse ici aux effets principaux des méthodes des corrections de biais (ici fictives). On peut voir que la méthode A induit des modules annuels plus forts que la méthode B dans le futur.
 
-Cette analyse est aussi en cours de production pour les séries d'indicateurs en fonction de la température planétaire.
+Cette analyse est aussi en cours de production pour les séries d’indicateurs en fonction de la température planétaire.
+
 
 \newpage
 
@@ -94,9 +79,10 @@ Cette analyse est aussi en cours de production pour les séries d'indicateurs en
 plt_hm_effect
 ```
 
-On s'intéresse ici aux effets principaux des modèles hydrologiques (ici fictifs). On peut voir que le modèle A induit des modules annuels plus forts que le modèle B dans le futur.
+Figure 6: On s’intéresse ici aux effets principaux des modèles hydrologiques (ici fictifs). On peut voir que le modèle A induit des modules annuels plus forts que le modèle B dans le futur.
 
-Cette analyse est aussi en cours de production pour les séries d'indicateurs en fonction de la température planétaire.
+Cette analyse est aussi en cours de production pour les séries d’indicateurs en fonction de la température planétaire.
+
 
 \newpage
 
@@ -104,9 +90,10 @@ Cette analyse est aussi en cours de production pour les séries d'indicateurs en
 plt_var_decomp
 ```
 
-Ce graphique illustre une autre manière de représenter la contribution des différents maillons de la chaîne de modélisation à l'incertitude totale.
+Figure 7: Ce graphique illustre une autre manière de représenter la contribution des différents maillons de la chaîne de modélisation à l’incertitude totale.
 
-On représente le pourcentage de variance expliqué par chaque composante en fonction du temps. Ainsi au début du 21e siècle, l'accord entre les chaînes sur le changement est bon et la variabilité interne est la principale source d'incertitude. Plus on progresse vers la fin du siècle, plus la part d'incertitude liée aux modèles augmente, particulièrement en ce qui concerne les RCM. La variabilité résiduelle prend aussi une part de plus en plus importante.
+On représente le pourcentage de variance expliqué par chaque composante en fonction du temps. Ainsi au début du 21e siècle, l’accord entre les chaînes sur le changement est bon et la variabilité interne est la principale source d’incertitude. Plus on progresse vers la fin du siècle, plus la part d’incertitude liée aux modèles augmente, particulièrement en ce qui concerne les RCM. La variabilité résiduelle prend aussi une part de plus en plus importante.
+
 
 \newpage
 
@@ -114,6 +101,18 @@ On représente le pourcentage de variance expliqué par chaque composante en fon
 plt_change_rcp_time
 ```
 
-Un dernier exemple de représentation est inspiré d'une représentation du changement relativement classique dans le rapport du GIEC. On montre le changement relatif de notre indicateur en fonction du temps pour les 3 RCP sélectionnés, ainsi que l'intervalle de confiance (incertitude sans la variabilité interne) associé.
+Figure 8: Un dernier exemple de représentation est inspiré d’une représentation du changement relativement classique dans le rapport du GIEC. On montre le changement relatif de notre indicateur en fonction du temps pour les 3 RCP sélectionnés, ainsi que l’intervalle de confiance (incertitude sans la variabilité interne) associé.
 
-On observe par exemple ici que si les RCP 2.6 et 4.5 projettent une baisse du module annuel, en RCP 8.5 on assiste à une augmentation du module annuel. Néanmoins l'incertitude liée à la dispersion des chaînes de modélisation est importante et les projections des 3 RCP se recoupent donc fortement.
+On observe par exemple ici que si les RCP 2.6 et 4.5 projettent une baisse du module annuel, en RCP 8.5 on assiste à une augmentation du module annuel. Néanmoins l’incertitude liée à la dispersion des chaînes de modélisation est importante et les projections des 3 RCP se recoupent donc fortement.
+
+\newpage
+
+```{r}
+plt_var_rcp8.5
+```
+
+Figure 9: Une fois les fonctions de réponse extraites en temps (et en température) pour chaque chaîne disponible, on peut appliquer la méthode d’équilibrage d’ensemble et de partition d’incertitudes QUALYPSO. Cette méthode permet de reconstituer les combinaisons de modèles et expériences manquantes, afin d’obtenir un ensemble équilibré. On peut ensuite déterminer le changement moyen de l’ensemble, l’incertitude associée et sa partition entre les différentes étapes de modélisation, les changements moyens par GCM, RCM…
+
+Ici on présente pour le RCP 8.5 le changement relatif moyen projeté en fonction du temps (par rapport à la référence 1990). On montre également l’incertitude totale associée liée à la dispersion entre les chaînes de modélisation et la partition de cette incertitude entre les différentes étapes de modélisation. La variabilité interne correspond à la dispersion autour de la fonction de réponse évoquée précédemment. La variabilité résiduelle à la part d’incertitude qui n’est pas expliquée par une étape identifiée de la chaîne de modélisation (principalement les interactions entre modèles ou expériences GCM-RCM, RCP-GCM…). L’incertitude GCM et RCM correspondent respectivement à la part d’incertitude liée à la dispersion entre chaînes associée aux GCM ou aux RCM. On observe que l’incertitude totale augmente au cours du temps, principalement du fait d’une augmentation du désaccord entre les RCM. En 1990, la seule source d’incertitude est liée à l’importante variabilité interne observée précédemment. Le changement relatif moyen est à la baisse, de l’ordre de -5%, mais avec une gamme de possibles allant de +40% à -50% (sans prendre en compte la variabilité interne) du fait du désaccord entre les modèles.
+
+Cette analyse est aussi en cours de production pour les séries d’indicateurs en fonction de la température planétaire.
