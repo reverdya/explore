@@ -143,7 +143,7 @@ rle2 <- function (x)  {
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Any TRUE locations in 'y' are the end of a run, where the next value
-  # changes to something different
+  # changes to something différent
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   i <- c(which(y), n)
   
@@ -195,7 +195,7 @@ base_map_outlets=function(data,val_name){
 yellow_blue_5=c(rgb(255,255,204,maxColorValue=255),rgb(161,218,180,maxColorValue=255),rgb(65,182,196,maxColorValue=255),rgb(44,127,184,maxColorValue=255),rgb(37,52,148,maxColorValue=255))
 #For Precipitation
 precip_5=c(rgb(166,97,26,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(1,133,113,maxColorValue=255))
-#For temperature
+#For température
 temp_5=c(rgb(202,0,32,maxColorValue=255),rgb(244,165,130,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(5,113,176,maxColorValue=255))
 #For rcp
 col_3rcp=c("#0000FF","#79BCFF","#FF0000")
@@ -244,7 +244,7 @@ rescale_col=function(pal=brewer.blues(100),values,param){
 }
 
 ###################################
-## Format Global temperature for use in Qualypso, to be used inside code run_QUalypso
+## Format Global température for use in Qualypso, to be used inside code run_QUalypso
 ## Difference to 1861-1900 average and rcp/gcm matching + spline smoothing
 ## path_data the root of the path
 ##simu_lst the list of simulations
@@ -253,7 +253,7 @@ rescale_col=function(pal=brewer.blues(100),values,param){
 format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year){
   
   vecYears=seq(1861,last_full_year,1)#1861 first year for GFDL
-  ## Format global temperature: difference to 1861-1900 
+  ## Format global température: difference to 1861-1900 
   paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
   for ( i in 1:length(paths)){
     tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
@@ -269,7 +269,7 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
     }
   }
   
-  ## Format global temperature for Qualypso
+  ## Format global température for Qualypso
   mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
   vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm),function(x) strsplit(x,"_")[[1]][2]))
   vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm),function(x) strsplit(x,"_")[[1]][1]))
@@ -296,13 +296,15 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
 ## plain_nameEff the plain language name of the effect
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the plain language name of the indicator
-## bv_name the plain language name of the watershed if needed
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## bv_name the name of the watershed
+## bc_full_name plain language name of the watershed
 ## pre_unit the unit of the predictor
 ## folder_out the saving folder
 ## incert=TRUE adds confidence interval equivalent to Vtot-Vint
 
-plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,incert=FALSE,no_loess=T){
+plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,incert=FALSE,no_loess=T){
   
   Xfut = QUALYPSOOUT$Xfut
   iEff = which(QUALYPSOOUT$namesEff == nameEff)
@@ -352,8 +354,13 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
       probCI = QUALYPSOOUT$listOption$probCI
       binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
       bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
-      binf=data.frame(apply(binf,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
-      bsup=data.frame(apply(bsup,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
+      if(length(Xfut)<=6|no_loess){#loess model is under constrained
+        binf=data.frame(binf*100)
+        bsup=data.frame(bsup*100)
+      }else{
+        binf=data.frame(apply(binf,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
+        bsup=data.frame(apply(bsup,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
+      }
       colnames(binf)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
       colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
       binf$pred=Xfut
@@ -381,22 +388,22 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
       geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5,linetype="dotted")
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
       plt=plt+
-        scale_color_discrete("Moyenne lissee et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-        scale_fill_discrete("Moyenne lissee et\nintervalle de confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+        scale_color_discrete("Moyenne lissée et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("Moyenne lissée et\nintervalle de confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
     }else{
       plt=plt+
-        scale_color_discrete("Moyenne lissee et\nintervalle de confiance",type = parula(nEff))+
-        scale_fill_discrete("Moyenne lissee et\nintervalle de confiance",type=parula(nEff))
+        scale_color_discrete("Moyenne lissée et\nintervalle de confiance",type = parula(nEff))+
+        scale_fill_discrete("Moyenne lissée et\nintervalle de confiance",type=parula(nEff))
     }
   }else{
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
       plt=plt+
-        scale_color_discrete("Moyenne lissee",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-        scale_fill_discrete("Moyenne lissee",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+        scale_color_discrete("Moyenne lissée",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("Moyenne lissée",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
     }else{
       plt=plt+
-        scale_color_discrete("Moyenne lissee",type = parula(nEff))+
-        scale_fill_discrete("Moyenne lissee",type=parula(nEff))
+        scale_color_discrete("Moyenne lissée",type = parula(nEff))+
+        scale_fill_discrete("Moyenne lissée",type=parula(nEff))
     }
   }
 
@@ -405,7 +412,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   if(includeMean){
     plt=plt+
       scale_y_continuous(paste0("Changement (%)"))+
-      ggtitle(paste0("Changement des ",plain_nameEff," pour le predicteur ",pred_name,"\net l'indicateur ",ind_name," (",bv_name,")"))
+      ggtitle(paste0("Changements des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," (",bv_full_name,")"))
     if (is.na(folder_out)){
       return(plt)
     }else{
@@ -414,7 +421,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   }else{
     plt=plt+
       scale_y_continuous(paste0("Effet principal (%)"))+
-      ggtitle(paste0("Effet principaux des ",plain_nameEff," pour le predicteur ",pred_name,"\net l'indicateur ",ind_name," (",bv_name,")"))
+      ggtitle(paste0("Effets principaux des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," (",bv_full_name,")"))
     if (is.na(folder_out)){
       return(plt)
     }else{
@@ -431,12 +438,14 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
 ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the plain language name of the indicator
-## bv_name the plain language name of the watershed if needed
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## bv_name the name of the watershed
+## bc_full_name plain language name of the watershed
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,no_loess=T){
+plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
   
   probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
@@ -500,7 +509,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
     geom_line(aes(x=Xfut,y=mean,color="black"))+
     scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type="black",label="Moyenne lissee")+
+    scale_color_discrete("",type="black",label="Moyenne lissée")+
     scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
     guides(alpha = "none")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
@@ -508,7 +517,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Changement moyen (%)"))+
-    ggtitle(paste0("Changement moyen et partition de variance pour\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
+    ggtitle(paste0("Changement moyen et partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -522,13 +531,15 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
 ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the plain language name of the indicator
-## bv_name the plain language name of the watershed if needed
+## ind_name thename of the indicator
+## ind_name_full the plain language name of the indicator
+## bv_name the name of the watershed
+## bc_full_name plain language name of the watershed
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 ## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
 
-plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,iv_type="sum",no_loess=T){
+plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="sum",no_loess=T){
   
   probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
@@ -545,7 +556,7 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
   Vuncer = colSums(Vbind)
   Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vuncer))
   vNormRev = apply(Vnorm, 2, rev)
-  vNormRev[is.na(vNormRev)]=0 #year of reference where uncertainty without IV is 0
+  vNormRev[is.na(vNormRev)]=0 #year of référence where uncertainty without IV is 0
   binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vuncer))
   bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vuncer))
   
@@ -624,9 +635,9 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
     geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
     geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
     scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type=c("orange","black"),label=c("Intervalle avec\nvariabilite naturelle","Moyenne lissee"))+
+    scale_color_discrete("",type=c("orange","black"),label=c("Intervalle avec\nvariabilité naturelle","Moyenne lissée"))+
     scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
-    scale_linetype_manual("",values=c("dotted","solid"),label=c("Intervalle avec\nvariabilite naturelle","Moyenne lissee"))+
+    scale_linetype_manual("",values=c("dotted","solid"),label=c("Intervalle avec\nvariabilité naturelle","Moyenne lissée"))+
     guides(alpha = "none")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
@@ -634,7 +645,7 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Changement moyen (%)"))+
     theme(legend.key.width = unit(1.5,"cm"))+
-    ggtitle(paste0("Changement moyen et partition de variance pour\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
+    ggtitle(paste0("Changement moyen et partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -648,12 +659,14 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
 ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the plain language name of the indicator
-## bv_name the plain language name of the watershed if needed
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## bv_name the name of the watershed
+## bc_full_name plain language name of the watershed
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,no_loess=T){
+plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
   
   Xfut = QUALYPSOOUT$Xfut
   nFut = length(Xfut)
@@ -694,7 +707,7 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
-    ggtitle(paste0("Partition de variance pour\nle predicteur ",pred_name," et l'indicateur ",ind_name," (",bv_name,")"))
+    ggtitle(paste0("Partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full," (",bv_full_name,")"))
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -711,12 +724,14 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
 ## plain_name_Scen plain language name of scenario for legend
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the plain language name of the indicator
-## bv_name the plain language name of the watershed if needed
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## bv_name the name of the watershed
+## bc_full_name plain language name of the watershed
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,no_loess=T){
+plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
   
   probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
@@ -793,7 +808,7 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
     geom_line(aes(x=Xfut,y=mean,color="black"))+
     scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type="black",label="Moyenne lissee")+
+    scale_color_discrete("",type="black",label="Moyenne lissée")+
     scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
     guides(alpha = "none")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
@@ -801,7 +816,7 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Changement moyen (%)"))+
-    ggtitle(paste0("Changement et partition de variance pour les experiences ",plain_name_Scen,"\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
+    ggtitle(paste0("Changement et partition de variance pour les expériences ",plain_name_Scen,"\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -818,13 +833,15 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
 ## plain_name_Scen plain language name of scenario for legend
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the plain language name of the indicator
-## bv_name the plain language name of the watershed if needed
+## ind_name the of the indicator
+## ind_name_full the plain language name of the indicator
+## bv_name the name of the watershed
+## bc_full_name plain language name of the watershed
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 ## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
 
-plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,bv_name,pred_unit,folder_out,xlim,iv_type="sum",no_loess=T){
+plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="sum",no_loess=T){
   
   probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
@@ -845,7 +862,7 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
   Vuncer = colSums(Vbind)
   Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vuncer))
   vNormRev = apply(Vnorm, 2, rev)
-  vNormRev[is.na(vNormRev)]=0 #year of reference where uncertainty without IV is 0
+  vNormRev[is.na(vNormRev)]=0 #year of référence where uncertainty without IV is 0
   binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vuncer))
   bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vuncer))
   
@@ -927,9 +944,9 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
     geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
     geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
     scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type=c("orange","black"),label=c("Intervalle avec\nvariabilite naturelle","Moyenne lissee"))+
+    scale_color_discrete("",type=c("orange","black"),label=c("Intervalle avec\nvariabilité naturelle","Moyenne lissée"))+
     scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
-    scale_linetype_manual("",values=c("dotted","solid"),label=c("Intervalle avec\nvariabilite naturelle","Moyenne lissee"))+
+    scale_linetype_manual("",values=c("dotted","solid"),label=c("Intervalle avec\nvariabilité naturelle","Moyenne lissée"))+
     guides(alpha = "none")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
@@ -937,7 +954,7 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Changement moyen (%)"))+
     theme(legend.key.width = unit(1.5,"cm"))+
-    ggtitle(paste0("Changement et partition de variance pour les experiences ",plain_name_Scen,"\nle predicteur ",pred_name," et l'indicateur ",ind_name,"\n(",bv_name,")"))
+    ggtitle(paste0("Changement et partition de variance pour les expériences ",plain_name_Scen,"\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -949,15 +966,16 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
 #######################################################################
 ## Map of 3 quantiles by 3 RCP for one horizon
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## horiz a temporal or temperature horizon
+## horiz a temporal or température horizon
 ## pred_name the plain language name of the predictor
 ## ind_name thenname of the indicator
+## ind_name_full the plain language name of the indicator
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,folder_out,scale_col=1,bin_col=20){
+map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -1009,7 +1027,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   plt=plt+
     facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
     scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-    ggtitle(paste0("Changement relatif de ",ind_name," et son incertitude pour\ndifferents RCP et le predicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
   save.plot(plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
@@ -1019,17 +1037,18 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
 #######################################################################
 ##Map of 3 quantiles by 3 horizons for one RCP
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## horiz 3 temporal or temperature horizons
+## horiz 3 temporal or température horizons
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the plain language name of the indicator
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
 ## pred_unit the unit of the predictor
 ## rcp_name the name of the wanted rcp
 ## folder_out the saving folder
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,folder_out,scale_col=1,bin_col=20){
+map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
 
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==rcp_name)
@@ -1080,7 +1099,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   plt=plt+
     facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
     scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-    ggtitle(paste0("Changement relatif de ",ind_name," et son incertitude pour\ndifferents horizons et le predicteur ",pred_name,"\n(",rcp_plainname," avec reference 1990)"))+
+    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
   save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
@@ -1091,19 +1110,20 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 
 
 #######################################################################
-##Map of 3 quantiles by 3 horizons of temperature
+##Map of 3 quantiles by 3 horizons of température
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## horiz 3 temporal or temperature horizons
+## horiz 3 temporal or température horizons
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the plain language name of the indicator
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
 ## pred_unit the unit of the predictor
 ## rcp_name the name of the wanted rcp
 ## folder_out the saving folder
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,folder_out,scale_col=1,bin_col=20){
+map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
   
   quant=c("5%","mean","95%")
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
@@ -1148,7 +1168,7 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,fo
   exut$quant=factor(exut$quant,levels=quant)
   colnames(exut)=c("Num_ordre_Modcou","y","x","idx","horiz","quant","val")
   
-  horiz.labs <- paste0(as.character(horiz)," deg C")
+  horiz.labs <- paste0(as.character(horiz),"°C")
   names(horiz.labs) <- horiz
   quant.labs <- c("Q5", "Moyenne", "Q95")
   names(quant.labs) <- quant
@@ -1164,7 +1184,7 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,fo
   plt=plt+
     facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
     scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-    ggtitle(paste0("Changement relatif de ",ind_name," et son incertitude pour\ndifferents horizons de temperature planetaire (en deg C)\n(avec reference 1990, 3 RCP pour 1.5 degC et 2 RCP pour 2 et 3 deg C)"))+
+    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons de température planétaire (°C)\n(avec référence 1990, 3 RCP pour 1.5°C et 2 RCP pour 2 et 3°C)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
   save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_2.5_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
@@ -1174,13 +1194,14 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,fo
 }
 
 #######################################################################
-## Map of effects GCM or RCM (temperature or time)
+## Map of effects GCM or RCM (température or time)
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
 ## includeMean if true adds mean change to effect
 ## name_eff "gcm" ou "rcm"...
 ## pred_name the plain language name of the predictor
 ## pred the predictor name in the file
-## ind_name the plain language name of the indicator
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 ## horiz he horizon of predictor wanted
@@ -1188,7 +1209,7 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,fo
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,folder_out,scale_col=1,bin_col=20){
+map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
   
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
@@ -1233,7 +1254,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
     plt=plt+
       facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
       scale_fill_gradientn("Changement (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Changement des ",name_eff_plain,"s pour ",ind_name,"\net le predicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+      ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
     plt$layers[[3]]$aes_params$size= 1.5
     save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
@@ -1242,7 +1263,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
     plt=plt+
       facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
       scale_fill_gradientn("Effet principal (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour ",ind_name,"\net le predicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+      ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
     plt$layers[[3]]$aes_params$size= 1.5
     save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
@@ -1257,7 +1278,8 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
 ## vartype the variable to be plotted (one of varint, mean, vartot)
 ## pred_name the plain language name of the predictor
 ## pred the predictor name in the file
-## ind_name the plain language name of the indicator
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 ## horiz he horizon of predictor wanted
@@ -1265,7 +1287,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,folder_out,scale_col=1,bin_col=20){
+map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
   
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
@@ -1309,36 +1331,36 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     lim_col=round(lim_col/bin_col)*bin_col
     plt=plt+
       scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Changement relatif moyen de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))
+      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))
   }
   if(vartype=="vartot"){
     q99=quantile(exut$val,probs=0.99)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
       scale_fill_gradientn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Incertitude liee a la variabilite totale de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="incert"){
     q99=quantile(exut$val,probs=0.99)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
       scale_fill_gradientn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Incertitude liee a la variabilite (sauf interne) de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="varint"){
     q99=quantile(exut$val,probs=0.99)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
       scale_fill_gradientn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Incertitude liee a la variabilite interne de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude liée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   
   if(vartype=="varres"){
     q99=quantile(exut$val,probs=0.99)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
-      scale_fill_gradientn("Incertitude\nresiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      ggtitle(paste0("Incertitude liee a la variabilite residuelle de ",ind_name,"\npour le predicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      scale_fill_gradientn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      ggtitle(paste0("Incertitude liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
 
   save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
@@ -1350,12 +1372,13 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
 ## Map of 3 quantiles by 3 RCP for one horizon of time using basic mean and q5/q95
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
 ## horiz a temporal horizon
-## ind_name then name of the indicator
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
 ## folder_out the saving folder
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,folder_out,scale_col=1,bin_col=20){
+map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -1405,7 +1428,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,folder_out,
   plt=plt+
     facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
     scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-    ggtitle(paste0('Changement relatif de ',ind_name,' et son incertitude pour\ndifferents RCP (',horiz,' VS 1990), methode "classique"'))+
+    ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz,' VS 1990), méthode "classique"'))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
   save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
@@ -1453,12 +1476,12 @@ plot_comp_anova=function(LM,QU,type,nameEff=NULL,pred_name,ind_name,var_name,fol
   plt=ggplot(data)+
     geom_point(aes(x=x,y=y),size=0.5)+
     geom_abline(slope=1,size=0.3,col="red")+
-    xlab("Linear method")+
+    xlab("Méthode linéaire")+
     ylab("Qualypso")+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    ggtitle(paste0("Comparaison methodes ANOVA (tous les bassins et dates)\npour le predicteur ",pred_name,", l'indicateur ",ind_name,"\net la grandeur ",var_name))
+    ggtitle(paste0("Comparaison méthodes ANOVA (tous les bassins et dates)\npour le prédicteur ",pred_name,", l'indicateur ",ind_name,"\net la grandeur ",var_name))
   if (type=="eff"){
     plt=plt+
       facet_wrap(~eff,ncol=3)
