@@ -12,14 +12,15 @@ gc()
 library(knitr)
 library(markdown)
 library(rmarkdown)
-library(tinytex)
-library(cowplot)##grid plot of png in knitr
+#library(tinytex) # for pdf
+#library(cowplot)##grid plot of png in knitr
+library(bookdown)# figure numbers
 
 ########
 #SOURCE#
 ########
 
-source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R')
+source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',encoding = "utf-8")
 
 ####################
 #DEFAULT PARAMETERS#
@@ -155,7 +156,7 @@ xlim=c(1990,2100)
 b=1
 idx=select_stations$idx[b]
 
-plt_var_rcp8.5=plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,iv_type = "sum")
+plt_var_rcp8.5=plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,iv_type = "tot")
 
 #####################################
 ## Effet GCM, effet RCM
