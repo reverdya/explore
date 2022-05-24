@@ -214,4 +214,4 @@ plt_change_rcp_time=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx
 #MARKDOWN#
 ##########
 
-rmarkdown::render(path_Rmd,output_format = "word_document",output_file = "fiche_exemple_COUT_v0.1.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
+rmarkdown::render(path_Rmd,output_format = "word_document2",output_file = "fiche_exemple_COUT_v0.1.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
