@@ -1,6 +1,7 @@
 ---
 output:
-  word_document:
+  bookdown::word_document2:
+    fig_caption: yes
     reference_docx: template_word.docx
 fontsize: 12pt
 geometry: margin=1.5cm
@@ -11,7 +12,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 
 ```{r echo=FALSE}
 opts_knit$set(progress=FALSE, verbose=FALSE)#retire les sorties consoles
-#knitr::opts_chunk$set(fig.width=20, fig.height=10) 
+knitr::opts_chunk$set(fig.width=20, fig.height=10) 
 knitr::knit_hooks$set(inline = as.character)#évite les erreurs d'écriture des arrondis
 opts_chunk$set(echo = FALSE,warning = FALSE,message=FALSE,fig.width =30/2.54,fig.height = 20/2.54)#in inches
 ```
@@ -23,11 +24,14 @@ Le module annuel d’un bassin versant sera utilisé à titre illustratif, mais 
 
 \newpage
 
-```{r}
+```{r rawtime, fig.cap="Valeurs simulées du module annuel de la Seine à Poses au cours du temps pour les différentes combinaisons GCM/RCM disponibles pour le RCP 8.5 entre 1972 et 2098 (période commune des modèles)."}
+
 plt_raw_time[["rcp8.5"]]
+# for reference \@ref(fig:rawtime)
+# no underscore in figure label
 ```
 
-Figure 1: Valeurs simulées du module annuel de la Seine à Poses au cours du temps pour les différentes combinaisons GCM/RCM disponibles pour le RCP 8.5 entre 1972 et 2098 (période commune des modèles). Chaque panel montre les chroniques pour un modèle GCM et un ou plusieurs modèles RCMs. On peut noter l’importante variabilité interannuelle à décennale (variabilité interne) qui “bruite” les tendances. Le module annuel de la Seine à Poses projeté avec le GCM HadGEM2-ES, le RCM REMO et le modèle hydrologique SIM2 pour l’année 2092 s’élève à 1300 m3/s.
+Chaque panel montre les chroniques pour un modèle GCM et un ou plusieurs modèles RCMs. On peut noter l’importante variabilité interannuelle à décennale (variabilité interne) qui “bruite” les tendances. Le module annuel de la Seine à Poses projeté avec le GCM HadGEM2-ES, le RCM REMO et le modèle hydrologique SIM2 pour l’année 2092 s’élève à 1300 m3/s.
 
 \newpage
 

@@ -327,7 +327,6 @@ for (i in 1:length(lst_indic)){# for each indicator
         guides(color = guide_legend(override.aes = list(size = 1.7)))+
         facet_wrap(vars(gcm))+
         theme(panel.spacing.x = unit(2, "lines"))
-      plt
      save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_rel_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_relative/"),Format = "jpeg")
     }
   }
