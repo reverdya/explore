@@ -18,7 +18,7 @@ library(abind)#abind
 #SOURCE#
 ########
 
-source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R')
+source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',encoding = "utf-8")
 
 ####################
 #DEFAULT PARAMETERS#
