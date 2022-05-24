@@ -539,7 +539,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
 ## folder_out the saving folder
 ## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
 
-plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="sum",no_loess=T){
+plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="tot",no_loess=T){
   
   probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
@@ -623,21 +623,23 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
   
   #These colors work only if the order of the effects does not move
   #These colors work only if the order and the name of the effects does not move
-  col_6var=c("yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
+  col_6var=viridis(6)
   legend_var=c("Var. Res.","RCM","GCM","RCP","BC","HM")
   legend_var_full=c("res","rcm","gcm","rcp","bc","hm")
-  alpha_var=c(0.8,0.8,0.8,0.8,0.8,0.8)
+  alpha_var=rep(1,6)
   
   #warning from xlim
   plt=ggplot(data)+
     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
+    geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
+    geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"))+
     geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
     geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
-    scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type=c("orange","black"),label=c("Intervalle avec\nvariabilité naturelle","Moyenne lissée"))+
+    scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
+    scale_color_discrete("",type=c("black","black"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne lissée"))+
     scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
-    scale_linetype_manual("",values=c("dotted","solid"),label=c("Intervalle avec\nvariabilité naturelle","Moyenne lissée"))+
+    scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne lissée"))+
     guides(alpha = "none")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
@@ -841,7 +843,7 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
 ## folder_out the saving folder
 ## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
 
-plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="sum",no_loess=T){
+plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="tot",no_loess=T){
   
   probCI = QUALYPSOOUT$listOption$probCI
   Xfut = QUALYPSOOUT$Xfut
@@ -929,10 +931,10 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
   data$iv_sup=data$iv_sup*100
   
   #These colors work only if the order and the name of the effects does not move
-  col_6var=c("yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
+  col_6var=viridis(6)
   legend_var=c("Var. Res.","RCM","GCM","RCP","BC","HM")
   legend_var_full=c("res","rcm","gcm","rcp","bc","hm")
-  alpha_var=c(0.8,0.8,0.8,0.8,0.8,0.8)
+  alpha_var=rep(1,6)
   alpha_var=alpha_var[-which(legend_var_full==nameEff)]
   legend_var=legend_var[-which(legend_var_full==nameEff)]
   col_6var=col_6var[-which(legend_var_full==nameEff)]
@@ -940,13 +942,15 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
   #warning from xlim
   plt=ggplot(data)+
     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
+    geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
+    geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"))+
     geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
     geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
-    scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type=c("orange","black"),label=c("Intervalle avec\nvariabilité naturelle","Moyenne lissée"))+
+    scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
+    scale_color_discrete("",type=c("black","black"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne lissée"))+
     scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
-    scale_linetype_manual("",values=c("dotted","solid"),label=c("Intervalle avec\nvariabilité naturelle","Moyenne lissée"))+
+    scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne lissée"))+
     guides(alpha = "none")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
@@ -1262,7 +1266,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
   }else{
     plt=plt+
       facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-      scale_fill_gradientn("Effet principal (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      scale_fill_gradientn("Effet principal (%)",colours = rescale_divergent_col( rev(brewer.brbg(100)),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
     plt$layers[[3]]$aes_params$size= 1.5
