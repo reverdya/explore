@@ -203,6 +203,12 @@ names(col_3rcp)=c("rcp2.6","rcp4.5","rcp8.5")
 #For 2 plot or line charts
 ipcc_2col=c(rgb(0,0,0,maxColorValue=255),rgb(112,160,205,maxColorValue=255))
 
+# for variance partition
+col_7var=rev(viridis(7))
+names(col_7var)=c("rcp","gcm","rcm","bc","hm","res","int")
+legend_7var=c("RCP","GCM","RCM","BC","HM","Var. Res.","Var. Int.")
+
+
 ################################################
 ## Reformat a divergent (around 0) color scale
 ## Takes a color palette (pal) and a vector of values (values) that should be represented with this color palette centered on 0 
@@ -388,22 +394,22 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
       geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5,linetype="dotted")
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
       plt=plt+
-        scale_color_discrete("Moyenne lissée et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-        scale_fill_discrete("Moyenne lissée et\nintervalle de confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+        scale_color_discrete("Moyenne et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("Moyenne et\nintervalle de confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
     }else{
       plt=plt+
-        scale_color_discrete("Moyenne lissée et\nintervalle de confiance",type = parula(nEff))+
-        scale_fill_discrete("Moyenne lissée et\nintervalle de confiance",type=parula(nEff))
+        scale_color_discrete("Moyenne et\nintervalle de confiance",type = parula(nEff))+
+        scale_fill_discrete("Moyenne et\nintervalle de confiance",type=parula(nEff))
     }
   }else{
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
       plt=plt+
-        scale_color_discrete("Moyenne lissée",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-        scale_fill_discrete("Moyenne lissée",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+        scale_color_discrete("Moyenne",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("Moyenne",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
     }else{
       plt=plt+
-        scale_color_discrete("Moyenne lissée",type = parula(nEff))+
-        scale_fill_discrete("Moyenne lissée",type=parula(nEff))
+        scale_color_discrete("Moyenne",type = parula(nEff))+
+        scale_fill_discrete("Moyenne",type=parula(nEff))
     }
   }
 
@@ -500,18 +506,17 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
   data$inf=data$inf*100
   data$sup=data$sup*100
   
-  #These colors work only if the order of the effects does not move
-  col_7var=c("orange","yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
-  legend_var=c("Var. Int.","Var. Res.","RCM","GCM","RCP","BC","HM")
-  alpha_var=c(0.5,0.8,0.8,0.8,0.8,0.8,0.8)
+  vec_color=col_7var[names(col_7var) %in% names_var]
+  data$var=factor(data$var,levels=rev(names(vec_color)))
+  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
-    geom_line(aes(x=Xfut,y=mean,color="black"))+
-    scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type="black",label="Moyenne lissée")+
-    scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
-    guides(alpha = "none")+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.6)+
+    geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
+    geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
+    geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
+    scale_fill_discrete("Incertitude totale et\npartition de variance",type = vec_color,labels=labels_var)+
+    scale_color_discrete("",type="black",label="Moyenne d'ensemble")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -621,26 +626,21 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
   data$iv_inf=data$iv_inf*100
   data$iv_sup=data$iv_sup*100
   
-  #These colors work only if the order of the effects does not move
-  #These colors work only if the order and the name of the effects does not move
-  col_6var=viridis(6)
-  legend_var=c("Var. Res.","RCM","GCM","RCP","BC","HM")
-  legend_var_full=c("res","rcm","gcm","rcp","bc","hm")
-  alpha_var=rep(1,6)
+  vec_color=col_7var[names(col_7var) %in% names_var]
+  data$var=factor(data$var,levels=rev(names(vec_color)))
+  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   #warning from xlim
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"))+
+    geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"),size=1)+
     geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
     geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
-    scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type=c("black","black"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne lissée"))+
-    scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
-    scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne lissée"))+
-    guides(alpha = "none")+
+    scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = vec_color,labels=labels_var)+
+    scale_color_discrete("",type=c(as.vector(col_7var[7]),"#000000"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
+    scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -691,19 +691,20 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
     data[,i]=cum.smooth
   }
   data=data.frame(cbind(Xfut,data))
-  data=gather(data,key = "var",value = "val",-c(Xfut))
   namesEff = QUALYPSOOUT$names
-  names_var=c("InternalVar","ResidualVar",rev(namesEff))
-  data$var=factor(data$var,levels=c(names_var))
+  names_var=c(namesEff,"res","int")
+  colnames(data)=c("Xfut",names_var)
+  data=gather(data,key = "var",value = "val",-c(Xfut))
   data$val=data$val*100 #percentage
   
-  #These colors work only if the order of the effects does not move
-  col_7var=c("orange","yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
-  legend_var=c("Var. Int.","Var. Res.","RCM","GCM","RCP","BC","HM")
+  vec_color=col_7var[names(col_7var) %in% names_var]
+  data$var=factor(data$var,levels=rev(names(vec_color)))
+  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var),alpha=0.8)+
-    scale_fill_discrete("Partition\nde la variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
+    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var),alpha=0.6)+
+    geom_line(aes(x=Xfut,y=val,group=var),color="white",linetype="dashed",size=0.3)+
+    scale_fill_discrete("Partition\nde la variance",type = vec_color,labels=labels_var)+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -796,23 +797,18 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   data$inf=data$inf*100
   data$sup=data$sup*100
   
-  #These colors work only if the order and the name of the effects does not move
-  col_7var=c("orange","yellow", "cadetblue1", "blue1","darkgreen", "darkgoldenrod4","darkorchid1")
-  legend_var=c("Var. Int.","Var. Res.","RCM","GCM","RCP","BC","HM")
-  legend_var_full=c("int","res","rcm","gcm","rcp","bc","hm")
-  alpha_var=c(0.5,0.8,0.8,0.8,0.8,0.8,0.8)
-  alpha_var=alpha_var[-which(legend_var_full==nameEff)]
-  legend_var=legend_var[-which(legend_var_full==nameEff)]
-  col_7var=col_7var[-which(legend_var_full==nameEff)]
+  vec_color=col_7var[names(col_7var) %in% names_var]
+  data$var=factor(data$var,levels=rev(names(vec_color)))
+  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
-    geom_line(aes(x=Xfut,y=mean,color="black"))+
-    scale_fill_discrete("Incertitude totale et\npartition de variance",type = col_7var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type="black",label="Moyenne lissée")+
-    scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
-    guides(alpha = "none")+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.6)+
+    geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
+    geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
+    geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
+    scale_fill_discrete("Incertitude totale et\npartition de variance",type = vec_color,labels=labels_var)+
+    scale_color_discrete("",type="black",label="Moyenne d'ensemble")+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -930,28 +926,21 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
   data$iv_inf=data$iv_inf*100
   data$iv_sup=data$iv_sup*100
   
-  #These colors work only if the order and the name of the effects does not move
-  col_6var=viridis(6)
-  legend_var=c("Var. Res.","RCM","GCM","RCP","BC","HM")
-  legend_var_full=c("res","rcm","gcm","rcp","bc","hm")
-  alpha_var=rep(1,6)
-  alpha_var=alpha_var[-which(legend_var_full==nameEff)]
-  legend_var=legend_var[-which(legend_var_full==nameEff)]
-  col_6var=col_6var[-which(legend_var_full==nameEff)]
+  vec_color=col_7var[names(col_7var) %in% names_var]
+  data$var=factor(data$var,levels=rev(names(vec_color)))
+  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   #warning from xlim
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var,alpha=var))+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"))+
+    geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"),size=1)+
     geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
     geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
-    scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = col_6var[1:length(names_var)],labels=legend_var[1:length(names_var)])+
-    scale_color_discrete("",type=c("black","black"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne lissée"))+
-    scale_alpha_manual("",values = alpha_var[1:length(names_var)])+
-    scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne lissée"))+
-    guides(alpha = "none")+
+    scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = vec_color,labels=labels_var)+
+    scale_color_discrete("",type=c(as.vector(col_7var[7]),"#000000"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
+    scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
