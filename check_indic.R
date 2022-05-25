@@ -232,7 +232,7 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         
         plt=ggplot(data)+#Warnings okay
           geom_line(aes(x=year,y=val,size=type,color=rcm))+
-          scale_size_manual("",values=c(0.7,1.7),label=c("Réponse climatique","Spline"))+
+          scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur","Réponse climatique"))+
           scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
           theme_bw(base_size = 18)+
           theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -316,7 +316,7 @@ for (i in 1:length(lst_indic)){# for each indicator
         geom_line(aes(x=year,y=val,size=type,color=rcm))+
         #geom_line(aes(x=year,y=ciinf,color=rcm))+
         #geom_line(aes(x=year,y=cisup,color=rcm))+
-        scale_size_manual("",values=c(0.7,1.7),label=c("Réponse climatique","Spline"))+
+        scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur","Réponse au\nchangement climatique"))+
         scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
         theme_bw(base_size = 18)+
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -398,7 +398,7 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         
         plt=ggplot(data)+#Warnings okay
           geom_line(aes(x=tas,y=val,size=type,color=rcm))+
-          scale_size_manual("",values=c(0.7,1.7),label=c("Réponse climatique","Spline"))+
+          scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur","Réponse climatique"))+
           scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
           theme_bw(base_size = 18)+
           theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
