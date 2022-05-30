@@ -381,7 +381,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   }
 
   plt=ggplot(data)+
-    geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1)+
+    geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.2)+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -392,6 +392,9 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
       geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+
       geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5,linetype="dotted")+
       geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5,linetype="dotted")
+    #tmp=plt$layers[[1]]
+    #plt$layers[[1]]=plt$layers[[4]]
+    #plt$layers[[4]]=tmp
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
       plt=plt+
         scale_color_discrete("Moyenne et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
@@ -404,12 +407,12 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   }else{
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
       plt=plt+
-        scale_color_discrete("Moyenne",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-        scale_fill_discrete("Moyenne",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+        scale_color_discrete("",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
     }else{
       plt=plt+
-        scale_color_discrete("Moyenne",type = parula(nEff))+
-        scale_fill_discrete("Moyenne",type=parula(nEff))
+        scale_color_discrete("",type = parula(nEff))+
+        scale_fill_discrete("",type=parula(nEff))
     }
   }
 
@@ -417,7 +420,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
 
   if(includeMean){
     plt=plt+
-      scale_y_continuous(paste0("Changement (%)"))+
+      scale_y_continuous(paste0("Changement relatif moyen (%)"))+
       ggtitle(paste0("Changements des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," (",bv_full_name,")"))
     if (is.na(folder_out)){
       return(plt)
@@ -511,7 +514,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.6)+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
@@ -702,7 +705,7 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var),alpha=0.6)+
+    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var))+
     geom_line(aes(x=Xfut,y=val,group=var),color="white",linetype="dashed",size=0.3)+
     scale_fill_discrete("Partition\nde la variance",type = vec_color,labels=labels_var)+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
@@ -803,7 +806,7 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.6)+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
     geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
@@ -1023,7 +1026,11 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
-  save.plot(plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  }
 }
 
 
@@ -1095,8 +1102,11 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
-  save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
-
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  }
 
 
 }
@@ -1180,8 +1190,12 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
     ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons de température planétaire (°C)\n(avec référence 1990, 3 RCP pour 1.5°C et 2 RCP pour 2 et 3°C)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
-  save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_2.5_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
-  
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_2.5_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  }
+    
   
   
 }
@@ -1246,20 +1260,28 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
   if(includeMean){
     plt=plt+
       facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-      scale_fill_gradientn("Changement (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
     plt$layers[[3]]$aes_params$size= 1.5
-    save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
-    
+    if (is.na(folder_out)){
+      return(plt)
+    }else{
+      save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    }
+       
   }else{
     plt=plt+
       facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-      scale_fill_gradientn("Effet principal (%)",colours = rescale_divergent_col( rev(brewer.brbg(100)),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      scale_fill_gradientn("Effet principal (%)",colours = rescale_divergent_col( brewer.brbg(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
     plt$layers[[3]]$aes_params$size= 1.5
-    save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    if (is.na(folder_out)){
+      return(plt)
+    }else{
+      save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    }
     
   }
 }
@@ -1355,8 +1377,11 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
       scale_fill_gradientn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       ggtitle(paste0("Incertitude liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
-
-  save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  }
   
 }
 
@@ -1424,7 +1449,11 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
     ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz,' VS 1990), méthode "classique"'))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.5
-  save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+  }
 }
 
 
@@ -1499,5 +1528,10 @@ plot_bv_areas=function(folder_out){
   plt=plt+
     scale_fill_gradientn("Superficie (km2)",colours = parula(100),trans="log10")+
     ggtitle("Superficie des bassins versants")
-  save.plot(plt,Filename = "superficie_bv",Folder = folder_out,Format = "jpeg")
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = "superficie_bv",Folder = folder_out,Format = "jpeg")
+  }
+  
 }
