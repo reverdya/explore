@@ -381,7 +381,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   }
 
   plt=ggplot(data)+
-    geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1)+
+    geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.2)+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -392,6 +392,9 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
       geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+
       geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5,linetype="dotted")+
       geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5,linetype="dotted")
+    #tmp=plt$layers[[1]]
+    #plt$layers[[1]]=plt$layers[[4]]
+    #plt$layers[[4]]=tmp
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
       plt=plt+
         scale_color_discrete("Moyenne et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
@@ -404,12 +407,12 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   }else{
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
       plt=plt+
-        scale_color_discrete("Moyenne",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-        scale_fill_discrete("Moyenne",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+        scale_color_discrete("",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
     }else{
       plt=plt+
-        scale_color_discrete("Moyenne",type = parula(nEff))+
-        scale_fill_discrete("Moyenne",type=parula(nEff))
+        scale_color_discrete("",type = parula(nEff))+
+        scale_fill_discrete("",type=parula(nEff))
     }
   }
 
@@ -417,7 +420,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
 
   if(includeMean){
     plt=plt+
-      scale_y_continuous(paste0("Changement (%)"))+
+      scale_y_continuous(paste0("Changement relatif moyen (%)"))+
       ggtitle(paste0("Changements des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," (",bv_full_name,")"))
     if (is.na(folder_out)){
       return(plt)
@@ -511,7 +514,7 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.6)+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
@@ -702,7 +705,7 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var),alpha=0.6)+
+    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var))+
     geom_line(aes(x=Xfut,y=val,group=var),color="white",linetype="dashed",size=0.3)+
     scale_fill_discrete("Partition\nde la variance",type = vec_color,labels=labels_var)+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
@@ -803,7 +806,7 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   
   
   plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var),alpha=0.6)+
+    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
     geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
