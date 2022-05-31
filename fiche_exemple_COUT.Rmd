@@ -5,7 +5,7 @@ output:
     fig_caption: yes
 fontsize: 12pt
 geometry: margin=1cm
-title: "Fiche type de présentation des incertitudes pour Explore 2"
+title: "Fiche type de présentation des incertitudes pour EXPLORE 2"
 author: "Alix Reverdy, Benoit Hingray (IGE), Guillaume Evin (INRAE)"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 ---
@@ -18,11 +18,11 @@ opts_chunk$set(echo = FALSE,warning = FALSE,message=FALSE,fig.width =30/2.54,fig
 ```
 
 
-Ce document a pour objectif d’illustrer par une série d’exemples les représentations graphiques produites en sortie de l’analyse de la partition d’incertitude entre les différentes chaînes de modélisation. Il a aussi pour but de nourrir la discussion sur les choix graphiques et la compréhension des concepts illustrés sur les figures proposées. Les données utilisées ne doivent pas être interprétées en tant que telles, car elles sont issues d’un **sous-ensemble arbitraire des chaînes de modélisation d’Explore 2 et encore soumises à des modifications futures**.
+Ce document a pour objectif d’illustrer par une série d’exemples les représentations graphiques produites en sortie de l’analyse de la partition d’incertitude entre les différentes chaînes de modélisation. Il a aussi pour but de nourrir la discussion sur les choix graphiques et la compréhension des concepts illustrés sur les figures proposées. Les données utilisées ne doivent pas être interprétées en tant que telles, car elles sont issues d’un **sous-ensemble arbitraire des chaînes de modélisation d’EXPLORE 2 et encore soumises à des modifications futures**.
 
 Le module annuel d’un bassin versant sera utilisé à titre illustratif, mais les représentations proposées sont valables pour d’autres séries temporelles d’indicateurs hydrologiques. De même, on a choisi ici le bassin de la Seine à Poses, mais les représentations graphiques sont transférables à un autre exutoire.
 
-Les analyses (estimation de la moyenne d’ensemble, des effets principaux pour les différents modèles et scénarios et des différentes sources d’incertitudes) sont obtenues avec la méthode Qualypso. La méthode permet en particulier de traiter les ensembles de projections incomplets (avec des combinaisons de modèles et expériences manquantes). Elle produit une estimation de la moyenne d’ensemble et des incertitudes proches de celles qui auraient été obtenues avec un ensemble complet.
+Les analyses (estimation de la moyenne d’ensemble, des effets principaux pour les différents modèles et scénarios et des différentes sources d’incertitudes) sont obtenues avec la méthode QUALYPSO. La méthode permet en particulier de traiter les ensembles de projections incomplets (avec des combinaisons de modèles et expériences manquantes). Elle produit une estimation de la moyenne d’ensemble et des incertitudes proches de celles qui auraient été obtenues avec un ensemble complet.
 
 Les changements décrits sont des changements relatifs du module annuel de débit par rapport à la période de référence 1975-2005 (centrée sur 1990) .
 
@@ -113,7 +113,7 @@ grid.arrange(plt_gcm_effect,plt_rcm_effect,plt_bc_effect,plt_hm_effect,ncol=2)
 
 1. L’effet principal d’un modèle donné est la différence entre la réponse moyenne en changement que ce modèle induit par rapport à la réponse moyenne en changement obtenue pour l’ensemble des chaînes de modélisation. 
 
-2. La somme des effets principaux pour les différents modèles d’un type donné est donc toujours nulle (e.g. la somme des effets principaux obtenus pour les 9 GCMs considérés dans l'ensemble complet EXPLORE2 sera nulle; la somme des effets principaux des 7 MHs sera nulle, etc….). 
+2. La somme des effets principaux pour les différents modèles d’un type donné est donc toujours nulle (e.g. la somme des effets principaux obtenus pour les 9 GCMs considérés dans l'ensemble complet EXPLORE 2 sera nulle; la somme des effets principaux des 7 MHs sera nulle, etc…). 
 
 3. Quel que soit le modèle, son effet principal pour la période de référence (1990) est nul par construction (car la réponse en changement est nulle pour toutes les chaînes de modélisation). 
 
@@ -125,7 +125,7 @@ grid.arrange(plt_gcm_effect,plt_rcm_effect,plt_bc_effect,plt_hm_effect,ncol=2)
 
 1. Effets principaux des GCMs : A l’horizon 2050 le modèle de l’IPSL a un effet principal d’environ 9%, cela veut dire que les chaînes contenant ce modèle présenteront en moyenne une valeur de changement relatif du module annuel de 9% de plus que la moyenne d’ensemble. A l’inverse, le modèle EC-EARTH a tendance à produire des modules annuels de débit plus faibles que la moyenne dans le futur et le modèle du CNRM est toujours très proche de la moyenne d’ensemble. Une valeur négative d’effet principal ne correspond pas forcément à une baisse de l’indicateur, dans le cas où le changement moyen de l’ensemble est fortement positif.
 
-2. Effets principaux des RCMs: la réponse en changement de WRF est 40% au dessus de la réponse en changement moyenne de l’ensemble; la réponse en changement de ALADIN est 20% en dessous de la réponse en changement moyenne de l’ensemble à l'horizon 2100.
+2. Effets principaux des RCMs: la réponse en changement de WRF est 40% au-dessus de la réponse en changement moyenne de l’ensemble; la réponse en changement de ALADIN est 20% en-dessous de la réponse en changement moyenne de l’ensemble à l'horizon 2100.
 
 ```{r change, fig.cap="Changement relatif moyen des différents a) GCMs, b) RCMs, c) BCs (corrections de biais) et d) HMs (modèles hydrologiques). Les changements BC et HM sont fictifs et donnés à titre illustratif, n'étant pas encore disponibles. Module annuel de la Seine à Poses. Tous les RCP sont considérés."}
 
@@ -139,7 +139,7 @@ On représente ici non pas les effets principaux, mais le changement relatif moy
 
 **Eclairages :**
 
-A l’horizon 2050 le modèle de l’IPSL a un changement moyen d'environ +20%, alors que EC-EARTH montre un changement moyen de seulement 3%. On note bien que malgré un effet principal négatif (Figure \@ref(fig:eff)) EC-EARTH montre un changement moyen positif. Il produit des changements plus faibles que la moyenne d'ensemble, mais néanmoins positif.
+A l’horizon 2050 le modèle de l’IPSL a un changement moyen d'environ +20%, alors que EC-EARTH montre un changement moyen de seulement 3%. On note bien que malgré un effet principal négatif (Figure \@ref(fig:eff)) EC-EARTH montre un changement moyen positif. Il produit des changements plus faibles que la moyenne d'ensemble, mais néanmoins positifs.
 
 
 
@@ -162,20 +162,20 @@ plt_var_decomp
 
 1. Ce graphique illustre la contribution RELATIVE des différents types d’incertitude de la chaîne de modélisation (variabilité interne, incertitude GCM, incertitude RCM, …) à l’incertitude totale. La contribution est un rapport de variance (variance de l’incertitude GCM / variance de l’incertitude totale).  
 
-2. Le graphique est à interpréter avec précaution. L’incertitude liée à la variabilité interne n’a jamais tendance à diminuer avec le temps (ce qu’une mauvaise interprétation de la figure pourrait suggérer). Par hypothèse de la méthode d’estimation QUALYSPO, elle est en effet considérée invariante sur toute la période de temps. Sa contribution relative à l’incertitude totale diminue à l’inverse (ce que l’on voit sur la figure); ce qui est logique puisque toutes les autres sources d’incertitude augmentent avec le temps, conduisant à une augmentation de l’incertitude totale sur la période. 
+2. Le graphique est à interpréter avec précaution. L’incertitude liée à la variabilité interne n’a jamais tendance à diminuer avec le temps (ce qu’une mauvaise interprétation de la figure pourrait suggérer). Par hypothèse de la méthode d’estimation QUALYPSO, elle est en effet considérée invariante sur toute la période de temps. Sa contribution relative à l’incertitude totale diminue à l’inverse (ce que l’on voit sur la figure); ce qui est logique puisque toutes les autres sources d’incertitude augmentent avec le temps, conduisant à une augmentation de l’incertitude totale sur la période. 
 
 **Eclairages : **
 
 1. Dans tous les cas: la variabilité interne est l’unique source d’incertitude au début du 21e siècle(il n’y a pas d’incertitude modèle ni scénarios sur les changements). Sa contribution à l’incertitude totale se réduit avec le temps. A l’inverse, la part d’incertitude liée aux modèles et aux scénarios augmente avec le temps. 
 
-2. Dans le cas présent, la source d’incertitude principale en fin de siècle est l’incertitude liée aux modèles RCMs. L’incertitude liée au modèles GCMs et celle liée à la dispersion entre les scénarios RCP sont faibles en comparaison. Ce genre d'illustration permet de mettre en évidence les maillons de la chaînes de modélisation où le désaccord est le plus important entres le modèles et donc les opportunités d'amélioration les plus efficaces.
+2. Dans le cas présent, la source d’incertitude principale en fin de siècle est l’incertitude liée aux modèles RCMs. L’incertitude liée au modèles GCMs et celle liée à la dispersion entre les scénarios RCP sont faibles en comparaison. Ce genre d'illustration permet de mettre en évidence les maillons de la chaîne de modélisation où le désaccord est le plus important entres le modèles et donc les opportunités d'amélioration les plus efficaces.
 
 3. La variabilité résiduelle est non négligeable en fin de siècle (source d’incertitude non expliquée par le modèle d’incertitude et associée aux interactions entre modèles / scénarios).
 
 4. En 2050, environ 15% de l'incertitude provient de la dispersion entre les RCMs, alors que cette valeur monte jusqu'à pratiquement 40% en fin de siècle.
 
 
-```{r var85, fig.cap="Moyenne d’ensemble (ligne centrale grasse) et incertitudes (plage colorée) des changements relatifs moyens du module annuel de débit estimés pour l’ensemble de projections multi-modèles en scénario RCP8.5. Station de la Seine à Poses, référence 1990. L'incertitude fournie est calculée à partir de la variance avec un intervale de confiance 90% (quantiles 5/95% et hypothèse de normalité) Sources d’incertitudes : violet : variabilité interne (y compris la variabilité interannuelle); vert clair : incertitude GCM; vert foncé : incertitude RCM; bleu : incertitude résiduelle. a) L'incertitude (bande colorée) correspond à la dispersion entre les chaines de modélisation. La partition d'incertitude (bandes de couleurs) correspond au pourcentage de cette incertitude expliquée respectivement par les GCM, les RCM et la variabilité résiduelle. Les traitillés illustrent l'incertitude totale, variabilité interne comprise b) L'incertitude (bande colorée) correspond à la dispersion totale, variabilité interne comprise. La partition d'incertitude (bandes de couleurs) correspond au pourcentage de cette incertitude totale expliquée respectivement par les GCM, les RCM, la variabilité résiduelle et la variabilité interne."}
+```{r var85, fig.cap="Moyenne d’ensemble (ligne centrale grasse) et incertitudes (plage colorée) des changements relatifs moyens du module annuel de débit estimés pour l’ensemble de projections multi-modèles en scénario RCP8.5. Station de la Seine à Poses, référence 1990. L'incertitude fournie est calculée à partir de la variance avec un intervalle de confiance 90% (quantiles 5/95% et hypothèse de normalité) Sources d’incertitudes : violet : variabilité interne (y compris la variabilité interannuelle); vert clair : incertitude GCM; vert foncé : incertitude RCM; bleu : incertitude résiduelle. a) L'incertitude (bande colorée) correspond à la dispersion entre les chaînes de modélisation. La partition d'incertitude (bandes de couleurs) correspond au pourcentage de cette incertitude expliqué respectivement par les GCM, les RCM et la variabilité résiduelle. Les traitillés illustrent l'incertitude totale, variabilité interne comprise b) L'incertitude (bande colorée) correspond à la dispersion totale, variabilité interne comprise. La partition d'incertitude (bandes de couleurs) correspond au pourcentage de cette incertitude totale expliquée respectivement par les GCM, les RCM, la variabilité résiduelle et la variabilité interne."}
 
 grid.arrange(plt_var_rcp8.5,plt_var_rcp8.5_bis,ncol=1)
 
@@ -202,14 +202,14 @@ Pour chaque pas de temps,
 
 **Eclairages : **
 
-1. Le changement relatif moyen du débit annuel estimé pour l’ensemble EXPLORE2 est à la baisse, de l’ordre de +30% en fin de siècle.
+1. Le changement relatif moyen du débit annuel estimé pour l’ensemble EXPLORE 2 est à la baisse, de l’ordre de +30% en fin de siècle.
 
 2. L’incertitude totale sur la réponse en changement augmente (logiquement) au cours du temps. Les chaînes de modélisation proposent des réponses climatiques très différentes. Elles sont même en désaccord sur le signe du changement. En fin de siècle, la réponse climatique peut aller de -15% à +85%. 
 
 3. La variabilité interne est aussi assez importante. En début de siècle, c’est (logiquement) la seule source d’incertitude. Elle correspond à +/- 35% du débit annuel moyen pour la période de référence. Pour la chaîne de modélisation la plus forte en augmentation (+85% en fin de siècle), le débit annuel d’une année future particulière donnée en fin de siècle pourrait atteindre une augmentation +100% par rapport au débit moyen de référence. 
 
 
-```{r changercp, fig.height = 20/2.54/2, fig.cap="Changement relatif moyen (ligne) et incertitude (plage colorée) du module annuel de la Seine à Poses en fonction du scénario RCP considéré (référence 1990). L'incertitude fournie est calculée à partir de la variance avec un intervale de confiance 0.9 (quantiles 5/95%)."}
+```{r changercp, fig.height = 20/2.54/2, fig.cap="Changement relatif moyen (ligne) et incertitude (plage colorée) du module annuel de la Seine à Poses en fonction du scénario RCP considéré (référence 1990). L'incertitude fournie est calculée à partir de la variance avec un intervalle de confiance 0.9 (quantiles 5/95%)."}
 
 plt_change_rcp_time
 
@@ -221,9 +221,9 @@ Un dernier exemple de représentation est inspiré d’une représentation du ch
 
 **Eclairages : **
 
-1. On observe par exemple ici que si les RCP 2.6 et 4.5 sont plutôt en aaccord sur une augmentation du module annuel d'environ 20% en 2085, en RCP 8.5 cette augmentation est de l'ordre de 30%. Néanmoins l’incertitude liée à la dispersion des chaînes de modélisation est importante et les projections des 3 RCP se recoupent donc fortement, avec une incertitude liée à la dispersion des chaînes de modélisation en 2085 comprise entre -30 et +55% pour les 2 premiers et entre -20 et +75% pour le RCP 8.5.
+1. On observe par exemple ici que si les RCP 2.6 et 4.5 sont plutôt en accord sur une augmentation du module annuel d'environ 20% en 2085, en RCP 8.5 cette augmentation est de l'ordre de 30%. Néanmoins l’incertitude liée à la dispersion des chaînes de modélisation est importante et les projections des 3 RCP se recoupent donc fortement, avec une incertitude liée à la dispersion des chaînes de modélisation en 2085 comprise entre -30 et +55% pour les 2 premiers et entre -20 et +75% pour le RCP 8.5.
 
-2. on observe donc que dans notre exemple l'incertitude entre les chaînes de modélisation est bien plus importante que la dispersion entre les scénarios RCP.
+2. On note que dans notre exemple l'incertitude entre les chaînes de modélisation est bien plus importante que la dispersion entre les scénarios RCP.
 
 
 
@@ -231,7 +231,7 @@ Un dernier exemple de représentation est inspiré d’une représentation du ch
 
 # Représentations cartographiques
 
-```{r mapquanthoriz, fig.cap="Carte du changement relatif du module annuel de débit pour la France métropolitaine en RCP 8.5, par rapport à la référence 1990, à 3 horizons temporels: 2030, 2050 et 2085 (en lignes). En colonnes sont donnés la moyenne d'ensemble et l'intervalle de confiance 5/95% obtenus avec la méthode QUALYSPO. Cette intervalle de confiance prend en compte la dispersion entre les GCMS, les RCM et la variabilité résiduelle. Points à l'exutoire."}
+```{r mapquanthoriz, fig.cap="Carte du changement relatif du module annuel de débit pour la France métropolitaine en RCP 8.5, par rapport à la référence 1990, à 3 horizons temporels: 2030, 2050 et 2085 (en lignes). En colonnes sont donnés la moyenne d'ensemble et l'intervalle de confiance 5/95% obtenus avec la méthode QUALYPSO. Cette intervalle de confiance prend en compte la dispersion entre les GCMS, les RCM et la variabilité résiduelle. Points à l'exutoire."}
 
 map_quant_horiz
 
@@ -240,7 +240,7 @@ map_quant_horiz
 
 **Eclairages : **
 
-On observe une variation spatiale assez importante du signal de changement relatif du module annuel à l'échelle du territoire, avec des valeurs moyennes comprises entre environ entre -30% et +50% suivant la région, mais des transitions spatiales assez régulières. L'intervalle de confiance produit des valeurs d'environ -50% au Sud jusqu'à +100% au Nord en 2085. Plus l'horizon temporel est distant, plus le changement (positif ou négatif) est marqué et l'incertitude grande.
+On observe une variation spatiale assez importante du signal de changement relatif du module annuel à l'échelle du territoire, avec des valeurs moyennes comprises entre environ entre -30% et +50% suivant la région, mais des transitions spatiales assez régulières. L'intervalle de confiance produit des valeurs d'environ -50% au Sud jusqu'à +100% au Nord en 2085. Plus l'horizon temporel est distant, plus le changement (positif ou négatif) est marqué et l'incertitude est grande.
 
 
 ```{r mapiv, fig.cap="Carte de l'incertitude (écart-type) liée à la variabilité interne du module annuel de débit pour la France métropolitaine. Points à l'exutoire."}
@@ -251,7 +251,7 @@ map_iv
 
 **Eclairages : **
 
-1. La figure précédente montrait l'incertitude sur le signal de réponse au changement climatique, sans prise en compte de la variabilité interne du système climatique. Pour référence l'incertitude (écart-type) de cette variabilité est donné ici, afin de mettre en perspectives signaux de changements et variabilité interne.
+1. La figure précédente montrait l'incertitude sur le signal de réponse au changement climatique, sans prise en compte de la variabilité interne du système climatique. Pour référence l'incertitude (écart-type) de cette variabilité est donné ici, afin de mettre en perspective signaux de changements et variabilité interne.
 
 2. Cette incertitude est comprise entre 30 et 80% environ, avec un maximum sur le pourtour Méditerranéen.
 
@@ -265,7 +265,7 @@ map_gcmeff
 
 **Eclairages : **
 
-1. On représente cette fois les effets principaux de chaque GCM. Il est ainsi possible de voir que le modèle du CNRM a un effet principal très faible (sauf sur les Pyrénées) et produit donc des valeurs de module anneul très proches de la moyenne d'ensemble multi-modèles. A l'inverse, EC-EARTH produit des valeurs plus faibles que la moyenne dans le Nord. La dispersion des GCMs est très peu marquée sur un bande Nord-Ouest à Sud-Est où tous les GCMs ont des effets principaux très faibles.
+1. On représente cette fois les effets principaux de chaque GCM. Il est ainsi possible de voir que le modèle du CNRM a un effet principal très faible (sauf sur les Pyrénées) et produit donc des valeurs de module annuel très proches de la moyenne d'ensemble multi-modèles. A l'inverse, EC-EARTH produit des valeurs plus faibles que la moyenne dans le Nord. La dispersion des GCMs est très peu marquée sur un bande Nord-Ouest à Sud-Est où tous les GCMs ont des effets principaux très faibles.
 
 2. En chaque point la somme des effets est nulle par hypothèse de construction.
 
@@ -279,7 +279,7 @@ map_rcmeff
 
 **Eclairages : **
 
-On représente cette fois les effets principaux de chaque RCM. Le résultat marquant ici est une illustration de l'utilité d'étudier les effets principaux. On peut voir qu'avec notre sous-ensemble arbitraire d'EXPLORE 2 le RCM WRF381P a un effet principal particulièrement marqué sur le bassin Parisien. Il produit donc des modules annuels de débit environ 40% plus élevé que la moyenne d'ensemble. On a donc pu mettre en évidence (pour cet exemple arbitraire) un maillon de la chaîne de modélisation particulièrement intéressant à étudier en détail si l'intérêt de l'utilisateur se porte sur les fortes augmentations ou à retirer si ce dernier se porte sur des scénarios plus médians.
+On représente cette fois les effets principaux de chaque RCM. Le résultat marquant ici est une illustration de l'utilité d'étudier les effets principaux. On peut voir qu'avec notre sous-ensemble arbitraire d'EXPLORE 2 le RCM WRF381P a un effet principal particulièrement marqué sur le bassin Parisien. Il produit donc des modules annuels de débit environ 40% plus élevés que la moyenne d'ensemble. On a donc pu mettre en évidence (pour cet exemple arbitraire) un maillon de la chaîne de modélisation particulièrement intéressant à étudier en détail si l'intérêt de l'utilisateur se porte sur les fortes augmentations ou à retirer si ce dernier se porte sur des scénarios plus médians.
 
 ```{r mapgcmch, fig.height = 20/2.54/1.7, fig.cap="Carte des changements relatifs pour le module annuel de débit en fonction du GCM sur la France métropolitaine en 2050, par rapport à la référence 1990. Les valeurs sont les moyennes d'ensemble complet pour un GCM donné. Points à l'exutoire."}
 
