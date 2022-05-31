@@ -209,7 +209,7 @@ Pour chaque pas de temps,
 3. La variabilité interne est aussi assez importante. En début de siècle, c’est (logiquement) la seule source d’incertitude. Elle correspond à +/- 35% du débit annuel moyen pour la période de référence. Pour la chaîne de modélisation la plus forte en augmentation (+85% en fin de siècle), le débit annuel d’une année future particulière donnée en fin de siècle pourrait atteindre une augmentation +100% par rapport au débit moyen de référence. 
 
 
-```{r changercp, fig.height = 20/2.54/2, fig.cap="Changement relatif moyen (ligne) et incertitude (plage colorée) du module annuel de la Seine à Poses en fonction du scénario RCP considéré (référence 1990). L'incertitude fournie est calculée à partir de la variance avec un intervale de confiance 0.9 (quantiles 5/95%).s"}
+```{r changercp, fig.height = 20/2.54/2, fig.cap="Changement relatif moyen (ligne) et incertitude (plage colorée) du module annuel de la Seine à Poses en fonction du scénario RCP considéré (référence 1990). L'incertitude fournie est calculée à partir de la variance avec un intervale de confiance 0.9 (quantiles 5/95%)."}
 
 plt_change_rcp_time
 
@@ -224,3 +224,82 @@ Un dernier exemple de représentation est inspiré d’une représentation du ch
 1. On observe par exemple ici que si les RCP 2.6 et 4.5 sont plutôt en aaccord sur une augmentation du module annuel d'environ 20% en 2085, en RCP 8.5 cette augmentation est de l'ordre de 30%. Néanmoins l’incertitude liée à la dispersion des chaînes de modélisation est importante et les projections des 3 RCP se recoupent donc fortement, avec une incertitude liée à la dispersion des chaînes de modélisation en 2085 comprise entre -30 et +55% pour les 2 premiers et entre -20 et +75% pour le RCP 8.5.
 
 2. on observe donc que dans notre exemple l'incertitude entre les chaînes de modélisation est bien plus importante que la dispersion entre les scénarios RCP.
+
+
+
+\newpage
+
+# Représentations cartographiques
+
+```{r mapquanthoriz, fig.cap="Carte du changement relatif du module annuel de débit pour la France métropolitaine en RCP 8.5, par rapport à la référence 1990, à 3 horizons temporels: 2030, 2050 et 2085 (en lignes). En colonnes sont donnés la moyenne d'ensemble et l'intervalle de confiance 5/95% obtenus avec la méthode QUALYSPO. Cette intervalle de confiance prend en compte la dispersion entre les GCMS, les RCM et la variabilité résiduelle. Points à l'exutoire."}
+
+map_quant_horiz
+
+```
+
+
+**Eclairages : **
+
+On observe une variation spatiale assez importante du signal de changement relatif du module annuel à l'échelle du territoire, avec des valeurs moyennes comprises entre environ entre -30% et +50% suivant la région, mais des transitions spatiales assez régulières. L'intervalle de confiance produit des valeurs d'environ -50% au Sud jusqu'à +100% au Nord en 2085. Plus l'horizon temporel est distant, plus le changement (positif ou négatif) est marqué et l'incertitude grande.
+
+
+```{r mapiv, fig.cap="Carte de l'incertitude (écart-type) liée à la variabilité interne du module annuel de débit pour la France métropolitaine. Points à l'exutoire."}
+
+map_iv
+
+```
+
+**Eclairages : **
+
+1. La figure précédente montrait l'incertitude sur le signal de réponse au changement climatique, sans prise en compte de la variabilité interne du système climatique. Pour référence l'incertitude (écart-type) de cette variabilité est donné ici, afin de mettre en perspectives signaux de changements et variabilité interne.
+
+2. Cette incertitude est comprise entre 30 et 80% environ, avec un maximum sur le pourtour Méditerranéen.
+
+
+
+```{r mapgcmeff, fig.height = 20/2.54/1.7, fig.cap="Carte des effets principaux des GCMs pour le module annuel de débit sur la France métropolitaine en 2050, par rapport à la référence 1990. Points à l'exutoire."}
+
+map_gcmeff
+
+```
+
+**Eclairages : **
+
+1. On représente cette fois les effets principaux de chaque GCM. Il est ainsi possible de voir que le modèle du CNRM a un effet principal très faible (sauf sur les Pyrénées) et produit donc des valeurs de module anneul très proches de la moyenne d'ensemble multi-modèles. A l'inverse, EC-EARTH produit des valeurs plus faibles que la moyenne dans le Nord. La dispersion des GCMs est très peu marquée sur un bande Nord-Ouest à Sud-Est où tous les GCMs ont des effets principaux très faibles.
+
+2. En chaque point la somme des effets est nulle par hypothèse de construction.
+
+
+```{r maprcmeff, fig.cap="Carte des effets principaux des RCMs pour le module annuel de débit sur la France métropolitaine en 2050, par rapport à la référence 1990. Points à l'exutoire."}
+
+map_rcmeff
+
+```
+
+
+**Eclairages : **
+
+On représente cette fois les effets principaux de chaque RCM. Le résultat marquant ici est une illustration de l'utilité d'étudier les effets principaux. On peut voir qu'avec notre sous-ensemble arbitraire d'EXPLORE 2 le RCM WRF381P a un effet principal particulièrement marqué sur le bassin Parisien. Il produit donc des modules annuels de débit environ 40% plus élevé que la moyenne d'ensemble. On a donc pu mettre en évidence (pour cet exemple arbitraire) un maillon de la chaîne de modélisation particulièrement intéressant à étudier en détail si l'intérêt de l'utilisateur se porte sur les fortes augmentations ou à retirer si ce dernier se porte sur des scénarios plus médians.
+
+```{r mapgcmch, fig.height = 20/2.54/1.7, fig.cap="Carte des changements relatifs pour le module annuel de débit en fonction du GCM sur la France métropolitaine en 2050, par rapport à la référence 1990. Les valeurs sont les moyennes d'ensemble complet pour un GCM donné. Points à l'exutoire."}
+
+map_gcmchang
+
+```
+
+**Eclairages : **
+
+1. La représentation des effets principaux a l'avantage d'isoler facilement les modèles les plus divergents, mais peut être trompeuse, ne prenant pas en compte le signe du changement moyen. On a donc représenté ici le changement moyen de chaque GCM.
+
+2. Cette figure permet de mettre en évidence que si le changement moyen produit par EC-EARTH est assez faible et continu sur toute la France, il existe un fort contraste Nord-Sud sur les changements relatifs prédits par le modèle de l'IPSL, avec une diminution dans la zone Pyrénéenne et une augmentation dans le Nord.
+
+
+```{r maprcmch, fig.cap="Carte des changements relatifs pour le module annuel de débit en fonction du RCM sur la France métropolitaine en 2050, par rapport à la référence 1990. Les valeurs sont les moyennes d'ensemble complet pour un RCM donné. Points à l'exutoire."}
+
+map_rcmchang
+
+```
+
+**Eclairages : **
+
+On retrouve le changement positif marqué de WRF381P. Mais cette nouvelle représentation permet d'illustrer que même si les autres modèles présentent des effets principaux relativement négatifs, le changement associé peut être positif (RACMO22E dans le Nord par exemple).

@@ -336,6 +336,29 @@ plt_change_rcp_time=plt_change_rcp_time+
   labs(title=NULL)+
   theme(axis.title.x = element_blank())
 
+
+###############################################
+## Maps
+
+map_iv=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = 2085,pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
+map_iv=map_iv+
+  labs(title=NULL)
+map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = NA)
+map_quant_horiz=map_quant_horiz+
+  labs(title=NULL)
+map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
+map_rcmeff=map_rcmeff+
+  labs(title=NULL)
+map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA,bin_col = 5)
+map_gcmeff=map_gcmeff+
+  labs(title=NULL)
+map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
+map_rcmchang=map_rcmchang+
+  labs(title=NULL)
+map_gcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
+map_gcmchang=map_gcmchang+
+  labs(title=NULL)
+
 ##########
 #MARKDOWN#
 ##########
