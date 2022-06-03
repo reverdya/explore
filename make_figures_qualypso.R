@@ -113,24 +113,35 @@ for (i in 1:length(lst_indic)){
   pred_unit=""
   horiz=2085
   horiz3=c(2030,2050,2085)
-  map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-  map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=10)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
-
+  if(lst_indic[i]=="log10VCN10"){
+    freq_col=0.9
+    bin_col=100
+  }else{
+    freq_col=0.99
+    bin_col=20
+  }
+  map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  if(lst_indic[i]=="log10VCN10"){
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=50,freq_col=freq_col)
+  }else{
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=10,freq_col=freq_col)
+  }
+  
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_3rcp_lm.RData"))
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_2rcp_lm.RData"))
-  map_3quant_1.5_2_2.5_degC(lst.QUALYPSOOUT3 = lst.QUALYPSOOUT_temp_3rcp,lst.QUALYPSOOUT2 = lst.QUALYPSOOUT_temp_2rcp,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
+  map_3quant_1.5_2_2.5_degC(lst.QUALYPSOOUT3 = lst.QUALYPSOOUT_temp_3rcp,lst.QUALYPSOOUT2 = lst.QUALYPSOOUT_temp_2rcp,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
 
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
-  map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT_time,horiz=2085,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out)
+  map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT_time,horiz=2085,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
 }
 
 
@@ -177,6 +188,7 @@ for ( i in 1:length(paths)){
 years=mat_Globaltas_gcm$year
 mat_Globaltas_gcm=data.frame(apply(mat_Globaltas_gcm,MARGIN = 2,function(x) smooth.spline(x=years,y=x,spar = 1)$y))
 mat_Globaltas_gcm$year=years
+stock=mat_Globaltas_gcm
 
 data=gather(mat_Globaltas_gcm,key = "chain",value = "val",-year)
 data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
@@ -193,6 +205,39 @@ plt=ggplot(data)+
   scale_linetype_discrete("GCM")+
   ggtitle("Changement de température planetaire pour les différents RCP/GCM\npar rapport a la référence 1861-1900")
 save.plot(plt,Filename = "global_tas_1861",Folder = path_fig,Format = "jpeg")
+
+
+###################################################
+## Plot crossing date
+
+idx=vector(mode = "list")
+temp_ref=c(1,1.5,2,3,4,5)
+for(temp in temp_ref){
+  #stock is variable from previous chunk
+  idx[[as.character(temp)]]=apply(stock,MARGIN=2,function(x) min(which(x>=temp)))[-1]#-1 for year
+}
+
+idx=data.frame(do.call(rbind, idx))
+idx[idx==Inf]=NA
+idx=data.frame(apply(idx,MARGIN=2,function(x) stock$year[x]))
+idx$temp=temp_ref
+data=gather(idx,key = "chain",value = "val",-temp)
+data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
+
+
+plt=ggplot(data)+
+  geom_boxplot(aes(x=val,y=factor(temp),fill=rcp),alpha=0.7)+
+  geom_point(aes(x=val,y=factor(temp),fill=rcp), position = position_jitterdodge(jitter.width = 0.2),size=2,alpha=0.5)+
+  xlab("")+
+  ylab("Changement de température planétaire (deg C)")+
+  theme_bw(base_size = 18)+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+  scale_x_continuous(breaks=seq(2000,2100,20))+
+  scale_fill_discrete("",type = as.vector( col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+  guides(fill=guide_legend(reverse=TRUE))+
+  ggtitle("Première année de franchissement des seuils\nde changement de température planétaire\npour les différents RCP (et GCMs) (référence 1861-1900)")
+save.plot(plt,Filename = "dat_threshold_temp",Folder = path_fig,Format = "jpeg")
 
 ###########################################################################################################################
 ## Scatter plot global temperature (smoothed or not) VS yearly mean discharge for reference watersheds (smoothed or not)
