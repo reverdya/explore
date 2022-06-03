@@ -971,7 +971,7 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
+map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -1013,8 +1013,8 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   names(quant.labs) <- quant
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=0.99)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=0.01))
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
   lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
@@ -1048,7 +1048,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
+map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
 
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==rcp_name)
@@ -1089,8 +1089,8 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   names(quant.labs) <- quant
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=0.99)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=0.01))
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
   lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
@@ -1126,7 +1126,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
+map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
   
   quant=c("5%","mean","95%")
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
@@ -1177,8 +1177,8 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
   names(quant.labs) <- quant
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=0.99)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=0.01))
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
   lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
@@ -1216,7 +1216,7 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
+map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
   
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
@@ -1250,8 +1250,8 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
   colnames(exut)=c("Num_ordre_Modcou","y","x","idx","effs","val")
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=0.99)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=0.01))
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
   lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
@@ -1302,7 +1302,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
+map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
   
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
@@ -1340,8 +1340,8 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   
   plt=base_map_outlets(data = exut,val_name = "val")
   if(vartype=="mean"){
-    q99pos=quantile(exut$val[exut$val>=0],probs=0.99)
-    q99neg=abs(quantile(exut$val[exut$val<=0],probs=0.01))
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
     lim_col=max(q99pos,q99neg)
     lim_col=round(lim_col/bin_col)*bin_col
     plt=plt+
@@ -1349,21 +1349,21 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
       ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))
   }
   if(vartype=="vartot"){
-    q99=quantile(exut$val,probs=0.99)
+    q99=quantile(exut$val,probs=freq_col)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
       scale_fill_gradientn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       ggtitle(paste0("Incertitude liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="incert"){
-    q99=quantile(exut$val,probs=0.99)
+    q99=quantile(exut$val,probs=freq_col)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
       scale_fill_gradientn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       ggtitle(paste0("Incertitude liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="varint"){
-    q99=quantile(exut$val,probs=0.99)
+    q99=quantile(exut$val,probs=freq_col)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
       scale_fill_gradientn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
@@ -1371,7 +1371,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   }
   
   if(vartype=="varres"){
-    q99=quantile(exut$val,probs=0.99)
+    q99=quantile(exut$val,probs=freq_col)
     lim_col=round(q99/bin_col)*bin_col
     plt=plt+
       scale_fill_gradientn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
@@ -1396,7 +1396,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
 ## scale_col the level of deformation of the color scale
 ## bin_col the break levels for the color scale
 
-map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20){
+map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -1436,8 +1436,8 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   names(quant.labs) <- quant
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=0.99)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=0.01))
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
   lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
