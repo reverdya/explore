@@ -243,6 +243,10 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
           guides(color = guide_legend(override.aes = list(size = 1.7)))+
           facet_wrap(vars(gcm))+
           theme(panel.spacing.x = unit(2, "lines"))
+        if(lst_indic[i]=="log10VCN10"){
+          plt=plt+
+            scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
+        }
         if(SPAR==1){
           save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
           }else{#just to ease file sorting
@@ -409,6 +413,10 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
           guides(color = guide_legend(override.aes = list(size = 1.7)))+
           facet_wrap(vars(gcm))+
           theme(panel.spacing.x = unit(2, "lines"))
+        if(lst_indic[i]=="log10VCN10"){
+          plt=plt+
+            scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
+        }
         if(SPAR==1){
           save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_temp/"),Format = "jpeg")
         }else{#just to ease file sorting
