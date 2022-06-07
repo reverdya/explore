@@ -435,6 +435,67 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
   }
 }
 
+###############################################################################################
+## Plot spline for all models and selection of watersheds (color by RCP )for temperature
+
+tmp=format_global_tas(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year)
+mat_Globaltas=tmp[[1]]
+
+##Merge data frame warnings are okay
+SPAR=1.2
+for (i in 1:length(lst_indic)){# for each indicator
+  clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
+  dir.create(paste0(path_fig,lst_indic[i],"/plot_chains_temp_compare_rcp/"))
+  for(c in 1:nrow(simu_lst)){# for each chain
+    
+    load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
+    res=res[,c(1,select_stations$idx+1)]
+    res=res[res$year>=first_full_year&res$year<=last_full_year,]
+    zz = !is.na(res[,2])
+    res_spline=res
+    tas=mat_Globaltas[c,]
+    for(j in 2:ncol(res)){
+      res_spline[zz,j]=smooth.spline(x=tas,y=res[zz,j],spar = SPAR)$y
+    }
+    res_spline=res_spline[,-1]
+    res_spline$tas=tas
+    clim_resp_spline[[c]]=res_spline
+  }
+  
+  for (w in 1:(ncol(clim_resp_spline[[1]])-1)){
+      
+      spline=clim_resp_spline[[1]][,c(w,ncol(clim_resp_spline[[1]]))]
+      for (R in 2:length(clim_resp_spline)){
+        spline=merge(spline,clim_resp_spline[[R]][,c(w,ncol(clim_resp_spline[[1]]))],by="tas",all=T)
+        ## Warnings okay
+      }
+      colnames(spline)[-1]=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
+      spline=gather(spline,key = "model",value = "val",-tas)
+      data=spline
+      data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
+      data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
+      data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[3]))
+      data=data[!is.na(data$val),]
+      
+      plt=ggplot(data)+#Warnings okay
+        geom_line(aes(x=tas,y=val,color=rcp,group=model),size=1)+
+        scale_color_discrete("",type = as.vector(col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+        theme_bw(base_size = 18)+
+        theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+        theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+        ggtitle(paste0("Réponse climatique de ",name_indic[i]," en fonction de la température\n(",select_stations$Nom_complet[w],")"))+
+        scale_x_continuous("Température (°C)")+
+        scale_y_continuous(paste0("Réponse climatique ( ",units[i]," )"))+
+        guides(color = guide_legend(override.aes = list(size = 1.7)))
+      if(lst_indic[i]=="log10VCN10"){
+        plt=plt+
+          scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
+      }
+     save.plot(plt,Filename = paste0(lst_indic[i],"rep_clim_temp",select_stations$Nom[w]),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_temp_compare_rcp/"),Format = "jpeg")
+  }
+}
+
+
 #################################################################################################################################
 ## Percentage of discharge value <0.001 (m3/s,days...)  and of outliers (chain of worst case for each basin) in indicators
 
