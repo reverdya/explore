@@ -7,7 +7,7 @@ library(ggplot2) #plots
 library(ncdf4) #netcdf
 library(tictoc) #runtime
 library(lubridate) #date management
-# git submodule update --remote # in terminal
+# git submodule update --remote --merge # in terminal
 # install.packages(paste0(getwd(),"/QUALYPSO/"), repos = NULL, type="source")
 library(QUALYPSO) #Qualypso
 library(parallel) #detectCores
