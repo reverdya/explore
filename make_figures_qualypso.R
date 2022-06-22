@@ -268,7 +268,7 @@ for (i in 1:nrow(select_stations)){
   plt=ggplot(data)+
     geom_point(aes(x=tas,y=q,col="raw"),size=0.7,alpha=0.6)+
     geom_point(aes(x=tas_spline,y=q_spline,col="spline"),size=0.7,alpha=0.6)+
-    scale_color_manual("",values = c("raw"=ipcc_2col[1],"spline"=ipcc_2col[2]),labels=c("Brut","Spline"))+
+    scale_color_manual("",values = c("raw"=ipcc_6col[1],"spline"=ipcc_6col[2]),labels=c("Brut","Spline"))+
     xlab("Changement de température planétaire (deg C)")+
     ylab("Module annuel")+
     theme_bw(base_size = 18)+
