@@ -97,7 +97,11 @@ for (i in 1:length(lst_indic)){# for each indicator
     #spline
     res_spline=res
     for(j in 2:ncol(res)){
-      res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = spar)$y
+      if(lst_indic[i]=="VCN10"){
+        res_spline[zz,j]=10^smooth.spline(x=vecYears,y=log10(res[zz,j]),spar = 1.1)$y
+      }else{
+        res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = 1.1)$y
+      }
       if(typeChangeVar=='abs'){
         res_spline[zz,j]=res_spline[zz,j]-res_spline[which(res_spline[,1]==centr_ref_year),j]
       }else if(typeChangeVar=='rel'){
@@ -201,7 +205,11 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
       #spline
       res_spline=res
       for(j in 2:ncol(res)){
-        res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = SPAR)$y
+        if(lst_indic[i]=="VCN10"){
+          res_spline[zz,j]=10^smooth.spline(x=vecYears,y=log10(res[zz,j]),spar = SPAR)$y
+        }else{
+          res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = SPAR)$y
+        }
       }
       colnames(res)[1]="year"
       colnames(res_spline)[1]="year"
@@ -243,10 +251,10 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
           guides(color = guide_legend(override.aes = list(size = 1.7)))+
           facet_wrap(vars(gcm))+
           theme(panel.spacing.x = unit(2, "lines"))
-        if(lst_indic[i]=="log10VCN10"){
-          plt=plt+
-            scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
-        }
+        # if(lst_indic[i]=="log10VCN10"){
+        #   plt=plt+
+        #     scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
+        # }
         if(SPAR==1){
           save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
           }else{#just to ease file sorting
@@ -291,7 +299,11 @@ for (i in 1:length(lst_indic)){# for each indicator
     Y=t(do.call(cbind,ClimateProjections))
     nS=nrow(simu_lst)
     X=seq(first_full_year,last_full_year)
-    clim_resp=fit.climate.response(Y=Y,spar=SPAR,Xmat=matrix(rep(X,nS),byrow=T,nrow=nS,ncol=length(X)),Xref=rep(1990,nS),Xfut=X,typeChangeVariable = "rel")
+    if(lst_indic[i]=="VNC10"){
+      clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "rel",spar = rep(1.1,nrow(simu_lst)),type = "log_spline")
+    }else{
+      clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "rel",spar = rep(1.1,nrow(simu_lst)),type = "spline")
+    }
     raw=data.frame(t(clim_resp$phiStar+clim_resp$etaStar))*100
     colnames(raw)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
     raw$year=X
@@ -525,3 +537,4 @@ for (i in 1:length(lst_indic)){# for each indicator
   save.plot(plt2,Filename = paste0(lst_indic[i],"_percout"),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
   
 }
+
