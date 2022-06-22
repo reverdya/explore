@@ -171,6 +171,11 @@ path_fr="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/IGN/contours_FR/gadm36_
 river=read_shp(path_river)
 fr=read_shp(path_fr)
 
+data(wrld_simpl)
+options(warn=-1)
+wrld <- fortify(wrld_simpl)
+options(warn=0)
+
 base_map_outlets=function(data,val_name){
   plt=ggplot(data=data)+
     geom_polygon(data=fr,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.5)+
@@ -193,15 +198,28 @@ base_map_outlets=function(data,val_name){
 
 #For continuous variable requiring good distinction
 yellow_blue_5=c(rgb(255,255,204,maxColorValue=255),rgb(161,218,180,maxColorValue=255),rgb(65,182,196,maxColorValue=255),rgb(44,127,184,maxColorValue=255),rgb(37,52,148,maxColorValue=255))
+
 #For Precipitation
 precip_5=c(rgb(166,97,26,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(1,133,113,maxColorValue=255))
+
 #For température
+temp_11=c(rgb(103,0,31,maxColorValue=255),rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),rgb(244,165,30,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255),rgb(5,48,97,maxColorValue=255))
+temp_10=c(rgb(103,0,31,maxColorValue=255),rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),rgb(244,165,30,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255),rgb(5,48,97,maxColorValue=255))
+temp_9=c(rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),rgb(244,165,30,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
+temp_8=c(rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),rgb(244,165,30,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
+temp_7=c(rgb(178,24,43,maxColorValue=255),rgb(239,138,98,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(103,169,207,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
+temp_6=c(rgb(178,24,43,maxColorValue=255),rgb(239,138,98,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(103,169,207,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
 temp_5=c(rgb(202,0,32,maxColorValue=255),rgb(244,165,130,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(5,113,176,maxColorValue=255))
+temp_5=c(rgb(202,0,32,maxColorValue=255),rgb(244,165,130,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(5,113,176,maxColorValue=255))
+
 #For rcp
-col_3rcp=c("#0000FF","#79BCFF","#FF0000")
+col_3rcp=c(rgb(0,52,102,maxColorValue=255),rgb(112,160,205,maxColorValue=255),rgb(153,0,2,maxColorValue=255))
 names(col_3rcp)=c("rcp2.6","rcp4.5","rcp8.5")
-#For 2 plot or line charts
-ipcc_2col=c(rgb(0,0,0,maxColorValue=255),rgb(112,160,205,maxColorValue=255))
+col_3rcp_shade=c(rgb(67,147,195,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(252,209,197,maxColorValue=255))
+
+#For line charts
+ipcc_6col=c(rgb(0,0,0,maxColorValue=255),rgb(112,160,205,maxColorValue=255),rgb(196,121,0,maxColorValue=255),rgb(178,178,178,maxColorValue=255),rgb(0,52,102,maxColorValue=255),rgb(0,79,0,maxColorValue=255))
+
 
 # for variance partition
 col_7var=rev(viridis(7))
@@ -1533,5 +1551,119 @@ plot_bv_areas=function(folder_out){
   }else{
     save.plot(plt,Filename = "superficie_bv",Folder = folder_out,Format = "jpeg")
   }
+  
+}
+
+
+
+#############################################################
+## Prepare specific climate response for QUALYPSO
+## Y the nS x nY or nG x nS x nY indicator
+## X the predictor (vector or same size as Y)
+## Xref the reference value (or vector)
+## typeChangeVariable "rel" or "abs"
+## spar the spline smoothing in case of spline (vector of  size nS)
+## type the type of smoothing applied: spline (classic but can pick each spar, log_spline (log transform, spline , then unlog)
+
+
+prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
+  
+  # dimensions
+  d = dim(Y)
+  if(length(d)==3){
+    # Y is an array: GridPoints x Scenario x Time
+    nG = d[1]
+    nS = d[2]
+    nY = d[3]
+  }else{
+    # Y is a matrix: Scenario x Time
+    nS = nrow(Y)
+    nY = ncol(Y)
+  }
+  if(is.vector(X)){
+    if(nY!=length(X)){
+      stop('if X is provided as a vector, its length must equal the number of columns of Y')
+    }else{
+      # repeat the vector to obtain a matrix
+      Xmat = matrix(rep(X,nS),byrow=T,nrow=nS,ncol=nY)
+    }
+  }else if(is.matrix(X)){
+    if(any(dim(X)!=dim(Y))){
+      stop('if X is provided as a matrix, its size must match the size of Y')
+    }else{
+      Xmat = X
+    }
+  }else{
+    stop('X must be a vector or a matrix')
+  }
+  # if Xref is provided, we check that is a single value within the values of X
+  if(!any(length(Xref)==c(1,nS))|!is.numeric(Xref)){
+    stop('Xref must be a single numeric value or a vector of length nS')
+  }
+  # recycle Xref if it is a single value
+  if(length(Xref)==1){
+    Xref = rep(Xref,nS)
+  }
+  # number of future time/global.tas
+  nFut = length(Xfut)
+  
+  
+  # prepare outputs
+  phiStar = phi = matrix(nrow=nS,ncol=nFut)
+  etaStar = matrix(nrow=nS,ncol=nY)
+  climateResponse = list()
+  for(iS in 1:nS){
+    # projection for this simulation chain
+    Ys = Y[iS,]
+    Xs = Xmat[iS,]
+    Xrefs = Xref[iS]
+    # fit a smooth signal
+    zz = !is.na(Ys)
+    
+    if(type=="spline"){
+      smooth.spline.out<-stats::smooth.spline(Xs[zz],Ys[zz],spar=spar[iS])
+      # store spline object
+      climateResponse[[iS]] = smooth.spline.out
+      # fitted responses at the points of the fit (for etaStar)
+      phiY = predict(smooth.spline.out, Xs)$y
+      # fitted responses at unknown points ("Xfut")
+      phiS = predict(smooth.spline.out, Xfut)$y
+      # climate response of the reference/control time/global tas
+      phiC = predict(smooth.spline.out, Xrefs)$y
+    }
+    if(type=="log_spline"){
+      Yslog10=log10(Ys)
+      smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
+      # store spline object
+      climateResponse[[iS]] = smooth.spline.out
+      # fitted responses at the points of the fit (for etaStar)
+      phiY = 10^predict(smooth.spline.out, Xs)$y
+      # fitted responses at unknown points ("Xfut")
+      phiS = 10^predict(smooth.spline.out, Xfut)$y
+      # climate response of the reference/control time/global tas
+      phiC = 10^predict(smooth.spline.out, Xrefs)$y
+    }
+
+    # store climate response for this simulation chain
+    phi[iS,] = phiS
+    # Climate change response: phiStar, and internal variability expressed as a change: etaStar
+    if(typeChangeVariable=='abs'){
+      # Eq. 5
+      phiStar[iS,] = phiS-phiC
+      etaStar[iS,] = Ys-phiY
+    }else if(typeChangeVariable=='rel'){
+      # Eq. 6
+      phiStar[iS,] = phiS/phiC-1
+      etaStar[iS,] = (Ys-phiY)/phiC
+    }else{
+      stop("fit.climate.response: argument type.change.var must be equal to 'abs' (absolute changes) or 'rel' (relative changes)")
+    }
+  }
+  # Variance related to the internal variability: considered constant over the time period
+  # (see Eq. 22 and 23 in Hingray and Said, 2014). We use a direct empirical estimate
+  # of the variance of eta for each simulation chain and take the mean, see Eq. 19
+  varInterVariability = mean(apply(etaStar,2,function(x) var(x)),na.rm=T)
+  # return objects
+  return(list(phiStar=phiStar,etaStar=etaStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability))
   
 }
