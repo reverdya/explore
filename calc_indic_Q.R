@@ -46,7 +46,7 @@ period_agreg=c("date","year","season","month") #different periods of aggregation
 ###########################################
 ## Make list of calculated variables
 
-lst_indic=c("Q_mean_year","Q_q95_year","log10VCN10")
+lst_indic=c("Q_mean_year","Q_q95_year","VCN10")
 name_indic=c("Module annuel du débit","Q95 annuel du débit","log(VCN10)")
 save(lst_indic,name_indic,file=paste0(path_data,"processed/lst_indic.Rdata"))
 load(file=paste0(path_data,"processed/lst_indic.Rdata"))
@@ -76,7 +76,7 @@ for (v in var){
   }
 }
 simu_lst=data.frame(simu_lst)
-simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMI have been signaled as identical
+simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
 simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
 save(simu_lst,file=paste0(path_data,"processed/simu_lst.Rdata"))
 
@@ -161,10 +161,10 @@ calc_indic=function(chain,indic_name,stat,agreg_day){
     if(agreg_day[j]==1){
       res=st(data)
     }
-    if(indic_name[j]=="log10VCN10"){
-      res[res==0]=1e-40 #to allow use of res
-      res[,!colnames(res) %in% "year"]=log10(res[,!colnames(res) %in% "year"])
-    }
+    # if(indic_name[j]=="log10VCN10"){
+    #   res[res==0]=1e-40 #to allow use of res
+    #   res[,!colnames(res) %in% "year"]=log10(res[,!colnames(res) %in% "year"])
+    # }
     if(any(is.na(res))){
       print(i)
       print(j)
@@ -200,7 +200,8 @@ vcn10_day=function(data){aggregate(data[,-which(colnames(data) %in% period_agreg
 tic()
 
 for (i in 1:nrow(simu_lst)){
-  calc_indic(chain=simu_lst[i,],indic_name=lst_indic,stat = list(mean_year,q95_year,vcn10,vcn10_day),agreg_day=c(1,1,10,10))
+  #calc_indic(chain=simu_lst[i,],indic_name=lst_indic,stat = list(mean_year,q95_year,vcn10),agreg_day=c(1,1,10))
+  calc_indic(chain=simu_lst[i,],indic_name=lst_indic[3],stat = list(vcn10),agreg_day=c(10))
   print(simu_lst[i,])
 }
 
