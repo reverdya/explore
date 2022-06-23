@@ -197,9 +197,15 @@ base_map_outlets=function(data,val_name){
 ##IPCC colors and others
 
 #For continuous variable requiring good distinction
-yellow_blue_5=c(rgb(255,255,204,maxColorValue=255),rgb(161,218,180,maxColorValue=255),rgb(65,182,196,maxColorValue=255),rgb(44,127,184,maxColorValue=255),rgb(37,52,148,maxColorValue=255))
+ipcc_yelblue_5=c(rgb(255,255,204,maxColorValue=255),rgb(161,218,180,maxColorValue=255),rgb(65,182,196,maxColorValue=255),rgb(44,127,184,maxColorValue=255),rgb(37,52,148,maxColorValue=255))
 
 #For Precipitation
+precip_11=c(rgb(84,48,5,maxColorValue=255),rgb(140,81,10,maxColorValue=255),rgb(191,129,45,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(246,232,195,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(199,234,229,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(53,151,143,maxColorValue=255),rgb(1,102,94,maxColorValue=255),rgb(0,60,48,maxColorValue=255))
+precip_10=c(rgb(84,48,5,maxColorValue=255),rgb(140,81,10,maxColorValue=255),rgb(191,129,45,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(246,232,195,maxColorValue=255),rgb(199,234,229,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(53,151,143,maxColorValue=255),rgb(1,102,94,maxColorValue=255),rgb(0,60,48,maxColorValue=255))
+precip_9=c(rgb(140,81,10,maxColorValue=255),rgb(191,129,45,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(246,232,195,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(199,234,229,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(53,151,143,maxColorValue=255),rgb(1,102,94,maxColorValue=255))
+precip_8=c(rgb(140,81,10,maxColorValue=255),rgb(191,129,45,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(246,232,195,maxColorValue=255),rgb(199,234,229,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(53,151,143,maxColorValue=255),rgb(1,102,94,maxColorValue=255))
+precip_7=c(rgb(140,81,10,maxColorValue=255),rgb(216,179,101,maxColorValue=255),rgb(246,232,195,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(199,234,229,maxColorValue=255),rgb(90,180,172,maxColorValue=255),rgb(1,102,94,maxColorValue=255))
+precip_6=c(rgb(140,81,10,maxColorValue=255),rgb(216,179,101,maxColorValue=255),rgb(246,232,195,maxColorValue=255),rgb(199,234,229,maxColorValue=255),rgb(90,180,172,maxColorValue=255),rgb(1,102,94,maxColorValue=255))
 precip_5=c(rgb(166,97,26,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(1,133,113,maxColorValue=255))
 
 #For température
