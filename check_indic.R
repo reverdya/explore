@@ -148,7 +148,7 @@ for (i in 1:length(lst_indic)){# for each indicator
   data$pv=apply(resid[20,,],MARGIN = 1,function(x) shapiro.test(x)$p.value )#Shapiro-Wilk (p<0.05 distribution not normal)) for last year
   data$skew=apply(resid[20,,],MARGIN = 1,function(x) skewness(x) )#skewness of residuals for last year
   plt1=base_map_outlets(data,"pv")+
-    scale_fill_stepsn("P-value",colours=yellow_blue_5,limits=c(0.05,1),breaks=c(0.05,0.2,0.4,0.6,0.8,1),na.value = "grey",oob=oob_censor)+#oob_censor puts <0.05 as NA
+    scale_fill_stepsn("P-value",colours=ipcc_yelblue_5,limits=c(0.05,1),breaks=c(0.05,0.2,0.4,0.6,0.8,1),na.value = "grey",oob=oob_censor)+#oob_censor puts <0.05 as NA
     ggtitle(paste0(lst_indic[i]," ( ",last_full_year_smooth ," )\nShapiro-Wilk normality test (grey is < 0.05 and non-normal)"))
   save.plot(plt1,Filename = paste0(lst_indic[i],"_shapiro-pv-resid"),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
   plt2=base_map_outlets(data,"skew")+
@@ -241,7 +241,7 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         plt=ggplot(data)+#Warnings okay
           geom_line(aes(x=year,y=val,size=type,color=rcm))+
           scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur","Réponse climatique"))+
-          scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
+          scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+# keep these colors because need 8
           theme_bw(base_size = 18)+
           theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
           theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -528,11 +528,11 @@ for (i in 1:length(lst_indic)){# for each indicator
   data$perc_out=apply(perc_out,MARGIN = 2,function(x) max(x) )#worst case
   
   plt1=base_map_outlets(data,"perc_0001")+
-    scale_fill_gradientn("Values <0.001 (%)",colors=parula(100),limits=c(0,25),oob=oob_squish)+
+    scale_fill_stepsn("Values <0.001 (%)",colors=ipcc_yelblue_5,limits=c(0,10),oob=oob_squish)+
     ggtitle(paste0("Percentage of values <0.001 for ",lst_indic[i],"\n(worst chain for each watershed)"))
   save.plot(plt1,Filename = paste0(lst_indic[i],"_perc0001"),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
   plt2=base_map_outlets(data,"perc_out")+
-    scale_fill_gradientn("Outliers (%)",colors=parula(100),limits=c(0,25),oob=oob_squish)+
+    scale_fill_stepsn("Outliers (%)",colors=ipcc_yelblue_5,limits=c(0,10),oob=oob_squish)+
     ggtitle(paste0("Percentage of outliers (from tsoutliers) for ",lst_indic[i],"\n(worst chain for each watershed)"))
   save.plot(plt2,Filename = paste0(lst_indic[i],"_percout"),Folder = paste0(path_fig,lst_indic[i],"/"),Format = "jpeg")
   
