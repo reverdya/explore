@@ -290,14 +290,10 @@ for (i in 1:length(lst_indic2)){
     exut$val=unlist(lapply(lst.QUALYPSOOUT, function(x) mean(x$CLIMATEESPONSE$phi[,which(x$Xfut==ref_year)])))
     colnames(exut)=c("Num_ordre_Modcou","y","x","val")
     
-    q995=quantile(exut$val[exut$val>=0],probs=0.995)
-    lim_col=q995
-    lim_col=round(lim_col/25)*25#arrondi au bin_col[i] le plus proche
-    
     plt=base_map_outlets(data = exut,val_name = "val")
     plt=plt+
       #scale_fill_gradientn("",colours = rescale_col(brewer.blues(100),exut$val,scale_col),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col[i]),oob=squish,labels=c(seq(0,lim_col-bin_col[i],bin_col[i]),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",trans="log10")+#that way because stepsn deforms colors
       ggtitle(paste0("Valeurs de référence (1990) du ",name_indic2[i],"\n(moyenne des fonctions de réponse disponibles)"))
     save.plot(plt,Filename = paste0("ref1990_response_",lst_indic2[i]),Folder = path_fig,Format = "jpeg")
 }

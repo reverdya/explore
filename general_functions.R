@@ -1081,7 +1081,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    save.plot(plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
   }
 }
 
@@ -1156,7 +1156,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name),Folder = folder_out,Format = "jpeg")
   }
 
 
@@ -1243,7 +1243,7 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_2.5_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_2.5"),Folder = folder_out,Format = "jpeg")
   }
     
   
@@ -1316,7 +1316,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
     if (is.na(folder_out)){
       return(plt)
     }else{
-      save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+      save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
     }
        
   }else{
@@ -1330,7 +1330,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
     if (is.na(folder_out)){
       return(plt)
     }else{
-      save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+      save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
     }
     
   }
@@ -1402,7 +1402,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     lim_col=round(q99/25)*25
     plt=plt+
       #scale_fill_stepsn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Incertitude liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="incert"){
@@ -1410,7 +1410,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     lim_col=round(q99/25)*25
     plt=plt+
       #scale_fill_stepsn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Incertitude liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="varint"){
@@ -1418,7 +1418,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     lim_col=round(q99/25)*25
     plt=plt+
       #scale_fill_stepsn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Incertitude liée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   
@@ -1427,13 +1427,13 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     lim_col=round(q99/25)*25
     plt=plt+
       #scale_fill_stepsn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Incertitude liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
   }
   
 }
@@ -1505,7 +1505,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz,"_scale-col",scale_col),Folder = folder_out,Format = "jpeg")
+    save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz),Folder = folder_out,Format = "jpeg")
   }
 }
 
