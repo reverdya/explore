@@ -180,7 +180,7 @@ base_map_outlets=function(data,val_name){
   plt=ggplot(data=data)+
     geom_polygon(data=fr,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.5)+
     geom_path(data=river,aes(x=long,y=lat,group=group),colour="gray70",size=0.3)+
-    geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21)+
+    geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21,stroke=0.5)+
     coord_equal(ratio=111/78,xlim = c(-6, 9.75),ylim = c(41.25,52),expand=F)+## ratio of 1lat by 1long at 45N
     scale_x_continuous("")+
     scale_y_continuous("")+
@@ -191,6 +191,30 @@ base_map_outlets=function(data,val_name){
     theme(strip.text = element_text(size = 12, face = "bold"))+
     guides(fill = guide_colourbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   return(plt)
+}
+
+#########################################
+## CMYK to RGB colors
+#' assumes integer input for CMYK
+#' 
+cmyk <- function(C,M,Y,K) {
+  C <- C / 100.0
+  M <- M / 100.0
+  Y <- Y / 100.0
+  K <- K / 100.0
+  n.c <- (C * (1-K) + K)
+  n.m <- (M * (1-K) + K)  
+  n.y <- (Y * (1-K) + K)
+  r.col <- ceiling(255 * (1-n.c))
+  g.col <- ceiling(255 * (1-n.m))
+  b.col <- ceiling(255 * (1-n.y))
+  tmp=col2rgb(sprintf("#%02s%02s%02s",
+                         as.hexmode(r.col), 
+                         as.hexmode(g.col), 
+                         as.hexmode(b.col)))
+  tmp=as.vector(tmp)
+  return(rgb(tmp[1],tmp[2],tmp[3],maxColorValue=255))
+  
 }
 
 ##########################################
@@ -209,10 +233,10 @@ precip_6=c(rgb(140,81,10,maxColorValue=255),rgb(216,179,101,maxColorValue=255),r
 precip_5=c(rgb(166,97,26,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(1,133,113,maxColorValue=255))
 
 #For température
-temp_11=c(rgb(103,0,31,maxColorValue=255),rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),rgb(244,165,30,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255),rgb(5,48,97,maxColorValue=255))
-temp_10=c(rgb(103,0,31,maxColorValue=255),rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),rgb(244,165,30,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255),rgb(5,48,97,maxColorValue=255))
-temp_9=c(rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),rgb(244,165,30,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
-temp_8=c(rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),rgb(244,165,30,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
+temp_11=c(rgb(103,0,31,maxColorValue=255),rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),cmyk(0,44,49,0),rgb(253,219,199,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255),rgb(5,48,97,maxColorValue=255))
+temp_10=c(rgb(103,0,31,maxColorValue=255),rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),cmyk(0,44,49,0),rgb(253,219,199,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255),rgb(5,48,97,maxColorValue=255))
+temp_9=c(rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),cmyk(0,44,49,0),rgb(253,219,199,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
+temp_8=c(rgb(178,24,43,maxColorValue=255),rgb(214,96,77,maxColorValue=255),cmyk(0,44,49,0),rgb(253,219,199,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(67,147,195,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
 temp_7=c(rgb(178,24,43,maxColorValue=255),rgb(239,138,98,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(103,169,207,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
 temp_6=c(rgb(178,24,43,maxColorValue=255),rgb(239,138,98,maxColorValue=255),rgb(253,219,199,maxColorValue=255),rgb(209,229,240,maxColorValue=255),rgb(103,169,207,maxColorValue=255),rgb(33,102,172,maxColorValue=255))
 temp_5=c(rgb(202,0,32,maxColorValue=255),rgb(244,165,130,maxColorValue=255),rgb(247,247,247,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(5,113,176,maxColorValue=255))
@@ -425,8 +449,8 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
         scale_fill_discrete("Moyenne et\nintervalle de confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
     }else{
       plt=plt+
-        scale_color_discrete("Moyenne et\nintervalle de confiance",type = parula(nEff))+
-        scale_fill_discrete("Moyenne et\nintervalle de confiance",type=parula(nEff))
+        scale_color_discrete("Moyenne et\nintervalle de confiance",type = viridis(nEff))+
+        scale_fill_discrete("Moyenne et\nintervalle de confiance",type=viridis(nEff))
     }
   }else{
     if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
@@ -435,8 +459,8 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
         scale_fill_discrete("",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
     }else{
       plt=plt+
-        scale_color_discrete("",type = parula(nEff))+
-        scale_fill_discrete("",type=parula(nEff))
+        scale_color_discrete("",type = viridis(nEff))+
+        scale_fill_discrete("",type=viridis(nEff))
     }
   }
 
@@ -659,6 +683,7 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
   
   #warning from xlim
   plt=ggplot(data)+
+    geom_ribbon(aes(x=Xfut,ymin=iv_inf,ymax=iv_sup),fill=as.vector(col_7var[7]),alpha=0.2)+
     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
@@ -675,6 +700,7 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
     scale_y_continuous(paste0("Changement moyen (%)"))+
     theme(legend.key.width = unit(1.5,"cm"))+
     ggtitle(paste0("Changement moyen et partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
+
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -959,6 +985,7 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
   
   #warning from xlim
   plt=ggplot(data)+
+    geom_ribbon(aes(x=Xfut,ymin=iv_inf,ymax=iv_sup),fill=as.vector(col_7var[7]),alpha=0.2)+
     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
@@ -992,10 +1019,8 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
 ## ind_name_full the plain language name of the indicator
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
-## scale_col the level of deformation of the color scale
-## bin_col the break levels for the color scale
 
-map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
+map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -1040,16 +1065,19 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
   q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
+  #lim_col=round(lim_col/bin_col)*bin_col
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
   
   plt=base_map_outlets(data = exut,val_name = "val")
   plt=plt+
     facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
-    scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+    #scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
     ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.5
+  plt$layers[[3]]$aes_params$size= 1.75
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -1069,10 +1097,8 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
 ## pred_unit the unit of the predictor
 ## rcp_name the name of the wanted rcp
 ## folder_out the saving folder
-## scale_col the level of deformation of the color scale
-## bin_col the break levels for the color scale
 
-map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
+map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
 
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==rcp_name)
@@ -1116,16 +1142,17 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
   q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
   
   plt=base_map_outlets(data = exut,val_name = "val")
   plt=plt+
     facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
-    scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
     ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.5
+  plt$layers[[3]]$aes_params$size= 1.75
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -1147,10 +1174,8 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 ## pred_unit the unit of the predictor
 ## rcp_name the name of the wanted rcp
 ## folder_out the saving folder
-## scale_col the level of deformation of the color scale
-## bin_col the break levels for the color scale
 
-map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
+map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,ind_name_full,folder_out,freq_col=0.99){
   
   quant=c("5%","mean","95%")
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
@@ -1204,16 +1229,17 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
   q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
   q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
   
   plt=base_map_outlets(data = exut,val_name = "val")
   plt=plt+
     facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
-    scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
     ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons de température planétaire (°C)\n(avec référence 1990, 3 RCP pour 1.5°C et 2 RCP pour 2 et 3°C)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.5
+  plt$layers[[3]]$aes_params$size= 1.75
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -1237,10 +1263,8 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
 ## folder_out the saving folder
 ## horiz he horizon of predictor wanted
 ## name_eff_plain plain langauge name of principal effects
-## scale_col the level of deformation of the color scale
-## bin_col the break levels for the color scale
 
-map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
+map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
   
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
@@ -1277,17 +1301,18 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
   q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
   q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
   
   plt=base_map_outlets(data = exut,val_name = "val")
   if(includeMean){
     plt=plt+
       facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-      scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
-    plt$layers[[3]]$aes_params$size= 1.5
+    plt$layers[[3]]$aes_params$size= 1.75
     if (is.na(folder_out)){
       return(plt)
     }else{
@@ -1297,7 +1322,8 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
   }else{
     plt=plt+
       facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-      scale_fill_gradientn("Effet principal (%)",colours = rescale_divergent_col( brewer.brbg(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      #scale_fill_stepsn("Effet principal (%)",colours = precip_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
     plt$layers[[3]]$aes_params$size= 1.5
@@ -1323,10 +1349,8 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_e
 ## folder_out the saving folder
 ## horiz he horizon of predictor wanted
 ## name_eff_plain plain langauge name of principal effects
-## scale_col the level of deformation of the color scale
-## bin_col the break levels for the color scale
 
-map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
+map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
   
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
@@ -1367,38 +1391,43 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
     lim_col=max(q99pos,q99neg)
-    lim_col=round(lim_col/bin_col)*bin_col
+    lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
     plt=plt+
-      scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))
   }
   if(vartype=="vartot"){
     q99=quantile(exut$val,probs=freq_col)
-    lim_col=round(q99/bin_col)*bin_col
+    lim_col=round(q99/25)*25
     plt=plt+
-      scale_fill_gradientn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      #scale_fill_stepsn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Incertitude liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="incert"){
     q99=quantile(exut$val,probs=freq_col)
-    lim_col=round(q99/bin_col)*bin_col
+    lim_col=round(q99/25)*25
     plt=plt+
-      scale_fill_gradientn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      #scale_fill_stepsn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Incertitude liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="varint"){
     q99=quantile(exut$val,probs=freq_col)
-    lim_col=round(q99/bin_col)*bin_col
+    lim_col=round(q99/25)*25
     plt=plt+
-      scale_fill_gradientn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      #scale_fill_stepsn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Incertitude liée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   
   if(vartype=="varres"){
     q99=quantile(exut$val,probs=freq_col)
-    lim_col=round(q99/bin_col)*bin_col
+    lim_col=round(q99/25)*25
     plt=plt+
-      scale_fill_gradientn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      #scale_fill_stepsn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Incertitude liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if (is.na(folder_out)){
@@ -1417,10 +1446,9 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
 ## ind_name the name of the indicator
 ## ind_name_full the plain language name of the indicator
 ## folder_out the saving folder
-## scale_col the level of deformation of the color scale
-## bin_col the break levels for the color scale
 
-map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,scale_col=1,bin_col=20,freq_col=0.99){
+
+map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,freq_col=0.99){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -1463,16 +1491,17 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
   q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/bin_col)*bin_col#arrondi au bin_col le plus proche
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
   
   plt=base_map_outlets(data = exut,val_name = "val")
   plt=plt+
     facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
-    scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
     ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz,' VS 1990), méthode "classique"'))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.5
+  plt$layers[[3]]$aes_params$size= 1.75
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -1550,7 +1579,7 @@ plot_bv_areas=function(folder_out){
   colnames(exut)=c("Num_ordre_Modcou","y","x","val")
   plt=base_map_outlets(data = exut,val_name = "val")
   plt=plt+
-    scale_fill_gradientn("Superficie (km2)",colours = parula(100),trans="log10")+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Superficie (km2)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",trans="log10",show.limits = T,breaks=c(500,1000,5000,1e4),limits=c(100,5e4),oob=squish)+#that way because stepsn deforms colors and with trans cannot show limits
     ggtitle("Superficie des bassins versants")
   if (is.na(folder_out)){
     return(plt)
