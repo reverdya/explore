@@ -64,7 +64,7 @@ diff$lon=rep(lon,times=length(lat))
 
 plt=ggplot(diff)+
   geom_tile(aes(x=lon,y=lat,fill=tas))+
-  scale_fill_stepsn("DeltaT (K)",colors=temp_11[-6],limits=c(-0.5,0.5),breaks=seq(-0.5,0.5,0.1))+
+  scale_fill_stepsn("DeltaT (K)",colors=temp_10,limits=c(-0.5,0.5),breaks=seq(-0.5,0.5,0.1))+
   geom_polygon(data=wrld,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)+
   coord_equal(ratio=111/78,xlim = c(-23, 23),ylim = c(33, 63),expand=F)+## ratio of 1°lat by 1°long at 45°N
   scale_x_continuous("Longitude (deg)")+
