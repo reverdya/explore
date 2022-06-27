@@ -115,33 +115,31 @@ for (i in 1:length(lst_indic)){
   horiz3=c(2030,2050,2085)
   if(lst_indic[i]=="log10VCN10"){
     freq_col=0.9
-    bin_col=100
   }else{
     freq_col=0.99
-    bin_col=20
   }
-  map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
-  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
+  map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
+  map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out,freq_col=freq_col)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
+  map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
   if(lst_indic[i]=="log10VCN10"){
-      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=50,freq_col=freq_col)
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
   }else{
-      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=10,freq_col=freq_col)
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
   }
   
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_3rcp_lm.RData"))
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_temp_2rcp_lm.RData"))
-  map_3quant_1.5_2_2.5_degC(lst.QUALYPSOOUT3 = lst.QUALYPSOOUT_temp_3rcp,lst.QUALYPSOOUT2 = lst.QUALYPSOOUT_temp_2rcp,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_3quant_1.5_2_2.5_degC(lst.QUALYPSOOUT3 = lst.QUALYPSOOUT_temp_3rcp,lst.QUALYPSOOUT2 = lst.QUALYPSOOUT_temp_2rcp,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
 
   load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic[i],"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
-  map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT_time,horiz=2085,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,bin_col=bin_col,freq_col=freq_col)
+  map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT_time,horiz=2085,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
 }
 
 
@@ -283,8 +281,6 @@ for (i in 1:nrow(select_stations)){
 ## Plot map of reference (1990) value of indicator for continuous positive indicator (of discharge)
 
 ref_year=1990
-scale_col=0.2
-bin_col=c(250,500,50)
 lst_indic2=lst_indic[!lst_indic %in% c("log10VCN10","VCN10_day")]
 name_indic2=name_indic[!lst_indic %in% c("log10VCN10","VCN10_day")]
 for (i in 1:length(lst_indic2)){
@@ -296,11 +292,12 @@ for (i in 1:length(lst_indic2)){
     
     q995=quantile(exut$val[exut$val>=0],probs=0.995)
     lim_col=q995
-    lim_col=round(lim_col/bin_col[i])*bin_col[i]#arrondi au bin_col[i] le plus proche
+    lim_col=round(lim_col/25)*25#arrondi au bin_col[i] le plus proche
     
     plt=base_map_outlets(data = exut,val_name = "val")
     plt=plt+
-      scale_fill_gradientn("",colours = rescale_col(brewer.blues(100),exut$val,scale_col),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col[i]),oob=squish,labels=c(seq(0,lim_col-bin_col[i],bin_col[i]),paste0("> ",lim_col)))+
+      #scale_fill_gradientn("",colours = rescale_col(brewer.blues(100),exut$val,scale_col),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col[i]),oob=squish,labels=c(seq(0,lim_col-bin_col[i],bin_col[i]),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
       ggtitle(paste0("Valeurs de référence (1990) du ",name_indic2[i],"\n(moyenne des fonctions de réponse disponibles)"))
     save.plot(plt,Filename = paste0("ref1990_response_",lst_indic2[i]),Folder = path_fig,Format = "jpeg")
 }
