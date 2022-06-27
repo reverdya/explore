@@ -118,7 +118,7 @@ for (r in lst_names_eff$rcp){
   
   plt_raw_time[[r]]=ggplot(data[data$type=="raw",])+#Warnings okay
     geom_line(aes(x=year,y=val,color=rcm),size=1)+
-    scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
+    scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+#we keep that because we need 8 colors
     theme_bw(base_size = 18)+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -261,7 +261,7 @@ plt_bc_effect=ggplot(data_bc)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = viridis(2),labels=c("Correction A","Correction B"))+
+  scale_color_discrete("",type = ipcc_6col[1:2],labels=c("Correction A","Correction B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)
@@ -278,7 +278,7 @@ plt_hm_effect=ggplot(data_hm)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = viridis(2),labels=c("Modèle A","Modèle B"))+
+  scale_color_discrete("",type = ipcc_6col[1:2],labels=c("Modèle A","Modèle B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(d))", vjust=1, hjust=-2,parse=T,size=10)
@@ -312,7 +312,7 @@ plt_bc_change=ggplot(data_bc)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = viridis(2),labels=c("Correction A","Correction B"))+
+  scale_color_discrete("",type = ipcc_6col[1:2],labels=c("Correction A","Correction B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)
@@ -323,7 +323,7 @@ plt_hm_change=ggplot(data_hm)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = viridis(2),labels=c("Modèle A","Modèle B"))+
+  scale_color_discrete("",type = ipcc_6col[1:2],labels=c("Modèle A","Modèle B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(d))", vjust=1, hjust=-2,parse=T,size=10)
@@ -364,7 +364,7 @@ map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_e
 map_rcmeff=map_rcmeff+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
-map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA,bin_col = 5)
+map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
 map_gcmeff=map_gcmeff+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
