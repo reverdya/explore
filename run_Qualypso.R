@@ -37,6 +37,8 @@ first_ref_year=1975
 last_ref_year=2005
 first_full_year=1972# from raw data filenames
 last_full_year=2098# from raw data filenames
+first_data_year=1951
+last_data_year=2099
 vecYears = seq(first_full_year,last_full_year,1)
 
 select_gcm=c("CNRM-CM5-LR","EC-EARTH","IPSL-CM5A-MR")
@@ -51,7 +53,7 @@ load(file = paste0(path_data,"processed/simu_lst.Rdata"))
 simu_lst=simu_lst[simu_lst$gcm %in% select_gcm,]
 scenAvail=simu_lst[,c("rcp","gcm","rcm")]
 
-tmp=format_global_tas(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year)
+tmp=format_global_tas(path_data,first_data_year,last_data_year,simu_lst,first_ref_year,last_ref_year)
 mat_Globaltas=tmp[[1]]
 ref_Globaltas=tmp[[2]]
 
@@ -75,20 +77,24 @@ for (indc in lst_indic){
   for(i in 2:(n_bv+1)){
     
     ClimateProjections=lapply(all_chains, function(x) x[,c(1,i)])
-    ClimateProjections=lapply(ClimateProjections,function(x) x[x$year>=first_full_year & x$year<=last_full_year,][,2])
-    Y=t(do.call(cbind,ClimateProjections))
+    Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections)[,-1])
+    #Warnings okay
+    
+    #ClimateProjections=lapply(ClimateProjections,function(x) x[x$year>=first_full_year & x$year<=last_full_year,][,2])
+    #Y=t(do.call(cbind,ClimateProjections))
     
     ##Time predictor
     if(indc=="VCN10"){ #transformation to log to avoid negative values
-      tmp=prepare_clim_resp(Y=Y,X=vecYears,Xref = ref_year,Xfut = vecYears,typeChangeVariable = "rel",spar = rep(1.1,nrow(simu_lst)),type = "log_spline")
+      tmp=prepare_clim_resp(Y=Y,X=seq(first_data_year,last_data_year),Xref = ref_year,Xfut = vecYears,typeChangeVariable = "rel",spar = rep(1.1,nrow(simu_lst)),type = "log_spline")
       listOption = list(spar=1.1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),climResponse=tmp)
     }else{
       listOption = list(spar=1.1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
     }
     lst.QUALYPSOOUT_time[[i-1]] = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
                                            scenAvail=scenAvail,
-                                           X = vecYears,
+                                           X=seq(first_data_year,last_data_year),
                                            Xref = ref_year,
+                                           Xfut = vecYears,
                                            listOption=listOption)# no Xfut or iFut because we want all values
     ##Temperature predictor
     spar_tmp=rep(1.1,nrow(simu_lst))
