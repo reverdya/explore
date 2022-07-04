@@ -299,23 +299,28 @@ rescale_col=function(pal=brewer.blues(100),values,param){
 
 ###################################
 ## Format Global température for use in Qualypso, to be used inside code run_QUalypso
-## Difference to 1861-1900 average and rcp/gcm matching + spline smoothing
+## Difference to 1860-1900 average and rcp/gcm matching + spline smoothing
 ## path_data the root of the path
 ##simu_lst the list of simulations
-#first_full year and last_full_year the first an last years with data for all simu all year round
+#first_data_year and last_data_year the first an last years with data for simu all year round
 
-format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year){
+format_global_tas=function(path_data,first_data_year,last_data_year,simu_lst,first_ref_year,last_ref_year){
   
-  vecYears=seq(1861,last_full_year,1)#1861 first year for GFDL
-  ## Format global température: difference to 1861-1900 
+  vecYears=seq(1860,last_data_year,1)#1860 first year for GFDL
+  ## Format global température: difference to 1860-1900 
   paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
+  tas_glob_full=vector(length=length(paths),mode="list")
   for ( i in 1:length(paths)){
     tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
+    if(grepl("HadGEM2-ES",paths[i],fixed=T)){# -999 values in 1859
+      tas_glob=tas_glob[-1,]
+    }
     tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1861 & tas_glob$year<=1900])#because before no data or negative for Hadgem2-ES at least
+    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data for GFDL
     tas_glob$tas=tas_glob$tas-pre_indus_tas
-    tas_glob=tas_glob[tas_glob$year>=1861&tas_glob$year<=last_full_year,]
     colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
+    tas_glob_full[[i]]=tas_glob[tas_glob$year<=2100,]
+    tas_glob=tas_glob[tas_glob$year>=1860&tas_glob$year<=2100,]
     if(i==1){
       mat_Globaltas_gcm=tas_glob
     }else{
@@ -325,15 +330,16 @@ format_global_tas=function(path_data,first_full_year,last_full_year,simu_lst,fir
   
   ## Format global température for Qualypso
   mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
-  vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm),function(x) strsplit(x,"_")[[1]][2]))
-  vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm),function(x) strsplit(x,"_")[[1]][1]))
+  vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
+  vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
   for (i in 1:nrow(simu_lst)){
-    mat_Globaltas[[i]]=mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]
+    mat_Globaltas[[i]]=tas_glob_full[[which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]]
   }
-  mat_Globaltas=do.call(cbind,mat_Globaltas)
-  mat_Globaltas=t(apply(mat_Globaltas,MARGIN = 2,function(x) smooth.spline(x=vecYears,y=x,spar = 1)$y))
+  mat_Globaltas=lapply(mat_Globaltas,function(x) cbind(x[,1],smooth.spline(x=x[,1],y=x[,2],spar = 1)$y))
+  mat_Globaltas=lapply(mat_Globaltas,function(x) x[x[,1]>=1860&x[,1]<=2100,2])
+  mat_Globaltas=t(do.call(cbind,mat_Globaltas))
   ref_Globaltas=apply(mat_Globaltas,MARGIN = 1,function(x) mean(x[which(vecYears==first_ref_year):which(vecYears==last_ref_year)]))
-  idx=which(mat_Globaltas_gcm$year %in% seq(first_full_year,last_full_year))
+  idx=which(mat_Globaltas_gcm$year %in% seq(first_data_year,last_data_year))
   mat_Globaltas=mat_Globaltas[,idx]
   mat_Globaltas_gcm=mat_Globaltas_gcm[idx,]
   return(list(mat_Globaltas,ref_Globaltas,mat_Globaltas_gcm))
@@ -1701,4 +1707,57 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
   # return objects
   return(list(phiStar=phiStar,etaStar=etaStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability))
   
+}
+
+
+
+#######################################################################################
+## Takes a QUALYPSOOUT object and reconstructs chains from mean change +effects
+## QUALYPSOOUT a Qualypso output
+
+reconstruct_chains=function(QUALYPSOOUT){
+  neff=length(QUALYPSOOUT$namesEff)
+  n_eachEff=vector()
+  for(i in 1:neff){
+    n_eachEff[i]=ncol(QUALYPSOOUT$MAINEFFECT[[i]]$MEAN)
+  }
+  chains=data.frame(do.call("rbind", replicate(prod(n_eachEff),QUALYPSOOUT$GRANDMEAN$MEAN, simplify = FALSE)))
+  lst_eff=vector(mode = "list",length=neff)
+  for (j in 1:length(QUALYPSOOUT$Xfut)){
+    for(i in 1:neff){
+      lst_eff[[i]]=QUALYPSOOUT$MAINEFFECT[[i]]$MEAN[j,]
+    }
+    chains[,j]=chains[,j]+rowSums(expand.grid(lst_eff))
+  }
+  return(chains)
+}
+
+
+###########################################################################################
+## Make a time/temperature series of percentage of chains with positive or negative change
+
+plotQUALYPSO_chronique_accordsigne=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim){
+  chains=reconstruct_chains(QUALYPSOOUT)
+  n_chain=nrow(chains)
+  data=data.frame(Xfut=QUALYPSOOUT$Xfut,pos=QUALYPSOOUT$Xfut,neg=QUALYPSOOUT$Xfut)
+  for (i in 1: ncol(chains)){
+    data$pos[i]=sum(chains[,i]>0)/n_chain*100
+    data$neg[i]=sum(chains[,i]<0)/n_chain*100
+  }
+  plt=ggplot(data)+
+    geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=pos),color=temp_5[5],size=2)+
+    geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=-neg),color=temp_5[1],size=2)+
+    geom_hline(aes(yintercept=0))+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim)+
+    theme_bw(base_size = 18)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    scale_y_continuous(paste0("Accord sur le signe (%)"),limits=c(-100,100),breaks=seq(-100,100,20),labels=abs(seq(-100,100,20)),expand=c(0,0))+
+    ggtitle(paste0("Pourcentage de chaînes en accord sur le signe pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
+  plt
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("accord-signe_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  }
 }
