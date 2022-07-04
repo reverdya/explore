@@ -79,7 +79,7 @@ for(c in 1:nrow(simu_lst)){# for each chain
   load(file = paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[c],"_",simu_lst$gcm[c],"_",simu_lst$rcm[c],"_",simu_lst$bc[c],"_",simu_lst$hm[c],".Rdata"))
   res=res[,c(1,select_stations$idx+1)]
   
-  res=res[res$year>=first_full_year&res$year<=last_full_year,]
+  #res=res[res$year>=first_full_year&res$year<=last_full_year,]
   zz = !is.na(res[,2])
   vecYears=res[zz,1]
   #spline
@@ -163,18 +163,21 @@ n_bv=ncol(all_chains[[1]])-1
 w=2
   
 ClimateProjections=lapply(all_chains, function(x) x[,c(1,w)])
-ClimateProjections=lapply(ClimateProjections,function(x) x[x$year>=first_full_year & x$year<=last_full_year,][,2])
-Y=t(do.call(cbind,ClimateProjections))
+#ClimateProjections=lapply(ClimateProjections,function(x) x[x$year>=first_full_year & x$year<=last_full_year,][,2])
+Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections)[,-1])
+#Y=t(do.call(cbind,ClimateProjections))
 nS=nrow(simu_lst)
-X=seq(first_full_year,last_full_year)
+X=seq(first_data_year,last_data_year)
 clim_resp=fit.climate.response(Y=Y,spar=SPAR,Xmat=matrix(rep(X,nS),byrow=T,nrow=nS,ncol=length(X)),Xref=rep(1990,nS),Xfut=X,typeChangeVariable = "rel")
 raw=data.frame(t(clim_resp$phiStar+clim_resp$etaStar))*100
 colnames(raw)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
+raw[is.na(t(Y))]=NA
 raw$year=X
 raw=gather(raw,key="model",value="val",-year)
 raw$type="raw"
 spline=data.frame(t(clim_resp$phiStar))*100
 colnames(spline)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
+spline[is.na(t(Y))]=NA
 spline$year=X
 spline=gather(spline,key="model",value="val",-year)
 spline$type="spline"
