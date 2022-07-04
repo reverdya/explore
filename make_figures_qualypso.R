@@ -34,6 +34,8 @@ select_gcm=c("CNRM-CM5-LR","EC-EARTH","IPSL-CM5A-MR")
 
 labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualypsoout, same for color scale. Used inside plot functions
 Unit="%" #so far all changes are relative
+first_data_year=1951
+last_data_year=2099
 
 ######
 #MAIN#
@@ -92,6 +94,9 @@ for (i in 1:length(lst_indic)){
       plotQUALYPSOTotalVarianceByScenario_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
       plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "sum")
       plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "tot")
+      
+      plotQUALYPSO_chronique_accordsigne(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
+      save.plot(plot.object =NULL,Filename = paste0("betatest_",lst_indic[i],"_",predict[p],"_",select_stations$Nom[b]),Folder = folder_out,Type = "plot",plot.function=plotQUALYPSOMeanChangeAndUncertaintiesBetatest(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]]),Format = "jpeg")
     }
   }
 }
@@ -147,10 +152,10 @@ for (i in 1:length(lst_indic)){
 ############################################
 ## Plot GCM temperature
 
-tmp=format_global_tas(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year)
+tmp=format_global_tas(path_data,first_data_year,last_data_year,simu_lst,first_ref_year,last_ref_year)
 mat_Globaltas_gcm=tmp[[3]]
-mat_Globaltas_gcm=data.frame(apply(mat_Globaltas_gcm,MARGIN = 2,function(x) smooth.spline(x=vecYears,y=x,spar = 1)$y))
-mat_Globaltas_gcm$year=vecYears
+mat_Globaltas_gcm=data.frame(apply(mat_Globaltas_gcm,MARGIN = 2,function(x) smooth.spline(x=seq(first_data_year,last_data_year),y=x,spar = 1)$y))
+mat_Globaltas_gcm$year=seq(first_data_year,last_data_year)
 
 data=gather(mat_Globaltas_gcm,key = "chain",value = "val",-year)
 data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
@@ -165,28 +170,28 @@ plt=ggplot(data)+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
   scale_color_discrete("",type = as.vector(col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
   scale_linetype_discrete("GCM")+
-  ggtitle("Changement de température planétaire pour les différents RCP/GCM\npar rapport a la référence 1861-1900")
+  ggtitle("Changement de température planétaire pour les différents RCP/GCM\npar rapport a la référence 1860-1900")
 save.plot(plt,Filename = "global_tas",Folder = path_fig,Format = "jpeg")
 
 ## Same but start earlier
 
 paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
+tas_glob_full=vector(length=length(paths),mode="list")
 for ( i in 1:length(paths)){
   tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
+  if(grepl("HadGEM2-ES",paths[i],fixed=T)){# no values in 1859
+    tas_glob=tas_glob[-1,]
+  }
   tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-  pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1861 & tas_glob$year<=1900])
+  pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])
   tas_glob$tas=tas_glob$tas-pre_indus_tas
   colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
-  if(i==1){
-    mat_Globaltas_gcm=tas_glob
-  }else{
-    mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
-  }
+  tas_glob_full[[i]]=tas_glob[tas_glob$year<=2099,]
 }
-years=mat_Globaltas_gcm$year
-mat_Globaltas_gcm=data.frame(apply(mat_Globaltas_gcm,MARGIN = 2,function(x) smooth.spline(x=years,y=x,spar = 1)$y))
-mat_Globaltas_gcm$year=years
-stock=mat_Globaltas_gcm
+mat_Globaltas=lapply(tas_glob_full,function(x) cbind(x[,1],smooth.spline(x=x[,1],y=x[,2],spar = 1)$y))
+mat_Globaltas=lapply(mat_Globaltas,function(x) x[x[,1]>=1861&x[,1]<=2100,2])
+mat_Globaltas=t(do.call(cbind,mat_Globaltas))
+years=seq(1861,2100)
 
 data=gather(mat_Globaltas_gcm,key = "chain",value = "val",-year)
 data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
@@ -201,8 +206,8 @@ plt=ggplot(data)+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
   scale_color_discrete("",type = as.vector( col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
   scale_linetype_discrete("GCM")+
-  ggtitle("Changement de température planetaire pour les différents RCP/GCM\npar rapport a la référence 1861-1900")
-save.plot(plt,Filename = "global_tas_1861",Folder = path_fig,Format = "jpeg")
+  ggtitle("Changement de température planetaire pour les différents RCP/GCM\npar rapport a la référence 1860-1900")
+save.plot(plt,Filename = "global_tas_1860",Folder = path_fig,Format = "jpeg")
 
 
 ###################################################
@@ -234,7 +239,7 @@ plt=ggplot(data)+
   scale_x_continuous(breaks=seq(2000,2100,20))+
   scale_fill_discrete("",type = as.vector( col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
   guides(fill=guide_legend(reverse=TRUE))+
-  ggtitle("Première année de franchissement des seuils\nde changement de température planétaire\npour les différents RCP (et GCMs) (référence 1861-1900)")
+  ggtitle("Première année de franchissement des seuils\nde changement de température planétaire\npour les différents RCP (et GCMs) (référence 1860-1900)")
 save.plot(plt,Filename = "dat_threshold_temp",Folder = path_fig,Format = "jpeg")
 
 ###########################################################################################################################
