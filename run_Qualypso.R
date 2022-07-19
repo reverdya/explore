@@ -24,7 +24,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 path_data="C:/Users/reverdya/Documents/Docs/2_data/"
 nbcore=detectCores()-2 #Number of cores for parallelization
 
-var=c("Debits")
+Var=c("Debits")
 rcp=c("historical","rcp2.6","rcp4.5","rcp8.5")
 bc=c("ADAMONT")
 hm=c("SIM2")
@@ -77,7 +77,7 @@ for (indc in lst_indic){
   for(i in 2:(n_bv+1)){
     
     ClimateProjections=lapply(all_chains, function(x) x[,c(1,i)])
-    Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections)[,-1])
+    Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections)[,-1])#allows for NA
     #Warnings okay
     
     #ClimateProjections=lapply(ClimateProjections,function(x) x[x$year>=first_full_year & x$year<=last_full_year,][,2])
