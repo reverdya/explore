@@ -41,6 +41,8 @@ first_ref_year=1975
 last_ref_year=2005
 first_full_year=1972# from raw data filenames
 last_full_year=2098# from raw data filenames
+first_data_year=1951
+last_data_year=2099
 
 labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualypsoout, same for color scale. Used inside plot functions
 
@@ -81,11 +83,11 @@ for(c in 1:nrow(simu_lst)){# for each chain
   
   #res=res[res$year>=first_full_year&res$year<=last_full_year,]
   zz = !is.na(res[,2])
-  vecYears=res[zz,1]
+  Years=res[zz,1]
   #spline
   res_spline=res
   for(j in 2:ncol(res)){
-    res_spline[zz,j]=smooth.spline(x=vecYears,y=res[zz,j],spar = SPAR)$y
+    res_spline[zz,j]=smooth.spline(x=Years,y=res[zz,j],spar = SPAR)$y
   }
   colnames(res)[1]="year"
   colnames(res_spline)[1]="year"
@@ -108,9 +110,9 @@ for (r in lst_names_eff$rcp){
   }
   colnames(raw)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
   colnames(spline)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
-  raw=gather(raw,key = "model",value = "val",-year)
+  raw=pivot_longer(data=raw,cols=!year,names_to = "model",values_to = "val")
   raw$type="raw"
-  spline=gather(spline,key = "model",value = "val",-year)
+  spline=pivot_longer(data=spline,cols=!year,names_to = "model",values_to = "val")
   spline$type="spline"
   data=rbind(raw,spline)
   data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
@@ -155,7 +157,7 @@ all_chains=vector(length=nrow(simu_lst),mode="list")
 for (j in 1:nrow(simu_lst)){
   load(paste0(path_data,"processed/indic_hydro/",lst_indic[i],"_",simu_lst$rcp[j],"_",simu_lst$gcm[j],"_",simu_lst$rcm[j],"_",simu_lst$bc[j],"_",simu_lst$hm[j],".Rdata"))
   res=res[,c(1,select_stations$idx+1)]
-  res=res[res$year>=first_full_year&res$year<=last_full_year,]
+  #res=res[res$year>=first_full_year&res$year<=last_full_year,]
   all_chains[[j]]=res
 }
 
@@ -168,18 +170,18 @@ Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections)[,-1])
 #Y=t(do.call(cbind,ClimateProjections))
 nS=nrow(simu_lst)
 X=seq(first_data_year,last_data_year)
-clim_resp=fit.climate.response(Y=Y,spar=SPAR,Xmat=matrix(rep(X,nS),byrow=T,nrow=nS,ncol=length(X)),Xref=rep(1990,nS),Xfut=X,typeChangeVariable = "rel")
+clim_resp=prepare_clim_resp(Y=Y,X=seq(first_data_year,last_data_year),Xref = centr_ref_year,Xfut = seq(first_data_year,last_data_year),typeChangeVariable = "rel",spar = rep(SPAR,nrow(simu_lst)),type = "spline")
 raw=data.frame(t(clim_resp$phiStar+clim_resp$etaStar))*100
 colnames(raw)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
 raw[is.na(t(Y))]=NA
 raw$year=X
-raw=gather(raw,key="model",value="val",-year)
+raw=pivot_longer(data=raw,cols=!year,names_to = "model",values_to = "val")
 raw$type="raw"
 spline=data.frame(t(clim_resp$phiStar))*100
 colnames(spline)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
 spline[is.na(t(Y))]=NA
 spline$year=X
-spline=gather(spline,key="model",value="val",-year)
+spline=pivot_longer(data=spline,cols=!year,names_to = "model",values_to = "val")
 spline$type="spline"
 data=rbind(raw,spline)
 data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
@@ -256,7 +258,7 @@ plt_rcm_effect=plt_rcm_effect+
 data_bc=data.frame(year=seq(1990,2098))
 data_bc$bc1=(data_bc$year-1990)^1.5*0.01
 data_bc$bc2=-data_bc$bc1
-data_bc=gather(data_bc,key = "bc",value = "val",-year)
+data_bc=pivot_longer(data=data_bc,cols=!year,names_to = "bc",values_to = "val")
 
 plt_bc_effect=ggplot(data_bc)+
   geom_line(aes(x=year,y=val,group=bc,color=bc),size=1)+
@@ -273,7 +275,7 @@ plt_bc_effect=ggplot(data_bc)+
 data_hm=data.frame(year=seq(1990,2098))
 data_hm$hm1=(data_hm$year-1990)^0.5*2
 data_hm$hm2=-data_hm$hm1
-data_hm=gather(data_hm,key = "hm",value = "val",-year)
+data_hm=pivot_longer(data=data_hm,cols=!year,names_to = "hm",values_to = "val")
 
 plt_hm_effect=ggplot(data_hm)+
   geom_line(aes(x=year,y=val,group=hm,color=hm),size=1)+
