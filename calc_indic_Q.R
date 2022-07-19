@@ -21,7 +21,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_data/"
 
-var=c("Debits")
+Var=c("Debits")
 rcp=c("historical","rcp2.6","rcp4.5","rcp8.5")
 bc=c("ADAMONT")
 hm=c("SIM2")
@@ -30,7 +30,7 @@ time_origin=ymd("1949-12-01") #for SIM2 data
 
 #Netcdf could be modified for coherence of varid with var name using cdo
 var_id=list("debit")
-names(var_id)=var
+names(var_id)=Var
 
 
 sim_stations=read.csv(file = paste0(path_data,"raw/SIM2/Infos_stations_modcou_OK.csv"),sep=";")
@@ -47,7 +47,7 @@ period_agreg=c("date","year","season","month") #different periods of aggregation
 ## Make list of calculated variables
 
 lst_indic=c("Q_mean_year","Q_q95_year","VCN10")
-name_indic=c("Module annuel du débit","Q95 annuel du débit","log(VCN10)")
+name_indic=c("Module annuel du débit","Q95 annuel du débit","VCN10")
 save(lst_indic,name_indic,file=paste0(path_data,"processed/lst_indic.Rdata"))
 load(file=paste0(path_data,"processed/lst_indic.Rdata"))
 
@@ -57,7 +57,7 @@ load(file=paste0(path_data,"processed/lst_indic.Rdata"))
 
 simu_lst=vector(mode = "list",length=6)
 names(simu_lst)=c("var","rcp","gcm","rcm","bc","hm")
-for (v in var){
+for (v in Var){
   for(r in rcp[-1]){# -1 for not historical
     for(b in bc){
       for(h in hm){
