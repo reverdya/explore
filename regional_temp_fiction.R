@@ -29,9 +29,6 @@ typeChangeVar="rel"
 ref_year=1990# central year of 1975-2005 reference period
 first_ref_year=1975
 last_ref_year=2005
-first_full_year=1972# from raw data filenames
-last_full_year=2098# from raw data filenames
-vecYears = seq(first_full_year,last_full_year,1)
 
 
 
@@ -39,12 +36,32 @@ vecYears = seq(first_full_year,last_full_year,1)
 #MAIN#
 ######
 
-load(file = paste0(path_data,"processed/simu_lst.Rdata"))
-scenAvail=simu_lst[,c("rcp","gcm","rcm")]
-tmp=format_global_tas(path_data,first_full_year,last_full_year,simu_lst,first_ref_year,last_ref_year)
-mat_Globaltas_gcm=tmp[[3]][-1]
-mat_Globaltas_gcm=apply(mat_Globaltas_gcm,MARGIN = 2,function(x) smooth.spline(x=vecYears,y=x,spar = 1)$y)
-ref_Globaltas_gcm=as.vector(apply(mat_Globaltas_gcm,MARGIN = 2,function(x) mean(x[which(vecYears==first_ref_year):which(vecYears==last_ref_year)])))
+
+paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
+tas_glob_full=vector(length=length(paths),mode="list")
+for ( i in 1:length(paths)){
+  tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
+  if(grepl("HadGEM2-ES",paths[i],fixed=T)){# no values in 1859
+    tas_glob=tas_glob[-1,]
+  }
+  tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
+  pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])
+  tas_glob$tas=tas_glob$tas-pre_indus_tas
+  colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
+  tas_glob_full[[i]]=tas_glob[tas_glob$year<=2100,]
+}
+mat_Globaltas=lapply(tas_glob_full,function(x) cbind(x[,1],smooth.spline(x=x[,1],y=x[,2],spar = 1)$y))
+mat_Globaltas=lapply(mat_Globaltas,function(x) x[x[,1]>=1861&x[,1]<=2100,2])# here 1861 because we wanna show GFDL
+mat_Globaltas_local=lapply(tas_glob_full,function(x) x[x[,1]>=1861&x[,1]<=2100,2])# here 1861 because we wanna show GFDL
+mat_Globaltas_gcm=data.frame(do.call(cbind,mat_Globaltas))
+mat_Globaltas_local=data.frame(do.call(cbind,mat_Globaltas_local))
+for (i in 1:ncol(mat_Globaltas_gcm)){
+  colnames(mat_Globaltas_gcm)[i]=colnames(tas_glob_full[[i]])[2]
+}
+colnames(mat_Globaltas_local)=colnames(mat_Globaltas_gcm)
+
+years=seq(1861,2100)
+ref_Globaltas_gcm=as.vector(apply(mat_Globaltas_gcm,MARGIN = 2,function(x) mean(x[which(years==first_ref_year):which(years==last_ref_year)])))
 
 scenAvail=data.frame(colnames(mat_Globaltas_gcm))
 colnames(scenAvail)="chain"
@@ -52,7 +69,7 @@ scenAvail$rcp=unlist(lapply(strsplit(scenAvail$chain,"_"),function(x) x[1]))
 scenAvail$gcm=unlist(lapply(strsplit(scenAvail$chain,"_"),function(x) x[2]))
 scenAvail=scenAvail[,c("rcp","gcm")]
 
-mat_Globaltas_local=tmp[[3]][-1] * 1.3 # local French warming 30% greater than global, no smoothing
+mat_Globaltas_local= mat_Globaltas_local * 1.3 # local French warming 30% greater than global, no smoothing
 # https://www.ecologie.gouv.fr/sites/default/files/ONERC_rapport_Climate%20change_Costs%20of%20impacts%20and%20lines%20of%20adaptation_ENG.pdf
 
 ################################
@@ -65,7 +82,7 @@ listOption = list(spar=1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn
 
 QUALYPSOOUT_time = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
                                        scenAvail=scenAvail,
-                                       X = vecYears,
+                                       X = years,
                                        Xref = ref_year,
                                        listOption=listOption)# no Xfut or iFut because we want all values
 ##Temperature predictor
@@ -113,10 +130,10 @@ SPAR=1
 clim_resp=vector(length=nrow(scenAvail),mode="list")
 clim_resp_spline=vector(length=nrow(scenAvail),mode="list")
 for(c in 1:nrow(scenAvail)){# for each chain
-  res=data.frame(vecYears,mat_Globaltas_local[,c])
+  res=data.frame(years,mat_Globaltas_local[,c])
   colnames(res)=c("year","val")
   res_spline=res
-  res_spline$val=smooth.spline(x=vecYears,y=res$val,spar = SPAR)$y
+  res_spline$val=smooth.spline(x=years,y=res$val,spar = SPAR)$y
   clim_resp[[c]]=res
   clim_resp_spline[[c]]=res_spline
 }
@@ -131,9 +148,9 @@ for (r in unique(scenAvail$rcp)){
   }
   colnames(raw)[-1]=paste0(scenAvail[scenAvail$rcp==r,]$gcm)
   colnames(spline)[-1]=paste0(scenAvail[scenAvail$rcp==r,]$gcm)
-  raw=gather(raw,key = "gcm",value = "val",-year)
+  raw=pivot_longer(data=raw,cols=!year,names_to = "gcm",values_to = "val")
   raw$type="raw"
-  spline=gather(spline,key = "gcm",value = "val",-year)
+  spline=pivot_longer(data=spline,cols=!year,names_to = "gcm",values_to = "val")
   spline$type="spline"
   data=rbind(raw,spline)
   plt=ggplot(data)+#Warnings okay
@@ -158,11 +175,12 @@ SPAR=2 # above 2 spline is doing weird stuff
 clim_resp=vector(length=nrow(scenAvail),mode="list")
 clim_resp_spline=vector(length=nrow(scenAvail),mode="list")
 for(c in 1:nrow(scenAvail)){# for each chain
-  res=data.frame(vecYears,mat_Globaltas_local[,c])
+  res=data.frame(years,mat_Globaltas_local[,c])
   colnames(res)=c("year","val")
   res_spline=res
   tas=mat_Globaltas_gcm[,c]
-  res_spline$val=smooth.spline(x=tas,y=res$val,spar = SPAR)$y
+  smooth.spline.out=smooth.spline(x=tas,y=res$val,spar = SPAR)
+  res_spline$val=predict(smooth.spline.out, tas)$y#need extra step otherwise loose one value for some reason
   res$tas=tas
   res_spline$tas=tas
   res=res[,-1]
@@ -181,9 +199,9 @@ for (r in unique(scenAvail$rcp)){
   }
   colnames(raw)[-1]=paste0(scenAvail[scenAvail$rcp==r,]$gcm)
   colnames(spline)[-1]=paste0(scenAvail[scenAvail$rcp==r,]$gcm)
-  raw=gather(raw,key = "gcm",value = "val",-tas)
+  raw=pivot_longer(data=raw,cols=!tas,names_to = "gcm",values_to = "val")
   raw$type="raw"
-  spline=gather(spline,key = "gcm",value = "val",-tas)
+  spline=pivot_longer(data=spline,cols=!tas,names_to = "gcm",values_to = "val")
   spline$type="spline"
   data=rbind(raw,spline)
   data=data[!is.na(data$val),]
