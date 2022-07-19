@@ -176,11 +176,10 @@ options(warn=-1)
 wrld <- fortify(wrld_simpl)
 options(warn=0)
 
-base_map_outlets=function(data,val_name){
+base_map_outlets=function(data,val_name,alpha_name=NULL){
   plt=ggplot(data=data)+
     geom_polygon(data=fr,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.5)+
     geom_path(data=river,aes(x=long,y=lat,group=group),colour="gray70",size=0.3)+
-    geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21,stroke=0.5)+
     coord_equal(ratio=111/78,xlim = c(-6, 9.75),ylim = c(41.25,52),expand=F)+## ratio of 1lat by 1long at 45N
     scale_x_continuous("")+
     scale_y_continuous("")+
@@ -190,6 +189,13 @@ base_map_outlets=function(data,val_name){
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
     theme(strip.text = element_text(size = 12, face = "bold"))+
     guides(fill = guide_colourbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  if(!is.null(alpha_name)){
+    plt=plt+
+      geom_point(aes(x=x,y=y,fill=get(val_name),alpha=get(alpha_name)),size=3,shape=21,stroke=0.5)
+  }else{
+    plt=plt+
+      geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21,stroke=0.5)
+  }
   return(plt)
 }
 
@@ -299,6 +305,7 @@ rescale_col=function(pal=brewer.blues(100),values,param){
 
 ###################################
 ## Format Global température for use in Qualypso, to be used inside code run_QUalypso
+## spline calculated with data between 1860 and 1900
 ## Difference to 1860-1900 average and rcp/gcm matching + spline smoothing
 ## path_data the root of the path
 ##simu_lst the list of simulations
@@ -306,7 +313,7 @@ rescale_col=function(pal=brewer.blues(100),values,param){
 
 format_global_tas=function(path_data,first_data_year,last_data_year,simu_lst,first_ref_year,last_ref_year){
   
-  vecYears=seq(1860,last_data_year,1)#1860 first year for GFDL
+  vecYears=seq(1860,last_data_year,1)#1860 first year for HadGEM (1861 for GFDL but not used in QUALYPSO and before first_data_year so does not matter)
   ## Format global température: difference to 1860-1900 
   paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
   tas_glob_full=vector(length=length(paths),mode="list")
@@ -316,7 +323,7 @@ format_global_tas=function(path_data,first_data_year,last_data_year,simu_lst,fir
       tas_glob=tas_glob[-1,]
     }
     tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data for GFDL
+    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data for HadGEM
     tas_glob$tas=tas_glob$tas-pre_indus_tas
     colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
     tas_glob_full[[i]]=tas_glob[tas_glob$year<=2100,]
@@ -339,7 +346,7 @@ format_global_tas=function(path_data,first_data_year,last_data_year,simu_lst,fir
   mat_Globaltas=lapply(mat_Globaltas,function(x) x[x[,1]>=1860&x[,1]<=2100,2])
   mat_Globaltas=t(do.call(cbind,mat_Globaltas))
   ref_Globaltas=apply(mat_Globaltas,MARGIN = 1,function(x) mean(x[which(vecYears==first_ref_year):which(vecYears==last_ref_year)]))
-  idx=which(mat_Globaltas_gcm$year %in% seq(first_data_year,last_data_year))
+  idx=which(mat_Globaltas_gcm$year %in% seq(first_data_year,last_data_year))#often 1951-2099
   mat_Globaltas=mat_Globaltas[,idx]
   mat_Globaltas_gcm=mat_Globaltas_gcm[idx,]
   return(list(mat_Globaltas,ref_Globaltas,mat_Globaltas_gcm))
@@ -384,7 +391,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
   med=data.frame(meanPred)*100
   colnames(med)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
   med$pred=Xfut
-  med=gather(med,key = "eff",value = "med",-pred)
+  med=pivot_longer(data=med,cols=!pred,names_to = "eff",values_to = "med")
   
   add.CI = QUALYPSOOUT$listOption$ANOVAmethod == "QUALYPSO"
   if (add.CI) {
@@ -400,8 +407,8 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
     colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
     binf$pred=Xfut
     bsup$pred=Xfut
-    binf=gather(binf,key = "eff",value = "binf",-pred)
-    bsup=gather(bsup,key = "eff",value = "bsup",-pred)
+    binf=pivot_longer(data=binf,cols=!pred,names_to = "eff",values_to = "binf")
+    bsup=pivot_longer(data=bsup,cols=!pred,names_to = "eff",values_to = "bsup")
     data=merge(med,binf,by=c("pred","eff"))
     data=merge(data,bsup,by=c("pred","eff"))
   }else{
@@ -425,8 +432,8 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_n
       colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
       binf$pred=Xfut
       bsup$pred=Xfut
-      binf=gather(binf,key = "eff",value = "binf",-pred)
-      bsup=gather(bsup,key = "eff",value = "bsup",-pred)
+      binf=pivot_longer(data=binf,cols=!pred,names_to = "eff",values_to = "binf")
+      bsup=pivot_longer(data=bsup,cols=!pred,names_to = "eff",values_to = "bsup")
       data=merge(med,binf,by=c("pred","eff"))
       data=merge(data,bsup,by=c("pred","eff"))
     }else{
@@ -552,11 +559,11 @@ plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_nam
   data=data.frame(Xfut=Xfut,mean=meanPred)
   data=cbind(data,t(limIntInf))
   colnames(data)[-c(1:2)]=names_var
-  data2=gather(data,key = "var",value = "inf",-c(Xfut,mean))
+  data2=pivot_longer(data=data,cols=-c(Xfut,mean),names_to = "var",values_to = "inf")
   data=data.frame(Xfut=Xfut)
   data=cbind(data,t(limIntSup))
   colnames(data)[-c(1)]=names_var
-  data3=gather(data,key = "var",value = "sup",-Xfut)
+  data3=pivot_longer(data=data,cols=!Xfut,names_to = "var",values_to = "sup")
   data=merge(data2,data3,by=c("Xfut","var"))
   data$var=factor(data$var,levels=c(names_var))
   data$mean=data$mean*100#pourcentage
@@ -670,11 +677,11 @@ plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pre
   data=data.frame(Xfut=Xfut,mean=meanPred)
   data=cbind(data,t(limIntInf))
   colnames(data)[-c(1:2)]=c(names_var,"iv_inf")
-  data2=gather(data,key = "var",value = "inf",-c(Xfut,mean,iv_inf))
+  data2=pivot_longer(data=data,cols=-c(Xfut,mean,iv_inf),names_to = "var",values_to = "inf")
   data=data.frame(Xfut=Xfut)
   data=cbind(data,t(limIntSup))
   colnames(data)[-c(1)]=c(names_var,"iv_sup")
-  data3=gather(data,key = "var",value = "sup",-c(Xfut,iv_sup))
+  data3=pivot_longer(data=data,cols=-c(Xfut,iv_sup),names_to = "var",values_to = "sup")
   data=merge(data2,data3,by=c("Xfut","var"))
   data$var=factor(data$var,levels=c(names_var))
   data$mean=data$mean*100#pourcentage
@@ -753,7 +760,7 @@ plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_nam
   namesEff = QUALYPSOOUT$names
   names_var=c(namesEff,"res","int")
   colnames(data)=c("Xfut",names_var)
-  data=gather(data,key = "var",value = "val",-c(Xfut))
+  data=pivot_longer(data=data,cols=-c(Xfut),names_to = "var",values_to = "val")
   data$val=data$val*100 #percentage
   
   vec_color=col_7var[names(col_7var) %in% names_var]
@@ -845,11 +852,11 @@ plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameSce
   data=data.frame(Xfut=Xfut,mean=meanPred)
   data=cbind(data,t(limIntInf))
   colnames(data)[-c(1:2)]=names_var
-  data2=gather(data,key = "var",value = "inf",-c(Xfut,mean))
+  data2=pivot_longer(data=data,cols=-c(Xfut,mean),names_to = "var",values_to = "inf")
   data=data.frame(Xfut=Xfut)
   data=cbind(data,t(limIntSup))
   colnames(data)[-c(1)]=names_var
-  data3=gather(data,key = "var",value = "sup",-Xfut)
+  data3=pivot_longer(data=data,cols=-c(Xfut),names_to = "var",values_to = "sup")
   data=merge(data2,data3,by=c("Xfut","var"))
   data$var=factor(data$var,levels=c(names_var))
   data$mean=data$mean*100#pourcentage
@@ -972,11 +979,11 @@ plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, na
   data=data.frame(Xfut=Xfut,mean=meanPred)
   data=cbind(data,t(limIntInf))
   colnames(data)[-c(1:2)]=c(names_var,"iv_inf")
-  data2=gather(data,key = "var",value = "inf",-c(Xfut,mean,iv_inf))
+  data2=pivot_longer(data=data,cols=-c(Xfut,mean,iv_inf),names_to = "var",values_to = "inf")
   data=data.frame(Xfut=Xfut)
   data=cbind(data,t(limIntSup))
   colnames(data)[-c(1)]=c(names_var,"iv_sup")
-  data3=gather(data,key = "var",value = "sup",-c(Xfut,iv_sup))
+  data3=pivot_longer(data=data,cols=-c(Xfut,iv_sup),names_to = "var",values_to = "sup")
   data=merge(data2,data3,by=c("Xfut","var"))
   data$var=factor(data$var,levels=c(names_var))
   data$mean=data$mean*100#pourcentage
@@ -1243,7 +1250,7 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
     facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
     #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons de température planétaire (°C)\n(avec référence 1990, 3 RCP pour 1.5°C et 2 RCP pour 2 et 3°C)"))+
+    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons de réchauffement planétaire post 1860-1900 (°C)\n(avec référence 1990, 3 RCP pour 1.5°C et 2 RCP pour 2 et 3°C)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.75
   if (is.na(folder_out)){
@@ -1361,11 +1368,16 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
   exut$idx=seq(1:nrow(exut))
   exut$val=0
+  exut$sign="no"
   
   for (i in 1:length(lst.QUALYPSOOUT)){
     idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
     if(vartype=="mean"){
       chg=lst.QUALYPSOOUT[[i]]$GRANDMEAN$MEAN[idx_Xfut]*100
+      chains=reconstruct_chains(lst.QUALYPSOOUT[[i]])
+      if(sum(chains[,idx_Xfut]>0)/nrow(chains)>=0.8 | sum(chains[,idx_Xfut]>0)/nrow(chains)<=0.2){#80% agreement on the sign
+        exut$sign[exut$idx==i]="yes"
+      }
     }
     if(vartype=="varint"){
       chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]*100^2#because variance is square of standard deviation unit
@@ -1388,12 +1400,13 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     exut$val[exut$idx==i]=chg
   }
   
-  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","val")
+  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","val","sign")
   
   ## We show uncertainties not variances
   
   plt=base_map_outlets(data = exut,val_name = "val")
   if(vartype=="mean"){
+    plt=base_map_outlets(data = exut,val_name = "val",alpha_name ="sign")
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
     lim_col=max(q99pos,q99neg)
@@ -1401,7 +1414,10 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))
+      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+      scale_alpha_manual("",values = c("no"=0.2,"yes"=1),labels=c("Pas d'accord sur le signe du changement","Plus de 80% des chaînes en accord"))+
+      guides(alpha = guide_legend(override.aes = list(fill = "grey") ,label.theme = element_text(size = 11, face = "bold")))
+    plt
   }
   if(vartype=="vartot"){
     q99=quantile(exut$val,probs=freq_col)
@@ -1505,7 +1521,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
     facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
     #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-    ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz,' VS 1990), méthode "classique"'))+
+    ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz," VS 1990), fonctions de réponse de l'ensemble non balancé"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 1.75
   if (is.na(folder_out)){
@@ -1543,12 +1559,12 @@ plot_comp_anova=function(LM,QU,type,nameEff=NULL,pred_name,ind_name,var_name,fol
     
     x=lapply(LM,function(x) x$MAINEFFECT[[nameEff]]$MEAN)
     x=lapply(x,"colnames<-",LM[[1]]$listScenarioInput$listEff[[ieff]])
-    x=lapply(x,function(z) gather(data.frame(z),key="eff",value="x"))
+    x=lapply(x,function(z) pivot_longer(data=data.frame(z),names_to = "eff",values_to = "x"))
     x=do.call("rbind",x)
     
     y=lapply(QU,function(y) y$MAINEFFECT[[nameEff]]$MEAN)
     y=lapply(y,"colnames<-",LM[[1]]$listScenarioInput$listEff[[ieff]])
-    y=lapply(y,function(z) gather(data.frame(z),key="eff",value="y"))
+    y=lapply(y,function(z) pivot_longer(data=data.frame(z),names_to = "eff",values_to = "y"))
     y=do.call("rbind",y)
     data=cbind(x,y$y)#merge does not work because too many rows
     colnames(data)=c("eff","x","y")
@@ -1599,13 +1615,14 @@ plot_bv_areas=function(folder_out){
 
 #############################################################
 ## Prepare specific climate response for QUALYPSO
-## Y the nS x nY or nG x nS x nY indicator
+## Y the nS x nY or nG x nS x nY indicator, can take in NA
 ## X the predictor (vector or same size as Y)
 ## Xref the reference value (or vector)
 ## typeChangeVariable "rel" or "abs"
 ## spar the spline smoothing in case of spline (vector of  size nS)
 ## type the type of smoothing applied: spline (classic but can pick each spar, log_spline (log transform, spline , then unlog)
 
+## etaStar is by definition of X dimensions's and not Xfut and can contain NA (logical when thinking of tempreature predictor)
 
 prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
   
@@ -1745,8 +1762,10 @@ plotQUALYPSO_chronique_accordsigne=function(QUALYPSOOUT,pred,pred_name,ind_name,
     data$neg[i]=sum(chains[,i]<0)/n_chain*100
   }
   plt=ggplot(data)+
-    geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=pos),color=temp_5[5],size=2)+
-    geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=-neg),color=temp_5[1],size=2)+
+    geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=pos),color=temp_5[5],size=1)+
+    #geom_point(aes(x=Xfut,y=pos),color=temp_5[5],size=4)+
+    geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=-neg),color=temp_5[1],size=1)+
+    #geom_point(aes(x=Xfut,y=-neg),color=temp_5[1],size=4)+
     geom_hline(aes(yintercept=0))+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim)+
     theme_bw(base_size = 18)+
@@ -1754,7 +1773,10 @@ plotQUALYPSO_chronique_accordsigne=function(QUALYPSOOUT,pred,pred_name,ind_name,
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     scale_y_continuous(paste0("Accord sur le signe (%)"),limits=c(-100,100),breaks=seq(-100,100,20),labels=abs(seq(-100,100,20)),expand=c(0,0))+
     ggtitle(paste0("Pourcentage de chaînes en accord sur le signe pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
-  plt
+  # if(pred=="time"){
+  #   plt=plt+
+  #     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = c(1991,2100))
+  # }
   if (is.na(folder_out)){
     return(plt)
   }else{
