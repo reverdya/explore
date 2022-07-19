@@ -27,7 +27,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 path_data="C:/Users/reverdya/Documents/Docs/2_data/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/analyse_indic/"
 
-var=c("Debits")
+Var=c("Debits")
 rcp=c("historical","rcp2.6","rcp4.5","rcp8.5")
 bc=c("ADAMONT")
 hm=c("SIM2")
@@ -79,7 +79,7 @@ for(i in 1:length(lst_names_eff)){
 
 
 ###############################################################################################
-## Plot raw indicator, and its spline for all models and selection of watersheds by RCP for time
+## Plot raw indicator , and its spline and residual anomalies for all models and selection of watersheds by RCP for time
 ## Check for coherence of using spline and possible chains that are outlying
 ## checks particularly that data is not cyclical
 ## Climate response not climate change response
@@ -128,10 +128,18 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         }
         colnames(raw)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
         colnames(spline)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
-        raw=gather(raw,key = "model",value = "val",-year)
+        raw=pivot_longer(data=raw,cols=!year,names_to = "model",values_to = "val")
         raw$type="raw"
-        spline=gather(spline,key = "model",value = "val",-year)
+        spline=pivot_longer(data=spline,cols=!year,names_to = "model",values_to = "val")
         spline$type="spline"
+        
+        variab=raw
+        variab$val=raw$val-spline$val
+        variab$gcm=unlist(lapply(strsplit(variab$model,"_"),function(x) x[1]))
+        variab$rcm=unlist(lapply(strsplit(variab$model,"_"),function(x) x[2]))
+        tmp=pivot_wider(variab[c("year","model","val")],names_from = model,values_from = val)
+        sdIV=sqrt(mean(apply(tmp[,-1],2,var,na.rm=T),na.rm=T))
+        
         data=rbind(raw,spline)
         data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
         data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
@@ -165,6 +173,28 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         #   print(paste0(lst_indic[i],"_chronique_",select_stations$Nom[w-1],"_",r,"_log is impossible because of null or negative values in spline"))
         # }
         
+        plt=ggplot(variab)+#Warnings okay
+          geom_line(aes(x=year,y=val,color=rcm),size=0.7)+
+          geom_hline(aes(yintercept=sdIV/2,linetype="a"),size=1)+
+          geom_hline(aes(yintercept=-sdIV/2,linetype="a"),size=1,linetype="dotted")+
+          geom_hline(aes(yintercept=0),size=0.5)+
+          scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+# keep these colors because need 8
+          scale_linetype_manual("",values=c("a"="dotted"),label="Incertitude interne")+
+          theme_bw(base_size = 18)+
+          theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+          theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+          ggtitle(paste0("Anomalies résiduelles du ",name_indic[i],"\npour le ",r," et ",select_stations$Nom_complet[w-1]))+
+          scale_x_continuous("")+
+          scale_y_continuous(paste0("Anomalies résiduelles ( ",units[i]," )"))+
+          guides(color = guide_legend(override.aes = list(size = 1.7)))+
+          facet_wrap(vars(gcm))+
+          theme(panel.spacing.x = unit(2, "lines"))
+        if(SPAR==1){
+          save.plot(plt,Filename = paste0(lst_indic[i],"_residuals-anomalies_",select_stations$Nom[w-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+        }else{#just to ease file sorting
+          save.plot(plt,Filename = paste0(lst_indic[i],"_residuals-anomalies_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains/"),Format = "jpeg")
+        }
+        
       }
     }
     
@@ -173,7 +203,7 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
 
 
 ###############################################################################################
-## Plot change indicator, and its spline for all models and selection of watersheds by RCP for time
+## Plot change indicator, and its spline and residual anomalies for all models and selection of watersheds by RCP for time
 ## climate change response
 
 ##Merge data frame warnings are okay
@@ -206,14 +236,22 @@ for (i in 1:length(lst_indic)){# for each indicator
     colnames(raw)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
     raw[is.na(t(Y))]=NA
     raw$year=X
-    raw=gather(raw,key="model",value="val",-year)
+    raw=pivot_longer(data=raw,cols=!year,names_to = "model",values_to = "val")
     raw$type="raw"
     spline=data.frame(t(clim_resp$phiStar))*100
     colnames(spline)=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
     spline[is.na(t(Y))]=NA
     spline$year=X
-    spline=gather(spline,key="model",value="val",-year)
+    spline=pivot_longer(data=spline,cols=!year,names_to = "model",values_to = "val")
     spline$type="spline"
+    
+    variab=raw
+    variab$val=raw$val-spline$val
+    variab$gcm=unlist(lapply(strsplit(variab$model,"_"),function(x) x[1]))
+    variab$rcm=unlist(lapply(strsplit(variab$model,"_"),function(x) x[2]))
+    tmp=pivot_wider(variab[c("year","model","val")],names_from = model,values_from = val)
+    sdIV=sqrt(mean(apply(tmp[,-1],2,var,na.rm=T),na.rm=T))
+    
     data=rbind(raw,spline)
     data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
     data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
@@ -244,6 +282,24 @@ for (i in 1:length(lst_indic)){# for each indicator
         facet_wrap(vars(gcm))+
         theme(panel.spacing.x = unit(2, "lines"))
      save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_rel_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_relative/"),Format = "jpeg")
+    
+     plt=ggplot(variab)+#Warnings okay
+       geom_line(aes(x=year,y=val,color=rcm),size=0.7)+
+       geom_hline(aes(yintercept=sdIV/2,linetype="a"),size=1)+
+       geom_hline(aes(yintercept=-sdIV/2,linetype="a"),size=1,linetype="dotted")+
+       geom_hline(aes(yintercept=0),size=0.5)+
+       scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+# keep these colors because need 8
+       scale_linetype_manual("",values=c("a"="dotted"),label="Incertitude interne")+
+       theme_bw(base_size = 18)+
+       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+       ggtitle(paste0("Anomalies résiduelles relatives du ",name_indic[i],"\npour le ",r," et ",select_stations$Nom_complet[w-1]))+
+       scale_x_continuous("")+
+       scale_y_continuous(paste0("Anomalies résiduelles relatives (%)"))+
+       guides(color = guide_legend(override.aes = list(size = 1.7)))+
+       facet_wrap(vars(gcm))+
+       theme(panel.spacing.x = unit(2, "lines"))
+    save.plot(plt,Filename = paste0(lst_indic[i],"_residuals-anomalies_rel_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_relative/"),Format = "jpeg")
     }
   }
 }
@@ -253,7 +309,7 @@ for (i in 1:length(lst_indic)){# for each indicator
 
 
 ###############################################################################################
-## Plot raw indicator, and its spline for all models and selection of watersheds by RCP for temperature
+## Plot raw indicator, and its spline and residual anomalies for all models and selection of watersheds by RCP for temperature
 ## Check for coherence of using spline and possible chains that are outlying
 ## checks particularly that data is not cyclical
 ## Climate response not climate change response
@@ -304,10 +360,19 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         }
         colnames(raw)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
         colnames(spline)[-1]=paste0(simu_lst[simu_lst$rcp==r,]$gcm,"_",simu_lst[simu_lst$rcp==r,]$rcm)
-        raw=gather(raw,key = "model",value = "val",-tas)
+        raw=pivot_longer(data=raw,cols=!tas,names_to = "model",values_to = "val")
         raw$type="raw"
-        spline=gather(spline,key = "model",value = "val",-tas)
+        spline=pivot_longer(data=spline,cols=!tas,names_to = "model",values_to = "val")
         spline$type="spline"
+        
+        variab=raw
+        variab$val=raw$val-spline$val
+        variab$gcm=unlist(lapply(strsplit(variab$model,"_"),function(x) x[1]))
+        variab$rcm=unlist(lapply(strsplit(variab$model,"_"),function(x) x[2]))
+        tmp=pivot_wider(variab[c("tas","model","val")],names_from = model,values_from = val)
+        sdIV=sqrt(mean(apply(tmp[,-1],2,var,na.rm=T),na.rm=T))
+        variab=variab[!is.na(variab$val),]
+        
         data=rbind(raw,spline)
         data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
         data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
@@ -326,10 +391,10 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
           guides(color = guide_legend(override.aes = list(size = 1.7)))+
           facet_wrap(vars(gcm))+
           theme(panel.spacing.x = unit(2, "lines"))
-        if(lst_indic[i]=="log10VCN10"){
-          plt=plt+
-            scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
-        }
+        # if(lst_indic[i]=="log10VCN10"){
+        #   plt=plt+
+        #     scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
+        # }
         if(SPAR==1){
           save.plot(plt,Filename = paste0(lst_indic[i],"_chronique_",select_stations$Nom[w],"_",r,"_spar1.0"),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_temp/"),Format = "jpeg")
         }else{#just to ease file sorting
@@ -341,6 +406,23 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         # }else{
         #   print(paste0(lst_indic[i],"_chronique_",select_stations$Nom[w],"_",r,"_log is impossible because of null or negative values in spline"))
         # }
+        plt=ggplot(variab)+#Warnings okay
+          geom_line(aes(x=tas,y=val,color=rcm),size=0.7)+
+          geom_hline(aes(yintercept=sdIV/2,linetype="a"),size=1)+
+          geom_hline(aes(yintercept=-sdIV/2,linetype="a"),size=1,linetype="dotted")+
+          geom_hline(aes(yintercept=0),size=0.5)+
+          scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+# keep these colors because need 8
+          scale_linetype_manual("",values=c("a"="dotted"),label="Incertitude interne")+
+          theme_bw(base_size = 18)+
+          theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+          theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+          ggtitle(paste0("Anomalies résiduelles du ",name_indic[i],"\npour le ",r," et ",select_stations$Nom_complet[w-1]))+
+          scale_x_continuous("Température (°C)")+
+          scale_y_continuous(paste0("Anomalies résiduelles (%)"))+
+          guides(color = guide_legend(override.aes = list(size = 1.7)))+
+          facet_wrap(vars(gcm))+
+          theme(panel.spacing.x = unit(2, "lines"))
+        save.plot(plt,Filename = paste0(lst_indic[i],"_residual-anomalies_",select_stations$Nom[w-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_temp/"),Format = "jpeg")
         
       }
     }
@@ -384,7 +466,7 @@ for (i in 1:length(lst_indic)){# for each indicator
         ## Warnings okay
       }
       colnames(spline)[-1]=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm)
-      spline=gather(spline,key = "model",value = "val",-tas)
+      spline=pivot_longer(data=spline,cols=!tas,names_to = "model",values_to = "val")
       data=spline
       data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
       data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
@@ -401,11 +483,11 @@ for (i in 1:length(lst_indic)){# for each indicator
         scale_x_continuous("Température (°C)")+
         scale_y_continuous(paste0("Réponse climatique ( ",units[i]," )"))+
         guides(color = guide_legend(override.aes = list(size = 1.7)))
-      if(lst_indic[i]=="log10VCN10"){
-        plt=plt+
-          scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
-      }
-     save.plot(plt,Filename = paste0(lst_indic[i],"rep_clim_temp",select_stations$Nom[w]),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_temp_compare_rcp/"),Format = "jpeg")
+      # if(lst_indic[i]=="log10VCN10"){
+      #   plt=plt+
+      #     scale_y_continuous(name = paste0("Réponse climatique ( ",units[i]," )"),sec.axis = sec_axis(~10^(.), name="exposant 10",breaks=c(0.01,0.1,1,10,100,1000)))
+      # }
+     save.plot(plt,Filename = paste0(lst_indic[i],"_rep_clim_temp_",select_stations$Nom[w]),Folder = paste0(path_fig,lst_indic[i],"/plot_chains_temp_compare_rcp/"),Format = "jpeg")
   }
 }
 
