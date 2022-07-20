@@ -132,7 +132,7 @@ for (r in lst_names_eff$rcp){
     theme(panel.spacing.x = unit(2, "lines"))
   plt_spline_time[[r]]=ggplot(data)+#Warnings okay
     geom_line(aes(x=year,y=val,size=type,color=rcm))+
-    scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur","Réponse climatique"))+
+    scale_size_manual("",values=c(0.7,1.7),label=c('Module "brut"',"Réponse climatique"))+
     scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
     theme_bw(base_size = 18)+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -193,7 +193,7 @@ plt_spline_time_rel=ggplot(data[data$rcp==r,])+#Warnings okay
   geom_line(aes(x=year,y=val,size=type,color=rcm))+
   #geom_line(aes(x=year,y=ciinf,color=rcm))+
   #geom_line(aes(x=year,y=cisup,color=rcm))+
-  scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur","Réponse au\n changement climatique"))+
+  scale_size_manual("",values=c(0.7,1.7),label=c('Module "brut"',"Réponse en\n changement climatique"))+
   scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
   theme_bw(base_size = 18)+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
