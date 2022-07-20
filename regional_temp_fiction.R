@@ -1,6 +1,6 @@
 # Alix Reverdy
 # Explore 2
-# Run Qualypso with time then global temperature predictor
+# Run Qualypso with a fictive local temperature
 
 rm(list=ls())
 gc()
