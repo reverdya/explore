@@ -4,6 +4,8 @@
 
 library(svglite) #save svg
 library(ggplot2) #plots
+library(ggrepel)# labels
+library(ggpubr) #ggarrange
 library(ncdf4) #netcdf
 library(tictoc) #runtime
 library(lubridate) #date management
@@ -252,6 +254,7 @@ temp_5=c(rgb(202,0,32,maxColorValue=255),rgb(244,165,130,maxColorValue=255),rgb(
 col_3rcp=c(rgb(0,52,102,maxColorValue=255),rgb(112,160,205,maxColorValue=255),rgb(153,0,2,maxColorValue=255))
 names(col_3rcp)=c("rcp2.6","rcp4.5","rcp8.5")
 col_3rcp_shade=c(rgb(67,147,195,maxColorValue=255),rgb(146,197,222,maxColorValue=255),rgb(252,209,197,maxColorValue=255))
+names(col_3rcp_shade)=c("rcp2.6","rcp4.5","rcp8.5")
 
 #For line charts
 ipcc_6col=c(rgb(0,0,0,maxColorValue=255),rgb(112,160,205,maxColorValue=255),rgb(196,121,0,maxColorValue=255),rgb(178,178,178,maxColorValue=255),rgb(0,52,102,maxColorValue=255),rgb(0,79,0,maxColorValue=255))
@@ -1071,7 +1074,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
   names(rcp.labs) <- rcp_names
-  quant.labs <- c("Q5", "Moyenne", "Q95")
+  quant.labs <- c("Q5 ensemble", "Moyenne", "Q95 ensemble")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -1148,7 +1151,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   horiz.labs <- paste0(horiz," ",pred_unit)
   names(horiz.labs) <- horiz
-  quant.labs <- c("Q5", "Moyenne", "Q95")
+  quant.labs <- c("Q5 ensemble", "Moyenne", "Q95 ensemble")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -1235,7 +1238,7 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
   
   horiz.labs <- paste0(as.character(horiz),"°C")
   names(horiz.labs) <- horiz
-  quant.labs <- c("Q5", "Moyenne", "Q95")
+  quant.labs <- c("Q5 ensemble", "Moyenne", "Q95 ensemble")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -1381,21 +1384,21 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     }
     if(vartype=="varint"){
       chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]*100^2#because variance is square of standard deviation unit
-      chg=qnorm(p = 0.95, mean = 0, sd = sqrt(chg))
+      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
     }
     if(vartype=="varres"){
       chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]*100^2
-      chg=qnorm(p = 0.95, mean = 0, sd = sqrt(chg))
+      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
     }
     if(vartype=="vartot"){
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
       chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])*100^2
-      chg=qnorm(p = 0.95, mean = 0, sd = sqrt(chg))
+      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
     }
     if(vartype=="incert"){
       Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
       chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])*100^2
-      chg=qnorm(p = 0.95, mean = 0, sd = sqrt(chg))
+      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
     }
     exut$val[exut$idx==i]=chg
   }
@@ -1425,7 +1428,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="incert"){
     q99=quantile(exut$val,probs=freq_col)
@@ -1433,7 +1436,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="varint"){
     q99=quantile(exut$val,probs=freq_col)
@@ -1441,7 +1444,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude liée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   
   if(vartype=="varres"){
@@ -1450,7 +1453,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if (is.na(folder_out)){
     return(plt)
@@ -1506,7 +1509,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   
   rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
   names(rcp.labs) <- rcp_names
-  quant.labs <- c("Q5", "Moyenne", "Q95")
+  quant.labs <- c("Q5 ensemble", "Moyenne", "Q95 ensemble")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -1668,7 +1671,7 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
   
   # prepare outputs
   phiStar = phi = matrix(nrow=nS,ncol=nFut)
-  etaStar = matrix(nrow=nS,ncol=nY)
+  etaStar = YStar = matrix(nrow=nS,ncol=nY)
   climateResponse = list()
   for(iS in 1:nS){
     # projection for this simulation chain
@@ -1709,10 +1712,12 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
       # Eq. 5
       phiStar[iS,] = phiS-phiC
       etaStar[iS,] = Ys-phiY
+      YStar[iS,] = Ys-phiC
     }else if(typeChangeVariable=='rel'){
       # Eq. 6
       phiStar[iS,] = phiS/phiC-1
       etaStar[iS,] = (Ys-phiY)/phiC
+      YStar[iS,] = (Ys-phiC)/phiC
     }else{
       stop("fit.climate.response: argument type.change.var must be equal to 'abs' (absolute changes) or 'rel' (relative changes)")
     }
@@ -1722,7 +1727,7 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
   # of the variance of eta for each simulation chain and take the mean, see Eq. 19
   varInterVariability = mean(apply(etaStar,2,function(x) var(x)),na.rm=T)
   # return objects
-  return(list(phiStar=phiStar,etaStar=etaStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability))
+  return(list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability))
   
 }
 
@@ -1783,3 +1788,207 @@ plotQUALYPSO_chronique_accordsigne=function(QUALYPSOOUT,pred,pred_name,ind_name,
     save.plot(plt,Filename = paste0("accord-signe_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
   }
 }
+
+
+
+#############################################################################
+## Make the summarize plot of a time series
+## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+## pred the predictor name in the file
+## pred_name the plain language name of the predictor
+## ind_name the of the indicator
+## ind_name_full the plain language name of the indicator
+## bv_name the name of the watershed
+## bc_full_name plain language name of the watershed
+## pred_unit the unit of the predictor
+## folder_out the saving folder
+
+
+plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out){
+  
+  scenAvail=QUALYPSOOUT$listScenarioInput$scenAvail
+  Xfut = QUALYPSOOUT$Xfut
+  probCI = QUALYPSOOUT$listOption$probCI
+  
+  iEff = which(QUALYPSOOUT$namesEff == "rcp")
+  EffHat = QUALYPSOOUT$CHANGEBYEFFECT[["rcp"]]
+  nEff = dim(EffHat$MEAN)[2]
+  meanRaw = EffHat$MEAN
+  meanPred =meanRaw
+  med=data.frame(meanPred)*100
+  colnames(med)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+  med$pred=Xfut
+  med=pivot_longer(data=med,cols=!pred,names_to = "eff",values_to = "med")
+  
+  Binf=NULL
+  Bsup=NULL
+  for (r in 1:nEff){
+    idx_rcp=which(scenAvail$rcp==QUALYPSOOUT$listScenarioInput$listEff[[iEff]][r])
+    # phiStar
+    phiStar = QUALYPSOOUT$CLIMATEESPONSE$phiStar[idx_rcp,]
+    # Ystar: change variable from the projection (Y(t)-phi(c))
+    YStar = QUALYPSOOUT$CLIMATEESPONSE$YStar[idx_rcp,]
+    # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
+    # obtained from QUALYPSO
+    sd.qua = sqrt(QUALYPSOOUT$TOTALVAR-QUALYPSOOUT$INTERNALVAR-QUALYPSOOUT$EFFECTVAR[,iEff])
+    sd.emp = apply(phiStar,2,sd)
+    sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
+    sd.corr = sd.qua/sd.emp
+    phiStar.corr = phiStar*t(replicate(nrow(phiStar),sd.corr))
+    # compute the lower bound if the distribution is gaussian
+    binf = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
+    bsup = apply(phiStar.corr,2,quantile,probs = 0.5+probCI/2)
+    Binf=cbind(Binf,binf*100)
+    Bsup=cbind(Bsup,bsup*100)
+  }
+
+  
+  Binf=data.frame(Binf)
+  Bsup=data.frame(Bsup)
+  colnames(Binf)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+  colnames(Bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+  Binf$pred=Xfut
+  Bsup$pred=Xfut
+  Binf=pivot_longer(data=Binf,cols=!pred,names_to = "eff",values_to = "binf")
+  Bsup=pivot_longer(data=Bsup,cols=!pred,names_to = "eff",values_to = "bsup")
+  data=merge(med,Binf,by=c("pred","eff"))
+  data=merge(data,Bsup,by=c("pred","eff"))
+  
+  chains=data.frame(as.vector(QUALYPSOOUT$Xmat),as.vector(QUALYPSOOUT$CLIMATEESPONSE$YStar)*100,rep(scenAvail$rcp,times=dim(QUALYPSOOUT$Xmat)[2]),rep(paste0(scenAvail$rcp,scenAvail$gcm,scenAvail$rcm),times=dim(QUALYPSOOUT$Xmat)[2]))
+  colnames(chains)=c("pred","val","eff","chain")
+  
+  if(pred=="time"){
+    data=data[data$pred>=1990,]
+    chains=chains[chains$pred>=1990 & chains$pred<=2098,]
+    xlim=c(1950,2110)
+  }
+  
+  fake_obs=data.frame(QUALYPSOOUT$Xmat[2,],QUALYPSOOUT$CLIMATEESPONSE$YStar[2,]*100)
+  colnames(fake_obs)=c("pred","val")
+  if(pred=="time"){
+    fake_obs=fake_obs[fake_obs$pred<2005,]
+  }
+  fake_obs$spline=smooth.spline(x=fake_obs$pred,y=fake_obs$val,spar = QUALYPSOOUT$listOption$spar)$y
+  
+  idx_shrtlst=c(11,13,16)
+  shortlist=data.frame(t(QUALYPSOOUT$CLIMATEESPONSE$phiStar[idx_shrtlst,]))*100
+  colnames(shortlist)=paste0(scenAvail$rcp[idx_shrtlst],"/",scenAvail$gcm[idx_shrtlst],"/",scenAvail$rcm[idx_shrtlst])
+  shortlist$pred=Xfut
+  if(pred=="time"){
+    shortlist=shortlist[shortlist$pred>=1990,]
+  }
+  name_shortlist=data.frame(as.numeric(shortlist[nrow(shortlist),-ncol(shortlist)]),colnames(shortlist)[-ncol(shortlist)])
+  colnames(name_shortlist)=c("y","name")
+  name_shortlist=name_shortlist[order(name_shortlist$y),]
+  name_shortlist$x=seq(2099,2099+2*(nrow(name_shortlist)-1),2)
+  shortlist=pivot_longer(shortlist,cols=!pred,names_to="chain",values_to = "val")
+  lab_shortlist=paste0(seq(1,nrow(name_shortlist))," = ",name_shortlist$name)
+  lab_shortlist=gsub("rcp","RCP",lab_shortlist)
+  
+  plt1=ggplot(data)+
+    geom_line(data=chains,aes(x=pred,y=val,group=chain,color=eff,size="aa"),alpha=0.2)+#raw chains
+    geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+#uncertainty band
+    geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5)+#uncertainty band limit
+    geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5)+#uncertainty band limit
+    geom_line(aes(x=pred,y=med,group=eff,color=eff,size="cc"))+#RCP mean
+    geom_line(data=fake_obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+#raw obs
+    geom_line(data=fake_obs,aes(x=pred,y=spline,color="gray50",size="cc"))+#obs spline
+    geom_line(data=shortlist,aes(x=pred,y=val,group=chain,size="bb"),linetype="dotted",color="gray20")+#shortlist
+    geom_text(data=name_shortlist,aes(x=x,y=y,label = seq(1,nrow(name_shortlist))))+
+    geom_point(data=name_shortlist,aes(x=2100,y=y,shape=as.character(seq(1,nrow(name_shortlist)))),size=0.01,alpha=0)+#workaround to have text legended
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim,expand=c(0,0))+
+    scale_y_continuous(paste0("Changement relatif moyen (%)"),limits=c(min(c(chains$val,fake_obs$val)),max(c(chains$val,fake_obs$val))),expand=c(0,0))+
+    scale_color_discrete("",type = c("gray50"="gray50",col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]]),labels=c("Observations",labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])]))+
+    guides(color = guide_legend(order=1,override.aes = list(size = 1.2)))+
+    scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=NULL)+
+    guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE))+
+    scale_size_manual("",values=c("aa"=0.15,"bb"=1,"cc"=1.2),labels=c("Ensemble de projections",'Réponse en changement\ndes chaînes de référence',"Réponse moyenne\nen changement"))+
+    guides(size = guide_legend(order=3,byrow = TRUE,override.aes = list(linetype = c("solid","dotted","solid"))))+#byrow necessary for option of spacing between lines
+    scale_shape_discrete("",labels=lab_shortlist)+
+    guides(shape = guide_legend(order=4,override.aes = list(alpha=0)))+
+    theme_bw(base_size = 12)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    theme(legend.key.width = unit(1.5,"cm"))+
+    theme(legend.title = element_text(size=10))+
+    theme( legend.margin = margin(-2, 0, -2, 0))
+  
+  perc_pos=vector(mode="list",length=nEff)
+  for (r in 1:nEff){
+    idx_rcp=which(scenAvail$rcp==QUALYPSOOUT$listScenarioInput$listEff[[iEff]][r])
+    phiStar = QUALYPSOOUT$CLIMATEESPONSE$phiStar[idx_rcp,]
+    phiStar=phiStar[,Xfut>1990]
+    n_chain=dim(phiStar)[1]
+    perc_pos[[r]]=apply(phiStar,MARGIN=2,function(x) sum(x>=0)/n_chain*100)
+  }
+  data=data.frame(Xfut[Xfut>1990],do.call("cbind",perc_pos))
+  colnames(data)=c("pred",QUALYPSOOUT$listScenarioInput$listEff[[iEff]])
+  data=pivot_longer(data,cols=!pred,names_to = "rcp",values_to = "val")
+  rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
+  
+  plt2=ggplot(data)+
+    geom_point(aes(x=pred,y=rcp,fill=val),color="black",size=5,shape=21)+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les modèles sur\nle signe de la tendance (%)",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T)+#that way because stepsn deforms colors
+    #facet_wrap(vars(rcp),nrow=nEff,labeller = labeller(rcp = rcp.labs),strip.position = "left")+
+    scale_y_discrete("",labels=rcp.labs)+
+    theme_bw(base_size = 12)+
+    theme(legend.title = element_text(size=11))+
+    theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_blank(),axis.ticks = element_blank(),axis.text.x = element_blank())+
+    theme(axis.text.y = element_text(face="bold"))+
+    theme(legend.key.height = unit(0.3,"cm"))+
+    scale_x_continuous("",limits=xlim,expand=c(0,0))+
+    ylab("")
+  
+  
+  
+  nFut = length(Xfut)
+  nEff2 = QUALYPSOOUT$listScenarioInput$nEff
+  vecEff = 1:nEff2
+  VARDECOMP = QUALYPSOOUT$DECOMPVAR
+  VARDECOMP[, 1:nEff] = VARDECOMP[, vecEff]
+  cum = cum.smooth = rep(0, nFut)
+  data=VARDECOMP
+  for (i in 1:(nEff + 2)) {
+    cumPrevious = cum.smooth
+    cum = cum + VARDECOMP[, i]
+    cum.smooth = cum
+    cum.smooth[cum.smooth < 0] = 0
+    cum.smooth[cum.smooth > 1] = 1
+    data[,i]=cum.smooth
+  }
+  data=data.frame(cbind(Xfut,data))
+  data=data[data$Xfut>=1990,]
+  namesEff = QUALYPSOOUT$names
+  names_var=c(namesEff,"res","int")
+  colnames(data)=c("Xfut",names_var)
+  data=pivot_longer(data=data,cols=-c(Xfut),names_to = "var",values_to = "val")
+  data$val=data$val*100 #percentage
+  
+  vec_color=col_7var[names(col_7var) %in% names_var]
+  data$var=factor(data$var,levels=rev(names(vec_color)))
+  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
+  
+  plt3=ggplot(data)+
+    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var,alpha=var))+
+    geom_line(aes(x=Xfut,y=val,group=var),color="white",linetype="dashed",size=0.3)+
+    scale_fill_discrete("Partition\nde la variance",type = vec_color,labels=labels_var)+
+    scale_alpha_manual("Partition\nde la variance",values=c("int"=0.2,"res"=1,"rcm"=1,"gcm"=1,"rcp"=1),labels=labels_var)+
+    scale_x_continuous("",limits = xlim,expand=c(0,0))+
+    scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
+    theme_bw(base_size = 12)+
+    theme(legend.title = element_text(size=11))+
+    theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank(),panel.border = element_blank(),axis.ticks.x = element_blank(),axis.text.x = element_blank(),axis.line.y = element_line(colour = "black"),axis.line.x=element_blank())
+  
+  
+  
+  plt=ggarrange(plt1,plt2,plt3,heights=c(2,0.5,1),nrow=3,ncol=1,align="v")
+  plt
+    
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("summary_change_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  }
+  
+}
+
