@@ -28,7 +28,7 @@ library(plotly)#interactive plot
 library(htmlwidgets)#save interactive plot
 
 
-#####
+#############################################################
 #Save a graph in svg, pdf or jpeg format (size in cm)
 #object ggplot : object in "plot.object"
 #function plot base (ou multiplot): plot.object=NULL , Type="plot" , plot.function=plot(x,y)... , Format = "pdf" (ou "svg" ou "jpeg")
@@ -73,133 +73,7 @@ save.plot=function(plot.object,Filename,Folder,Type="ggplot",plot.function=NULL,
   }
 }
 
-#####
-#Cleanly load netcdf
-load_nc<-function(path){
-  nc<-nc_open(path)
-  return(nc)
-  nc_close(nc)
-}
 
-#####
-## From a date returns season DJF,MAM,JJA,SON
-date_to_season=function(date){
-  month=month(date)
-  season=month
-  season[season==12]="DJF"
-  season[season==1]="DJF"
-  season[season==2]="DJF"
-  season[season==3]="MAM"
-  season[season==4]="MAM"
-  season[season==5]="MAM"
-  season[season==6]="JJA"
-  season[season==7]="JJA"
-  season[season==8]="JJA"
-  season[season==9]="SON"
-  season[season==10]="SON"
-  season[season==11]="SON"
-  return(season)
-}
-
-
-#####
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# https://coolbutuseless.github.io/2020/08/26/run-length-encoding-and-the-problem-of-nas/
-# extrait 18/02/2022
-#
-#' A drop-in replacement for \code{base::rle()} that treats all NAs as identical
-#'
-#' @param x an atomic vector
-#'
-#' @return An object of class \code{rle}
-#'
-#' @export
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-rle2 <- function (x)  {
-  stopifnot("'x' must be a vector of an atomic type" = is.atomic(x))
-  
-  n <- length(x)
-  if (n == 0L) {
-    return(structure(list(
-      lengths = integer(), values = x)
-    ), class = 'rle')
-  }
-  
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Where does next value not equal current value?
-  # i.e. y will be TRUE at the last index before a change
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  y <- (x[-1L] != x[-n])
-  
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Since NAs are never equal to anything, NAs in 'x' will lead to NAs in 'y'.
-  # These current NAs in 'y' tell use nothing - Set all NAs in y to FALSE
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  y[is.na(y)] <- FALSE
-  
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # When a value in x is NA and its successor is not (or vice versa) then that
-  # should also count as a value change and location in 'y' should be set to TRUE
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  y <- y | xor(is.na(x[-1L]), is.na(x[-n]))
-  
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # Any TRUE locations in 'y' are the end of a run, where the next value
-  # changes to something différent
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  i <- c(which(y), n)
-  
-  structure(list(
-    lengths = diff(c(0L, i)),
-    values  = x[i]
-  ), class = 'rle')
-}
-
-#######
-## read and fortify for ggplot plotting shp file
-
-read_shp=function(path){
-  shp=readOGR(path,encoding = "UTF-8") ## parameters allows reading
-  shp$id <- row.names(shp)
-  shp_fort=fortify(shp)
-  shp_fort <- left_join(shp_fort, shp@data, by="id")
-}
-
-######
-## Make a ggplot2 base map of France with SIM2 outlets as dots and val_name the name of the column for the color scale, that can be customized afterwards
-## Data has at least longitude in x, latitude in y and a numeric filling value in val_name
-path_river="C:/Users/reverdya/Documents/Docs/2_data/SIG/processed/CoursEau_idx1_wgs84.shp"
-path_fr="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/IGN/contours_FR/gadm36_FRA_0.shp"
-river=read_shp(path_river)
-fr=read_shp(path_fr)
-
-data(wrld_simpl)
-options(warn=-1)
-wrld <- fortify(wrld_simpl)
-options(warn=0)
-
-base_map_outlets=function(data,val_name,alpha_name=NULL){
-  plt=ggplot(data=data)+
-    geom_polygon(data=fr,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.5)+
-    geom_path(data=river,aes(x=long,y=lat,group=group),colour="gray70",size=0.3)+
-    coord_equal(ratio=111/78,xlim = c(-6, 9.75),ylim = c(41.25,52),expand=F)+## ratio of 1lat by 1long at 45N
-    scale_x_continuous("")+
-    scale_y_continuous("")+
-    theme_bw(base_size = 10)+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    theme(axis.ticks =element_blank(),axis.text = element_blank() )+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
-    theme(strip.text = element_text(size = 12, face = "bold"))+
-    guides(fill = guide_colourbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
-  if(!is.null(alpha_name)){
-    plt=plt+
-      geom_point(aes(x=x,y=y,fill=get(val_name),alpha=get(alpha_name)),size=3,shape=21,stroke=0.5)
-  }else{
-    plt=plt+
-      geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21,stroke=0.5)
-  }
-  return(plt)
-}
 
 #########################################
 ## CMYK to RGB colors
@@ -217,9 +91,9 @@ cmyk <- function(C,M,Y,K) {
   g.col <- ceiling(255 * (1-n.m))
   b.col <- ceiling(255 * (1-n.y))
   tmp=col2rgb(sprintf("#%02s%02s%02s",
-                         as.hexmode(r.col), 
-                         as.hexmode(g.col), 
-                         as.hexmode(b.col)))
+                      as.hexmode(r.col), 
+                      as.hexmode(g.col), 
+                      as.hexmode(b.col)))
   tmp=as.vector(tmp)
   return(rgb(tmp[1],tmp[2],tmp[3],maxColorValue=255))
   
@@ -306,1313 +180,91 @@ rescale_col=function(pal=brewer.blues(100),values,param){
   return(pal(c(0, col_spacing,1)))
 }
 
-###################################
-## Format Global température for use in Qualypso, to be used inside code run_QUalypso
-## spline calculated with data between 1860 and 1900
-## Difference to 1860-1900 average and rcp/gcm matching + spline smoothing
-## path_data the root of the path
-##simu_lst the list of simulations
-#first_data_year and last_data_year the first an last years with data for simu all year round
 
-format_global_tas=function(path_data,first_data_year,last_data_year,simu_lst,first_ref_year,last_ref_year){
-  
-  vecYears=seq(1860,last_data_year,1)#1860 first year for HadGEM (1861 for GFDL but not used in QUALYPSO and before first_data_year so does not matter)
-  ## Format global température: difference to 1860-1900 
-  paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
-  tas_glob_full=vector(length=length(paths),mode="list")
-  for ( i in 1:length(paths)){
-    tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
-    if(grepl("HadGEM2-ES",paths[i],fixed=T)){# -999 values in 1859
-      tas_glob=tas_glob[-1,]
-    }
-    tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data for HadGEM
-    tas_glob$tas=tas_glob$tas-pre_indus_tas
-    colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
-    tas_glob_full[[i]]=tas_glob[tas_glob$year<=2100,]
-    tas_glob=tas_glob[tas_glob$year>=1860&tas_glob$year<=2100,]
-    if(i==1){
-      mat_Globaltas_gcm=tas_glob
-    }else{
-      mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
-    }
-  }
-  
-  ## Format global température for Qualypso
-  mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
-  vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
-  vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
-  for (i in 1:nrow(simu_lst)){
-    mat_Globaltas[[i]]=tas_glob_full[[which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]]
-  }
-  mat_Globaltas=lapply(mat_Globaltas,function(x) cbind(x[,1],smooth.spline(x=x[,1],y=x[,2],spar = 1)$y))
-  mat_Globaltas=lapply(mat_Globaltas,function(x) x[x[,1]>=1860&x[,1]<=2100,2])
-  mat_Globaltas=t(do.call(cbind,mat_Globaltas))
-  ref_Globaltas=apply(mat_Globaltas,MARGIN = 1,function(x) mean(x[which(vecYears==first_ref_year):which(vecYears==last_ref_year)]))
-  idx=which(mat_Globaltas_gcm$year %in% seq(first_data_year,last_data_year))#often 1951-2099
-  mat_Globaltas=mat_Globaltas[,idx]
-  mat_Globaltas_gcm=mat_Globaltas_gcm[idx,]
-  return(list(mat_Globaltas,ref_Globaltas,mat_Globaltas_gcm))
+###########################
+#Cleanly load netcdf
+load_nc<-function(path){
+  nc<-nc_open(path)
+  return(nc)
+  nc_close(nc)
+}
+
+################################################
+## From a date returns season DJF,MAM,JJA,SON
+date_to_season=function(date){
+  month=month(date)
+  season=month
+  season[season==12]="DJF"
+  season[season==1]="DJF"
+  season[season==2]="DJF"
+  season[season==3]="MAM"
+  season[season==4]="MAM"
+  season[season==5]="MAM"
+  season[season==6]="JJA"
+  season[season==7]="JJA"
+  season[season==8]="JJA"
+  season[season==9]="SON"
+  season[season==10]="SON"
+  season[season==11]="SON"
+  return(season)
 }
 
 
-##############################################################################
-## Time series of main effect from QUALYPSOOUT object or main effect + mu
-##returns a ggplot 2 object
-## QUALYPSOOUT a Qualypso output object
-## nameEff the effect name as in QUALYPSOOUT
-## CIlevel the uncertainties percentiles
-## includeMean if True then adds mean change to effect
-## plain_nameEff the plain language name of the effect
-## pred the predictor name in the file
-## pred_name the plain language name of the predictor
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## bv_name the name of the watershed
-## bc_full_name plain language name of the watershed
-## pre_unit the unit of the predictor
-## folder_out the saving folder
-## incert=TRUE adds confidence interval equivalent to Vtot-Vint
-
-plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,plain_nameEff,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,incert=FALSE,no_loess=T){
+##############################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# https://coolbutuseless.github.io/2020/08/26/run-length-encoding-and-the-problem-of-nas/
+# extrait 18/02/2022
+#
+#' A drop-in replacement for \code{base::rle()} that treats all NAs as identical
+#'
+#' @param x an atomic vector
+#'
+#' @return An object of class \code{rle}
+#'
+#' @export
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+rle2 <- function (x)  {
+  stopifnot("'x' must be a vector of an atomic type" = is.atomic(x))
   
-  Xfut = QUALYPSOOUT$Xfut
-  iEff = which(QUALYPSOOUT$namesEff == nameEff)
-  if (length(iEff) == 0){    stop("wrong value for nameEff")} 
-  if (includeMean) {
-    EffHat = QUALYPSOOUT$CHANGEBYEFFECT[[nameEff]]
-  }  else {
-    EffHat = QUALYPSOOUT$MAINEFFECT[[nameEff]]
-  }
-  nEff = dim(EffHat$MEAN)[2]
-  meanRaw = EffHat$MEAN
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    meanPred =meanRaw
-  }else{
-    meanPred = apply(meanRaw, 2, function(x) predict(loess(x ~ Xfut)))
-  }
-  med=data.frame(meanPred)*100
-  colnames(med)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
-  med$pred=Xfut
-  med=pivot_longer(data=med,cols=!pred,names_to = "eff",values_to = "med")
-  
-  add.CI = QUALYPSOOUT$listOption$ANOVAmethod == "QUALYPSO"
-  if (add.CI) {
-    CIRaw = EffHat$CI
-    if(length(Xfut)<=6|no_loess){#loess model is under constrained
-      CIsmooth=CIRaw
-    }else{
-      CIsmooth = apply(CIRaw, c(2, 3), function(x) predict(loess(x ~ Xfut)))
-    }
-    binf=data.frame(CIsmooth[,1,])*100
-    bsup=data.frame(CIsmooth[,2,])*100
-    colnames(binf)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
-    colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
-    binf$pred=Xfut
-    bsup$pred=Xfut
-    binf=pivot_longer(data=binf,cols=!pred,names_to = "eff",values_to = "binf")
-    bsup=pivot_longer(data=bsup,cols=!pred,names_to = "eff",values_to = "bsup")
-    data=merge(med,binf,by=c("pred","eff"))
-    data=merge(data,bsup,by=c("pred","eff"))
-  }else{
-    if(incert){
-      Veff = QUALYPSOOUT$EFFECTVAR[, -iEff]
-      Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN)
-      Vtot = colSums(Vbind)
-      Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vtot))
-      vNormRev = apply(Vnorm, 2, rev)
-      probCI = QUALYPSOOUT$listOption$probCI
-      binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
-      bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
-      if(length(Xfut)<=6|no_loess){#loess model is under constrained
-        binf=data.frame(binf*100)
-        bsup=data.frame(bsup*100)
-      }else{
-        binf=data.frame(apply(binf,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
-        bsup=data.frame(apply(bsup,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
-      }
-      colnames(binf)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
-      colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
-      binf$pred=Xfut
-      bsup$pred=Xfut
-      binf=pivot_longer(data=binf,cols=!pred,names_to = "eff",values_to = "binf")
-      bsup=pivot_longer(data=bsup,cols=!pred,names_to = "eff",values_to = "bsup")
-      data=merge(med,binf,by=c("pred","eff"))
-      data=merge(data,bsup,by=c("pred","eff"))
-    }else{
-      data=med
-    }
-  }
-
-  plt=ggplot(data)+
-    geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.2)+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim,expand=c(0,0))+
-    theme_bw(base_size = 18)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))
-  
-  if(add.CI|incert){
-    plt=plt+
-      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+
-      geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5,linetype="dotted")+
-      geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5,linetype="dotted")
-    #tmp=plt$layers[[1]]
-    #plt$layers[[1]]=plt$layers[[4]]
-    #plt$layers[[4]]=tmp
-    if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
-      plt=plt+
-        scale_color_discrete("Moyenne et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-        scale_fill_discrete("Moyenne et\nintervalle de confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
-    }else{
-      plt=plt+
-        scale_color_discrete("Moyenne et\nintervalle de confiance",type = viridis(nEff))+
-        scale_fill_discrete("Moyenne et\nintervalle de confiance",type=viridis(nEff))
-    }
-  }else{
-    if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
-      plt=plt+
-        scale_color_discrete("",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
-        scale_fill_discrete("",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
-    }else{
-      plt=plt+
-        scale_color_discrete("",type = viridis(nEff))+
-        scale_fill_discrete("",type=viridis(nEff))
-    }
-  }
-
-  
-
-  if(includeMean){
-    plt=plt+
-      scale_y_continuous(paste0("Changement relatif moyen (%)"))+
-      ggtitle(paste0("Changements des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," (",bv_full_name,")"))
-    if (is.na(folder_out)){
-      return(plt)
-    }else{
-      save.plot(plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
-    }
-  }else{
-    plt=plt+
-      scale_y_continuous(paste0("Effet principal (%)"))+
-      ggtitle(paste0("Effets principaux des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," (",bv_full_name,")"))
-    if (is.na(folder_out)){
-      return(plt)
-    }else{
-      save.plot(plt,Filename = paste0("effect_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
-    }
+  n <- length(x)
+  if (n == 0L) {
+    return(structure(list(
+      lengths = integer(), values = x)
+    ), class = 'rle')
   }
   
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Where does next value not equal current value?
+  # i.e. y will be TRUE at the last index before a change
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  y <- (x[-1L] != x[-n])
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Since NAs are never equal to anything, NAs in 'x' will lead to NAs in 'y'.
+  # These current NAs in 'y' tell use nothing - Set all NAs in y to FALSE
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  y[is.na(y)] <- FALSE
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # When a value in x is NA and its successor is not (or vice versa) then that
+  # should also count as a value change and location in 'y' should be set to TRUE
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  y <- y | xor(is.na(x[-1L]), is.na(x[-n]))
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Any TRUE locations in 'y' are the end of a run, where the next value
+  # changes to something différent
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  i <- c(which(y), n)
+  
+  structure(list(
+    lengths = diff(c(0L, i)),
+    values  = x[i]
+  ), class = 'rle')
 }
 
 
-##############################################################################
-## Time series of mu + uncertainties
-## returns a ggplot 2 object
-## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
-## pred the predictor name in the file
-## pred_name the plain language name of the predictor
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## bv_name the name of the watershed
-## bc_full_name plain language name of the watershed
-## pred_unit the unit of the predictor
-## folder_out the saving folder
 
-plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
-  
-  probCI = QUALYPSOOUT$listOption$probCI
-  Xfut = QUALYPSOOUT$Xfut
-  nFut = length(Xfut)
-  meanPred = QUALYPSOOUT$GRANDMEAN$MEAN
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    meanPred=meanPred
-  }else{
-    meanPred=predict(loess(meanPred ~ Xfut))
-  }
-  vNorm = t(QUALYPSOOUT$DECOMPVAR)
-  Vtot = QUALYPSOOUT$TOTALVAR
-  nEff = nrow(vNorm) - 2
-  vNormRev = apply(vNorm, 2, rev)
-  binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
-  bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
-  limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    limIntInf[1, ] =binf
-    limIntSup[1, ] =bsup
-  }else{
-    limIntInf[1, ] = predict(loess(binf ~ Xfut))
-    limIntSup[1, ] = predict(loess(bsup ~ Xfut))
-  }
-  for (i in 1:(nEff + 1)) {
-    binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
-    bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
-    if(length(Xfut)<=6|no_loess){#loess model is under constrained
-      limIntInf[i + 1, ] =binfi
-      limIntSup[i + 1, ] =bsupi
-    }else{
-      limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
-      limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
-    }
-  }
-  
-  namesEff = QUALYPSOOUT$names
-  names_var=c("int","res",rev(namesEff))
-
-  
-  data=data.frame(Xfut=Xfut,mean=meanPred)
-  data=cbind(data,t(limIntInf))
-  colnames(data)[-c(1:2)]=names_var
-  data2=pivot_longer(data=data,cols=-c(Xfut,mean),names_to = "var",values_to = "inf")
-  data=data.frame(Xfut=Xfut)
-  data=cbind(data,t(limIntSup))
-  colnames(data)[-c(1)]=names_var
-  data3=pivot_longer(data=data,cols=!Xfut,names_to = "var",values_to = "sup")
-  data=merge(data2,data3,by=c("Xfut","var"))
-  data$var=factor(data$var,levels=c(names_var))
-  data$mean=data$mean*100#pourcentage
-  data$inf=data$inf*100
-  data$sup=data$sup*100
-  
-  vec_color=col_7var[names(col_7var) %in% names_var]
-  data$var=factor(data$var,levels=rev(names(vec_color)))
-  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
-  
-  plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
-    geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
-    scale_fill_discrete("Incertitude totale et\npartition de variance",type = vec_color,labels=labels_var)+
-    scale_color_discrete("",type="black",label="Moyenne d'ensemble")+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
-    theme_bw(base_size = 18)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    scale_y_continuous(paste0("Changement moyen (%)"))+
-    ggtitle(paste0("Changement moyen et partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("meanchange_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
-  }
-}
-
-##############################################################################
-## Time series of mu + uncertainties without IV
-## returns a ggplot 2 object
-## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
-## pred the predictor name in the file
-## pred_name the plain language name of the predictor
-## ind_name thename of the indicator
-## ind_name_full the plain language name of the indicator
-## bv_name the name of the watershed
-## bc_full_name plain language name of the watershed
-## pred_unit the unit of the predictor
-## folder_out the saving folder
-## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
-
-plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="tot",no_loess=T){
-  
-  probCI = QUALYPSOOUT$listOption$probCI
-  Xfut = QUALYPSOOUT$Xfut
-  nFut = length(Xfut)
-  meanPred = QUALYPSOOUT$GRANDMEAN$MEAN
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    meanPred=meanPred
-  }else{
-    meanPred=predict(loess(meanPred ~ Xfut))
-  }
-  Veff = QUALYPSOOUT$EFFECTVAR
-  Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN)
-  nEff = nrow(Vbind) - 1
-  Vuncer = colSums(Vbind)
-  Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vuncer))
-  vNormRev = apply(Vnorm, 2, rev)
-  vNormRev[is.na(vNormRev)]=0 #year of référence where uncertainty without IV is 0
-  binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vuncer))
-  bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vuncer))
-  
-  Vbind_all=rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN,QUALYPSOOUT$INTERNALVAR)
-  Vtot=colSums(Vbind_all)
-  binf_tot = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
-  bsup_tot = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
-  
-  IV=QUALYPSOOUT$INTERNALVAR
-  binf_iv = binf+ qnorm(p = (1 - probCI)/2, mean = 0, sd = sqrt(IV))
-  bsup_iv = bsup+ qnorm(p = 0.5 + probCI/2, mean = 0, sd = sqrt(IV))
-  
-  limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    limIntInf[1, ] =binf
-    limIntSup[1, ] =bsup
-  }else{
-    limIntInf[1, ] = predict(loess(binf ~ Xfut))
-    limIntSup[1, ] = predict(loess(bsup ~ Xfut))
-    binf_tot=predict(loess(binf_tot ~ Xfut))
-    bsup_tot=predict(loess(bsup_tot ~ Xfut))
-    binf_iv=predict(loess(binf_iv ~ Xfut))
-    bsup_iv=predict(loess(bsup_iv ~ Xfut))
-  }
-  for (i in 1:(nEff + 0)) {
-    binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
-    bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
-    if(length(Xfut)<=6|no_loess){#loess model is under constrained
-      limIntInf[i + 1, ] =binfi
-      limIntSup[i + 1, ] =bsupi
-    }else{
-      limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
-      limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
-    }
-  }
-  if(iv_type=="sum"){
-    limIntInf[i + 2, ]=binf_iv
-    limIntSup[i + 2, ] =bsup_iv
-  }
-  if(iv_type=="tot"){
-    limIntInf[i + 2, ]=binf_tot
-    limIntSup[i + 2, ] = bsup_tot
-  }
-  
-  namesEff = QUALYPSOOUT$names
-  names_var=c("res",rev(namesEff))
-  
-  
-  data=data.frame(Xfut=Xfut,mean=meanPred)
-  data=cbind(data,t(limIntInf))
-  colnames(data)[-c(1:2)]=c(names_var,"iv_inf")
-  data2=pivot_longer(data=data,cols=-c(Xfut,mean,iv_inf),names_to = "var",values_to = "inf")
-  data=data.frame(Xfut=Xfut)
-  data=cbind(data,t(limIntSup))
-  colnames(data)[-c(1)]=c(names_var,"iv_sup")
-  data3=pivot_longer(data=data,cols=-c(Xfut,iv_sup),names_to = "var",values_to = "sup")
-  data=merge(data2,data3,by=c("Xfut","var"))
-  data$var=factor(data$var,levels=c(names_var))
-  data$mean=data$mean*100#pourcentage
-  data$inf=data$inf*100
-  data$sup=data$sup*100
-  data$iv_inf=data$iv_inf*100
-  data$iv_sup=data$iv_sup*100
-  
-  vec_color=col_7var[names(col_7var) %in% names_var]
-  data$var=factor(data$var,levels=rev(names(vec_color)))
-  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
-  
-  #warning from xlim
-  plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=iv_inf,ymax=iv_sup),fill=as.vector(col_7var[7]),alpha=0.2)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
-    geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"),size=1)+
-    geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
-    geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
-    scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = vec_color,labels=labels_var)+
-    scale_color_discrete("",type=c(as.vector(col_7var[7]),"#000000"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
-    scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
-    theme_bw(base_size = 18)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    scale_y_continuous(paste0("Changement moyen (%)"))+
-    theme(legend.key.width = unit(1.5,"cm"))+
-    ggtitle(paste0("Changement moyen et partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
-
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("meanchange_variance_",ind_name,"_",pred,"_",bv_name,"_",iv_type),Folder = folder_out,Format = "jpeg")
-  }
-}
-
-##############################################################################
-## Time series of variance partition
-## returns a ggplot 2 object
-## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
-## pred the predictor name in the file
-## pred_name the plain language name of the predictor
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## bv_name the name of the watershed
-## bc_full_name plain language name of the watershed
-## pred_unit the unit of the predictor
-## folder_out the saving folder
-
-plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
-  
-  Xfut = QUALYPSOOUT$Xfut
-  nFut = length(Xfut)
-  nEff = QUALYPSOOUT$listScenarioInput$nEff
-  vecEff = 1:nEff
-  VARDECOMP = QUALYPSOOUT$DECOMPVAR
-  VARDECOMP[, 1:nEff] = VARDECOMP[, vecEff]
-  cum = cum.smooth = rep(0, nFut)
-  data=VARDECOMP
-  for (i in 1:(nEff + 2)) {
-    cumPrevious = cum.smooth
-    cum = cum + VARDECOMP[, i]
-    if(length(Xfut)<=6|no_loess){#loess model is under constrained
-      cum.smooth = cum
-    }else{
-      cum.smooth = predict(loess(cum ~ Xfut))
-    }
-    cum.smooth[cum.smooth < 0] = 0
-    cum.smooth[cum.smooth > 1] = 1
-    data[,i]=cum.smooth
-  }
-  data=data.frame(cbind(Xfut,data))
-  namesEff = QUALYPSOOUT$names
-  names_var=c(namesEff,"res","int")
-  colnames(data)=c("Xfut",names_var)
-  data=pivot_longer(data=data,cols=-c(Xfut),names_to = "var",values_to = "val")
-  data$val=data$val*100 #percentage
-  
-  vec_color=col_7var[names(col_7var) %in% names_var]
-  data$var=factor(data$var,levels=rev(names(vec_color)))
-  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
-  
-  plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var))+
-    geom_line(aes(x=Xfut,y=val,group=var),color="white",linetype="dashed",size=0.3)+
-    scale_fill_discrete("Partition\nde la variance",type = vec_color,labels=labels_var)+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
-    theme_bw(base_size = 18)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
-    ggtitle(paste0("Partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full," (",bv_full_name,")"))
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("partition_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
-  }
-}
-
-##############################################################################
-## Time series of one scenario + uncertainties
-## returns a ggplot 2 object
-## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
-## nameEff name of effect as in QUALYPSOOUT
-## nameScenario name of scenario as in nameEff
-## plain_name_Scen plain language name of scenario for legend
-## pred the predictor name in the file
-## pred_name the plain language name of the predictor
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## bv_name the name of the watershed
-## bc_full_name plain language name of the watershed
-## pred_unit the unit of the predictor
-## folder_out the saving folder
-
-plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
-  
-  probCI = QUALYPSOOUT$listOption$probCI
-  Xfut = QUALYPSOOUT$Xfut
-  nFut = length(Xfut)
-  iEff = which(QUALYPSOOUT$namesEff == nameEff)
-  if (length(iEff) == 0){stop("wrong value for nameEff")}
-  iScenario = which(QUALYPSOOUT$listScenarioInput$listEff[[iEff]] == 
-                      nameScenario)
-  meanPred = QUALYPSOOUT$CHANGEBYEFFECT[[nameEff]]$MEAN[,iScenario]
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    meanPred=meanPred
-  }else{
-    meanPred=predict(loess(meanPred ~ Xfut))
-  }
-  Veff = QUALYPSOOUT$EFFECTVAR[, -iEff]
-  Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN, QUALYPSOOUT$INTERNALVAR)
-  nEff = nrow(Vbind) - 2
-  Vtot = colSums(Vbind)
-  Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vtot))
-  vNormRev = apply(Vnorm, 2, rev)
-  binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
-  bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
-  limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    limIntInf[1, ] =binf
-    limIntSup[1, ] =bsup
-  }else{
-    limIntInf[1, ] = predict(loess(binf ~ Xfut))
-    limIntSup[1, ] = predict(loess(bsup ~ Xfut))
-  }
-  for (i in 1:(nEff + 1)) {
-    binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - 
-                                                binf)
-    bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
-    if(length(Xfut)<=6|no_loess){#loess model is under constrained
-      limIntInf[i + 1, ] =binfi
-      limIntSup[i + 1, ] =bsupi
-    }else{
-      limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
-      limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
-    }
-  }
-  
-  namesEff = QUALYPSOOUT$names
-  namesEff=namesEff[namesEff!=nameEff]
-  names_var=c("int","res",rev(namesEff))
-  
-  
-  data=data.frame(Xfut=Xfut,mean=meanPred)
-  data=cbind(data,t(limIntInf))
-  colnames(data)[-c(1:2)]=names_var
-  data2=pivot_longer(data=data,cols=-c(Xfut,mean),names_to = "var",values_to = "inf")
-  data=data.frame(Xfut=Xfut)
-  data=cbind(data,t(limIntSup))
-  colnames(data)[-c(1)]=names_var
-  data3=pivot_longer(data=data,cols=-c(Xfut),names_to = "var",values_to = "sup")
-  data=merge(data2,data3,by=c("Xfut","var"))
-  data$var=factor(data$var,levels=c(names_var))
-  data$mean=data$mean*100#pourcentage
-  data$inf=data$inf*100
-  data$sup=data$sup*100
-  
-  vec_color=col_7var[names(col_7var) %in% names_var]
-  data$var=factor(data$var,levels=rev(names(vec_color)))
-  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
-  
-  
-  plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
-    geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
-    geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
-    scale_fill_discrete("Incertitude totale et\npartition de variance",type = vec_color,labels=labels_var)+
-    scale_color_discrete("",type="black",label="Moyenne d'ensemble")+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
-    theme_bw(base_size = 18)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    scale_y_continuous(paste0("Changement moyen (%)"))+
-    ggtitle(paste0("Changement et partition de variance pour les expériences ",plain_name_Scen,"\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("change_variance_",nameScenario,"_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
-  }
-}
-
-##############################################################################
-## Time series of one scenario + uncertainties without IV
-## returns a ggplot 2 object
-## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
-## nameEff name of effect as in QUALYPSOOUT
-## nameScenario name of scenario as in nameEff
-## plain_name_Scen plain language name of scenario for legend
-## pred the predictor name in the file
-## pred_name the plain language name of the predictor
-## ind_name the of the indicator
-## ind_name_full the plain language name of the indicator
-## bv_name the name of the watershed
-## bc_full_name plain language name of the watershed
-## pred_unit the unit of the predictor
-## folder_out the saving folder
-## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
-
-plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="tot",no_loess=T){
-  
-  probCI = QUALYPSOOUT$listOption$probCI
-  Xfut = QUALYPSOOUT$Xfut
-  nFut = length(Xfut)
-  iEff = which(QUALYPSOOUT$namesEff == nameEff)
-  if (length(iEff) == 0){stop("wrong value for nameEff")}
-  iScenario = which(QUALYPSOOUT$listScenarioInput$listEff[[iEff]] == 
-                      nameScenario)
-  meanPred = QUALYPSOOUT$CHANGEBYEFFECT[[nameEff]]$MEAN[,iScenario]
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    meanPred=meanPred
-  }else{
-    meanPred=predict(loess(meanPred ~ Xfut))
-  }
-  Veff = QUALYPSOOUT$EFFECTVAR[, -iEff]
-  Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN)
-  nEff = nrow(Vbind) - 1
-  Vuncer = colSums(Vbind)
-  Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vuncer))
-  vNormRev = apply(Vnorm, 2, rev)
-  vNormRev[is.na(vNormRev)]=0 #year of référence where uncertainty without IV is 0
-  binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vuncer))
-  bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vuncer))
-  
-  Vbind_all=rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN,QUALYPSOOUT$INTERNALVAR)
-  Vtot=colSums(Vbind_all)
-  binf_tot = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
-  bsup_tot = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
-  
-  IV=QUALYPSOOUT$INTERNALVAR
-  binf_iv = binf+ qnorm(p = (1 - probCI)/2, mean = 0, sd = sqrt(IV))
-  bsup_iv = bsup+ qnorm(p = 0.5 + probCI/2, mean = 0, sd = sqrt(IV))
-  
-  limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
-  if(length(Xfut)<=6|no_loess){#loess model is under constrained
-    limIntInf[1, ] =binf
-    limIntSup[1, ] =bsup
-  }else{
-    limIntInf[1, ] = predict(loess(binf ~ Xfut))
-    limIntSup[1, ] = predict(loess(bsup ~ Xfut))
-    binf_tot=predict(loess(binf_tot ~ Xfut))
-    bsup_tot=predict(loess(bsup_tot ~ Xfut))
-    binf_iv=predict(loess(binf_iv ~ Xfut))
-    bsup_iv=predict(loess(bsup_iv ~ Xfut))
-  }
-  for (i in 1:(nEff + 0)) {
-    binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
-    bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
-    if(length(Xfut)<=6|no_loess){#loess model is under constrained
-      limIntInf[i + 1, ] =binfi
-      limIntSup[i + 1, ] =bsupi
-    }else{
-      limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
-      limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
-    }
-  }
-  if(iv_type=="sum"){
-    limIntInf[i + 2, ]=binf_iv
-    limIntSup[i + 2, ] =bsup_iv
-  }
-  if(iv_type=="tot"){
-    limIntInf[i + 2, ]=binf_tot
-    limIntSup[i + 2, ] = bsup_tot
-  }
-  
-  namesEff = QUALYPSOOUT$names
-  namesEff=namesEff[namesEff!=nameEff]
-  names_var=c("res",rev(namesEff))
-  
-  
-  data=data.frame(Xfut=Xfut,mean=meanPred)
-  data=cbind(data,t(limIntInf))
-  colnames(data)[-c(1:2)]=c(names_var,"iv_inf")
-  data2=pivot_longer(data=data,cols=-c(Xfut,mean,iv_inf),names_to = "var",values_to = "inf")
-  data=data.frame(Xfut=Xfut)
-  data=cbind(data,t(limIntSup))
-  colnames(data)[-c(1)]=c(names_var,"iv_sup")
-  data3=pivot_longer(data=data,cols=-c(Xfut,iv_sup),names_to = "var",values_to = "sup")
-  data=merge(data2,data3,by=c("Xfut","var"))
-  data$var=factor(data$var,levels=c(names_var))
-  data$mean=data$mean*100#pourcentage
-  data$inf=data$inf*100
-  data$sup=data$sup*100
-  data$iv_inf=data$iv_inf*100
-  data$iv_sup=data$iv_sup*100
-  
-  vec_color=col_7var[names(col_7var) %in% names_var]
-  data$var=factor(data$var,levels=rev(names(vec_color)))
-  labels_var=rev(legend_7var[names(col_7var) %in% names_var])
-  
-  #warning from xlim
-  plt=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=iv_inf,ymax=iv_sup),fill=as.vector(col_7var[7]),alpha=0.2)+
-    geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
-    geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
-    geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"),size=1)+
-    geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
-    geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
-    scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = vec_color,labels=labels_var)+
-    scale_color_discrete("",type=c(as.vector(col_7var[7]),"#000000"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
-    scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
-    theme_bw(base_size = 18)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    scale_y_continuous(paste0("Changement moyen (%)"))+
-    theme(legend.key.width = unit(1.5,"cm"))+
-    ggtitle(paste0("Changement et partition de variance pour les expériences ",plain_name_Scen,"\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("change_variance_",nameScenario,"_",ind_name,"_",pred,"_",bv_name,"_",iv_type),Folder = folder_out,Format = "jpeg")
-  }
-}
-
-
-#######################################################################
-## Map of 3 quantiles by 3 RCP for one horizon
-## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## horiz a temporal or température horizon
-## pred_name the plain language name of the predictor
-## ind_name thenname of the indicator
-## ind_name_full the plain language name of the indicator
-## pred_unit the unit of the predictor
-## folder_out the saving folder
-
-map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
-  
-  ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
-  rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
-  quant=c("5%","mean","95%")
-
-  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
-  exut$idx=seq(1:nrow(exut))
-  
-  tmp=exut
-  for (i in 1:8){
-    exut=rbind(exut,tmp)
-  }
-  exut$rcp=rep(rcp_names,each=nrow(exut)/3)
-  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
-  exut$val=0
-  
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    for(r in rcp_names){
-      idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-      ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==r)
-      chg_mean=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,ieff_this_rcp]
-      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut, -ieff_rcp]
-      Vtot = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])
-      probCI = lst.QUALYPSOOUT[[i]]$listOption$probCI
-      chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
-      chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[1]]=chg_q5*100
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[3]]=chg_q95*100
-    }
-  }
-  
-  exut$quant=factor(exut$quant,levels=quant)
-  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","rcp","quant","val")
-  
-  rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
-  names(rcp.labs) <- rcp_names
-  quant.labs <- c("Q5 ensemble", "Moyenne", "Q95 ensemble")
-  names(quant.labs) <- quant
-  
-  #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-  lim_col=max(q99pos,q99neg)
-  #lim_col=round(lim_col/bin_col)*bin_col
-  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
-  #lim_col=(lim_col%/%bin_col+1)*bin_col
-  
-  plt=base_map_outlets(data = exut,val_name = "val")
-  plt=plt+
-    facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
-    #scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-    theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.75
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
-  }
-}
-
-
-#######################################################################
-##Map of 3 quantiles by 3 horizons for one RCP
-## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## horiz 3 temporal or température horizons
-## pred the predictor name in the file
-## pred_name the plain language name of the predictor
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## pred_unit the unit of the predictor
-## rcp_name the name of the wanted rcp
-## folder_out the saving folder
-
-map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
-
-  ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
-  ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==rcp_name)
-  quant=c("5%","mean","95%")
-  
-  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
-  exut$idx=seq(1:nrow(exut))
-  
-  tmp=exut
-  for (i in 1:8){
-    exut=rbind(exut,tmp)
-  }
-  exut$horiz=rep(horiz,each=nrow(exut)/3)
-  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
-  exut$val=0
-  
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    for(h in horiz){
-      idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==h)
-      chg_mean=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,ieff_this_rcp]
-      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut, -ieff_rcp]
-      Vtot = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])
-      probCI = lst.QUALYPSOOUT[[i]]$listOption$probCI
-      chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
-      chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[1]]=chg_q5*100
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[3]]=chg_q95*100
-    }
-  }
-  
-  exut$quant=factor(exut$quant,levels=quant)
-  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","horiz","quant","val")
-  
-  horiz.labs <- paste0(horiz," ",pred_unit)
-  names(horiz.labs) <- horiz
-  quant.labs <- c("Q5 ensemble", "Moyenne", "Q95 ensemble")
-  names(quant.labs) <- quant
-  
-  #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-  lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
-  #lim_col=(lim_col%/%bin_col+1)*bin_col
-  
-  plt=base_map_outlets(data = exut,val_name = "val")
-  plt=plt+
-    facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
-    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990)"))+
-    theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.75
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name),Folder = folder_out,Format = "jpeg")
-  }
-
-
-}
-
-
-#######################################################################
-##Map of 3 quantiles by 3 horizons of température
-## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## horiz 3 temporal or température horizons
-## pred the predictor name in the file
-## pred_name the plain language name of the predictor
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## pred_unit the unit of the predictor
-## rcp_name the name of the wanted rcp
-## folder_out the saving folder
-
-map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,ind_name_full,folder_out,freq_col=0.99){
-  
-  quant=c("5%","mean","95%")
-  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
-  exut$idx=seq(1:nrow(exut))
-  horiz=c(1.5,2,2.5)
-  
-  tmp=exut
-  for (i in 1:8){
-    exut=rbind(exut,tmp)
-  }
-  exut$horiz=rep(horiz,each=nrow(exut)/3)
-  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
-  exut$val=0
-  
-  for (i in 1:length(lst.QUALYPSOOUT3)){
-    for(h in horiz[1]){# all RCP
-      idx_Xfut=which(lst.QUALYPSOOUT3[[i]]$Xfut==h)
-      chg_mean=lst.QUALYPSOOUT3[[i]]$GRANDMEAN$MEAN[idx_Xfut]
-      Veff = lst.QUALYPSOOUT3[[i]]$EFFECTVAR[idx_Xfut,]
-      Vtot = sum(Veff, lst.QUALYPSOOUT3[[i]]$RESIDUALVAR$MEAN[idx_Xfut])
-      probCI = lst.QUALYPSOOUT3[[i]]$listOption$probCI
-      chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
-      chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[1]]=chg_q5*100
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[3]]=chg_q95*100
-    }
-    for(h in horiz[2:3]){#2 RCP only
-      idx_Xfut=which(lst.QUALYPSOOUT2[[i]]$Xfut==h)
-      chg_mean=lst.QUALYPSOOUT2[[i]]$GRANDMEAN$MEAN[idx_Xfut]
-      Veff = lst.QUALYPSOOUT2[[i]]$EFFECTVAR[idx_Xfut,]
-      Vtot = sum(Veff, lst.QUALYPSOOUT2[[i]]$RESIDUALVAR$MEAN[idx_Xfut])
-      probCI = lst.QUALYPSOOUT2[[i]]$listOption$probCI
-      chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
-      chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[1]]=chg_q5*100
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[3]]=chg_q95*100
-    }
-  }
-  
-  exut$quant=factor(exut$quant,levels=quant)
-  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","horiz","quant","val")
-  
-  horiz.labs <- paste0(as.character(horiz),"°C")
-  names(horiz.labs) <- horiz
-  quant.labs <- c("Q5 ensemble", "Moyenne", "Q95 ensemble")
-  names(quant.labs) <- quant
-  
-  #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-  lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
-  #lim_col=(lim_col%/%bin_col+1)*bin_col
-  
-  plt=base_map_outlets(data = exut,val_name = "val")
-  plt=plt+
-    facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
-    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons de réchauffement planétaire post 1860-1900 (°C)\n(avec référence 1990, 3 RCP pour 1.5°C et 2 RCP pour 2 et 3°C)"))+
-    theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.75
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_2.5"),Folder = folder_out,Format = "jpeg")
-  }
-    
-  
-  
-}
-
-#######################################################################
-## Map of effects GCM or RCM (température or time)
-## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## includeMean if true adds mean change to effect
-## name_eff "gcm" ou "rcm"...
-## pred_name the plain language name of the predictor
-## pred the predictor name in the file
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## pred_unit the unit of the predictor
-## folder_out the saving folder
-## horiz he horizon of predictor wanted
-## name_eff_plain plain langauge name of principal effects
-
-map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
-  
-  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
-  exut$idx=seq(1:nrow(exut))
-  
-  ieff=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)==name_eff)
-  effs.labs <- lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff]]
-  effs=seq(1,length(effs.labs))
-  names(effs.labs) <- effs
-  
-  
-  tmp=exut
-  for (i in 1:(length(effs)-1)){
-    exut=rbind(exut,tmp)
-  }
-  exut$effs=rep(effs,each=nrow(exut)/length(effs))
-  exut$val=0
-  
-  
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-    if(includeMean){
-      chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
-    }else{
-      chg=lst.QUALYPSOOUT[[i]]$MAINEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
-    }
-    for(j in 1:length(chg)){
-      exut$val[exut$idx==i & exut$effs==j]=chg[j]
-    }
-  }
-  
-  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","effs","val")
-  
-  #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-  lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
-  #lim_col=(lim_col%/%bin_col+1)*bin_col
-  
-  plt=base_map_outlets(data = exut,val_name = "val")
-  if(includeMean){
-    plt=plt+
-      facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-      #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-      theme(panel.border = element_rect(colour = "black",fill=NA))
-    plt$layers[[3]]$aes_params$size= 1.75
-    if (is.na(folder_out)){
-      return(plt)
-    }else{
-      save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
-    }
-       
-  }else{
-    plt=plt+
-      facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-      #scale_fill_stepsn("Effet principal (%)",colours = precip_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-      theme(panel.border = element_rect(colour = "black",fill=NA))
-    plt$layers[[3]]$aes_params$size= 1.5
-    if (is.na(folder_out)){
-      return(plt)
-    }else{
-      save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
-    }
-    
-  }
-}
-
-
-############################################################################
-## Map mean change or internal variability or total variability or res var
-## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## vartype the variable to be plotted (one of varint, mean, vartot)
-## pred_name the plain language name of the predictor
-## pred the predictor name in the file
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## pred_unit the unit of the predictor
-## folder_out the saving folder
-## horiz he horizon of predictor wanted
-## name_eff_plain plain langauge name of principal effects
-
-map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
-  
-  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
-  exut$idx=seq(1:nrow(exut))
-  exut$val=0
-  exut$sign="no"
-  
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-    if(vartype=="mean"){
-      chg=lst.QUALYPSOOUT[[i]]$GRANDMEAN$MEAN[idx_Xfut]*100
-      chains=reconstruct_chains(lst.QUALYPSOOUT[[i]])
-      if(sum(chains[,idx_Xfut]>0)/nrow(chains)>=0.8 | sum(chains[,idx_Xfut]>0)/nrow(chains)<=0.2){#80% agreement on the sign
-        exut$sign[exut$idx==i]="yes"
-      }
-    }
-    if(vartype=="varint"){
-      chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]*100^2#because variance is square of standard deviation unit
-      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
-    }
-    if(vartype=="varres"){
-      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]*100^2
-      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
-    }
-    if(vartype=="vartot"){
-      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
-      chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])*100^2
-      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
-    }
-    if(vartype=="incert"){
-      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
-      chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])*100^2
-      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
-    }
-    exut$val[exut$idx==i]=chg
-  }
-  
-  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","val","sign")
-  
-  ## We show uncertainties not variances
-  
-  plt=base_map_outlets(data = exut,val_name = "val")
-  if(vartype=="mean"){
-    plt=base_map_outlets(data = exut,val_name = "val",alpha_name ="sign")
-    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-    lim_col=max(q99pos,q99neg)
-    lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
-    plt=plt+
-      #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-      scale_alpha_manual("",values = c("no"=0.2,"yes"=1),labels=c("Pas d'accord sur le signe du changement","Plus de 80% des chaînes en accord"))+
-      guides(alpha = guide_legend(override.aes = list(fill = "grey") ,label.theme = element_text(size = 11, face = "bold")))
-    plt
-  }
-  if(vartype=="vartot"){
-    q99=quantile(exut$val,probs=freq_col)
-    lim_col=round(q99/25)*25
-    plt=plt+
-      #scale_fill_stepsn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
-  }
-  if(vartype=="incert"){
-    q99=quantile(exut$val,probs=freq_col)
-    lim_col=round(q99/25)*25
-    plt=plt+
-      #scale_fill_stepsn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
-  }
-  if(vartype=="varint"){
-    q99=quantile(exut$val,probs=freq_col)
-    lim_col=round(q99/25)*25
-    plt=plt+
-      #scale_fill_stepsn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
-  }
-  
-  if(vartype=="varres"){
-    q99=quantile(exut$val,probs=freq_col)
-    lim_col=round(q99/25)*25
-    plt=plt+
-      #scale_fill_stepsn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,labels=c(seq(0,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
-  }
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
-  }
-  
-}
-
-
-#############################################################################################
-## Map of 3 quantiles by 3 RCP for one horizon of time using basic mean and q5/q95
-## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## horiz a temporal horizon
-## ind_name the name of the indicator
-## ind_name_full the plain language name of the indicator
-## folder_out the saving folder
-
-
-map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,freq_col=0.99){
-  
-  ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
-  rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
-  quant=c("5%","mean","95%")
-  idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-  
-  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
-  exut$idx=seq(1:nrow(exut))
-  
-  tmp=exut
-  for (i in 1:8){
-    exut=rbind(exut,tmp)
-  }
-  exut$rcp=rep(rcp_names,each=nrow(exut)/3)
-  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
-  exut$val=0
-  
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    for(r in rcp_names){
-      
-      ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==r)
-      chg_mean=mean(lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[,idx_Xfut])*100 #*100 for percentages
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[2]]=chg_mean
-      chg_q5=quantile(lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[,idx_Xfut],probs=0.05)*100 #*100 for percentages ; 1 is for 5%
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[1]]=chg_q5
-      chg_q95=quantile(lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[,idx_Xfut],probs=0.95)*100  #*100 for percentages ; 2 is for 95%
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[3]]=chg_q95
-    }
-  }
-  
-  exut$quant=factor(exut$quant,levels=quant)
-  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","rcp","quant","val")
-  
-  rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
-  names(rcp.labs) <- rcp_names
-  quant.labs <- c("Q5 ensemble", "Moyenne", "Q95 ensemble")
-  names(quant.labs) <- quant
-  
-  #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-  lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
-  #lim_col=(lim_col%/%bin_col+1)*bin_col
-  
-  plt=base_map_outlets(data = exut,val_name = "val")
-  plt=plt+
-    facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
-    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-    ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz," VS 1990), fonctions de réponse de l'ensemble non balancé"))+
-    theme(panel.border = element_rect(colour = "black",fill=NA))
-  plt$layers[[3]]$aes_params$size= 1.75
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz),Folder = folder_out,Format = "jpeg")
-  }
-}
-
-
-#####################################################
-## Compare results out of QUALYSPO and LM method
-## lm the list of QUALYPSOOUT for all watersheds and the lm method
-## qu the list of QUALYPSOOUT for all watersheds and the qualypso method
-## type the variable of interest (one of resvar,grandmean or eff)
-## nameEff in the case of eff the name of the effect considered as in QUALYPSOOUT
-## pred_name the name of the predictor used
-## ind_name the name of the indicator used
-## var_name the plain language name of the variable of interest (Effet RCP, Moyenne d'ensemble...)
-## folder_out the saving folder
-
-plot_comp_anova=function(LM,QU,type,nameEff=NULL,pred_name,ind_name,var_name,folder_out,interactive_plt=F){
-  if (type=="resvar"){
-    x=unlist(lapply(LM,function(x) x$RESIDUALVAR$MEAN))
-    y=unlist(lapply(QU,function(x) x$RESIDUALVAR$MEAN))
-    data=data.frame(x=x,y=y)
-  }
-  if (type=="grandmean"){
-    x=unlist(lapply(LM,function(x) x$GRANDMEAN$MEAN))
-    y=unlist(lapply(QU,function(x) x$GRANDMEAN$MEAN))
-    data=data.frame(x=x,y=y)
-  }
-  if (type=="eff"){
-    ieff=which(colnames(LM[[1]]$listScenarioInput$scenAvail)==nameEff)
-    
-    x=lapply(LM,function(x) x$MAINEFFECT[[nameEff]]$MEAN)
-    x=lapply(x,"colnames<-",LM[[1]]$listScenarioInput$listEff[[ieff]])
-    x=lapply(x,function(z) pivot_longer(data=data.frame(z),names_to = "eff",values_to = "x"))
-    x=do.call("rbind",x)
-    
-    y=lapply(QU,function(y) y$MAINEFFECT[[nameEff]]$MEAN)
-    y=lapply(y,"colnames<-",LM[[1]]$listScenarioInput$listEff[[ieff]])
-    y=lapply(y,function(z) pivot_longer(data=data.frame(z),names_to = "eff",values_to = "y"))
-    y=do.call("rbind",y)
-    data=cbind(x,y$y)#merge does not work because too many rows
-    colnames(data)=c("eff","x","y")
-  }
-  
-  plt=ggplot(data)+
-    geom_point(aes(x=x,y=y),size=0.5)+
-    geom_abline(slope=1,size=0.3,col="red")+
-    xlab("Méthode linéaire")+
-    ylab("Qualypso")+
-    theme_bw(base_size = 18)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    ggtitle(paste0("Comparaison méthodes ANOVA (tous les bassins et dates)\npour le prédicteur ",pred_name,", l'indicateur ",ind_name,"\net la grandeur ",var_name))
-  if (type=="eff"){
-    plt=plt+
-      facet_wrap(~eff,ncol=3)
-  }
-  save.plot(plt,Filename = paste0("comparison_anova_",ind_name,"_",pred_name,"_",type,nameEff),Folder = folder_out,Format = "jpeg")
-  if (interactive_plt){
-    pltly=ggplotly(plt,tooltip = c("x","y"))
-    setwd(folder_out)
-    saveWidget(pltly,paste0("comparison_anova_",ind_name,"_",pred_name,"_",type,nameEff,".html"))
-  }
-
-
-}
-
-#####################################################
-## Plot watershed areas
-
-plot_bv_areas=function(folder_out){
-  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon","Surf_mod")]
-  colnames(exut)=c("Num_ordre_Modcou","y","x","val")
-  plt=base_map_outlets(data = exut,val_name = "val")
-  plt=plt+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Superficie (km2)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",trans="log10",show.limits = T,breaks=c(500,1000,5000,1e4),limits=c(100,5e4),oob=squish)+#that way because stepsn deforms colors and with trans cannot show limits
-    ggtitle("Superficie des bassins versants")
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = "superficie_bv",Folder = folder_out,Format = "jpeg")
-  }
-  
-}
 
 
 
@@ -1704,7 +356,7 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
       # climate response of the reference/control time/global tas
       phiC = 10^predict(smooth.spline.out, Xrefs)$y
     }
-
+    
     # store climate response for this simulation chain
     phi[iS,] = phiS
     # Climate change response: phiStar, and internal variability expressed as a change: etaStar
@@ -1754,42 +406,245 @@ reconstruct_chains=function(QUALYPSOOUT){
   return(chains)
 }
 
+###################################
+## Format Global température for use in Qualypso, to be used inside code run_QUalypso
+## spline calculated with data between 1860 and 1900
+## Difference to 1860-1900 average and rcp/gcm matching + spline smoothing
+## path_data the root of the path
+##simu_lst the list of simulations
+#first_data_year and last_data_year the first an last years with data for simu all year round
 
-###########################################################################################
-## Make a time/temperature series of percentage of chains with positive or negative change
-
-plotQUALYPSO_chronique_accordsigne=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim){
-  chains=reconstruct_chains(QUALYPSOOUT)
-  n_chain=nrow(chains)
-  data=data.frame(Xfut=QUALYPSOOUT$Xfut,pos=QUALYPSOOUT$Xfut,neg=QUALYPSOOUT$Xfut)
-  for (i in 1: ncol(chains)){
-    data$pos[i]=sum(chains[,i]>0)/n_chain*100
-    data$neg[i]=sum(chains[,i]<0)/n_chain*100
+format_global_tas=function(path_data,first_data_year,last_data_year,simu_lst,first_ref_year,last_ref_year){
+  
+  vecYears=seq(1860,last_data_year,1)#1860 first year for HadGEM (1861 for GFDL but not used in QUALYPSO and before first_data_year so does not matter)
+  ## Format global température: difference to 1860-1900 
+  paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
+  tas_glob_full=vector(length=length(paths),mode="list")
+  for ( i in 1:length(paths)){
+    tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
+    if(grepl("HadGEM2-ES",paths[i],fixed=T)){# -999 values in 1859
+      tas_glob=tas_glob[-1,]
+    }
+    tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
+    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data for HadGEM
+    tas_glob$tas=tas_glob$tas-pre_indus_tas
+    colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
+    tas_glob_full[[i]]=tas_glob[tas_glob$year<=2100,]
+    tas_glob=tas_glob[tas_glob$year>=1860&tas_glob$year<=2100,]
+    if(i==1){
+      mat_Globaltas_gcm=tas_glob
+    }else{
+      mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
+    }
   }
-  plt=ggplot(data)+
-    geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=pos),color=temp_5[5],size=1)+
-    #geom_point(aes(x=Xfut,y=pos),color=temp_5[5],size=4)+
-    geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=-neg),color=temp_5[1],size=1)+
-    #geom_point(aes(x=Xfut,y=-neg),color=temp_5[1],size=4)+
-    geom_hline(aes(yintercept=0))+
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim)+
-    theme_bw(base_size = 18)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    scale_y_continuous(paste0("Accord sur le signe (%)"),limits=c(-100,100),breaks=seq(-100,100,20),labels=abs(seq(-100,100,20)),expand=c(0,0))+
-    ggtitle(paste0("Pourcentage de chaînes en accord sur le signe pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
-  # if(pred=="time"){
-  #   plt=plt+
-  #     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = c(1991,2100))
-  # }
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = paste0("accord-signe_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+  
+  ## Format global température for Qualypso
+  mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
+  vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
+  vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
+  for (i in 1:nrow(simu_lst)){
+    mat_Globaltas[[i]]=tas_glob_full[[which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]]
   }
+  mat_Globaltas=lapply(mat_Globaltas,function(x) cbind(x[,1],smooth.spline(x=x[,1],y=x[,2],spar = 1)$y))
+  mat_Globaltas=lapply(mat_Globaltas,function(x) x[x[,1]>=1860&x[,1]<=2100,2])
+  mat_Globaltas=t(do.call(cbind,mat_Globaltas))
+  ref_Globaltas=apply(mat_Globaltas,MARGIN = 1,function(x) mean(x[which(vecYears==first_ref_year):which(vecYears==last_ref_year)]))
+  idx=which(mat_Globaltas_gcm$year %in% seq(first_data_year,last_data_year))#often 1951-2099
+  mat_Globaltas=mat_Globaltas[,idx]
+  mat_Globaltas_gcm=mat_Globaltas_gcm[idx,]
+  return(list(mat_Globaltas,ref_Globaltas,mat_Globaltas_gcm))
 }
 
 
+##############################################################################
+## Time series of main effect from QUALYPSOOUT object or main effect + mu
+##returns a ggplot 2 object
+## QUALYPSOOUT a Qualypso output object
+## nameEff the effect name as in QUALYPSOOUT
+## CIlevel the uncertainties percentiles
+## includeMean if True then adds mean change to effect
+## include RCP if RCP given then adds mean change of an RCP to effect, cannot be combined with includeMean=T or used if effect is already RCP
+## plain_nameEff the plain language name of the effect
+## pred the predictor name in the file
+## pred_name the plain language name of the predictor
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## bv_name the name of the watershed
+## bc_full_name plain language name of the watershed
+## pre_unit the unit of the predictor
+## folder_out the saving folder
+## incert=TRUE adds confidence interval equivalent to Vtot-Vint
+
+plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,includeRCP=NULL,plain_nameEff,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,incert=FALSE,no_loess=T){
+  
+  Xfut = QUALYPSOOUT$Xfut
+  iEff = which(QUALYPSOOUT$namesEff == nameEff)
+  nEff=QUALYPSOOUT$listScenarioInput$nTypeEff[iEff]
+  if (length(iEff) == 0){    stop("wrong value for nameEff")} 
+  if (includeMean) {
+    EffHat = QUALYPSOOUT$CHANGEBYEFFECT[[nameEff]]
+  }  else {
+    EffHat = QUALYPSOOUT$MAINEFFECT[[nameEff]]
+  }
+  if(!is.null(includeRCP)){
+    ircp=which(QUALYPSOOUT$namesEff == "rcp")
+    i_thisrcp=which(QUALYPSOOUT$listScenarioInput$listEff[[ircp]]==includeRCP)
+    EffHat$MEAN = apply(EffHat$MEAN,MARGIN=2,function(x) x+QUALYPSOOUT$CHANGEBYEFFECT$rcp$MEAN[,i_thisrcp])
+    ref_mean=QUALYPSOOUT$CHANGEBYEFFECT$rcp$MEAN[,i_thisrcp]
+  }
+  EffhanEff = dim(EffHat$MEAN)[2]
+  meanRaw = EffHat$MEAN
+  if(length(Xfut)<=6|no_loess){#loess model is under constrained
+    meanPred =meanRaw
+  }else{
+    meanPred = apply(meanRaw, 2, function(x) predict(loess(x ~ Xfut)))
+  }
+  med=data.frame(meanPred)*100
+  colnames(med)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+  med$pred=Xfut
+  med=pivot_longer(data=med,cols=!pred,names_to = "eff",values_to = "med")
+  
+  add.CI = QUALYPSOOUT$listOption$ANOVAmethod == "QUALYPSO"
+  if (add.CI) {
+    CIRaw = EffHat$CI
+    if(length(Xfut)<=6|no_loess){#loess model is under constrained
+      CIsmooth=CIRaw
+    }else{
+      CIsmooth = apply(CIRaw, c(2, 3), function(x) predict(loess(x ~ Xfut)))
+    }
+    binf=data.frame(CIsmooth[,1,])*100
+    bsup=data.frame(CIsmooth[,2,])*100
+    colnames(binf)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+    colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+    binf$pred=Xfut
+    bsup$pred=Xfut
+    binf=pivot_longer(data=binf,cols=!pred,names_to = "eff",values_to = "binf")
+    bsup=pivot_longer(data=bsup,cols=!pred,names_to = "eff",values_to = "bsup")
+    data=merge(med,binf,by=c("pred","eff"))
+    data=merge(data,bsup,by=c("pred","eff"))
+  }else{
+    if(incert){
+      scenAvail=QUALYPSOOUT$listScenarioInput$scenAvail
+      Binf=NULL
+      Bsup=NULL
+      for (r in 1:nEff){
+        idx_model=which(scenAvail[,iEff]==QUALYPSOOUT$listScenarioInput$listEff[[iEff]][r])
+        # phiStar
+        phiStar = QUALYPSOOUT$CLIMATEESPONSE$phiStar[idx_model,]
+        # Ystar: change variable from the projection (Y(t)-phi(c))
+        YStar = QUALYPSOOUT$CLIMATEESPONSE$YStar[idx_model,]
+        # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
+        # obtained from QUALYPSO
+        sd.qua = sqrt(QUALYPSOOUT$TOTALVAR-QUALYPSOOUT$INTERNALVAR-QUALYPSOOUT$EFFECTVAR[,iEff])
+        sd.emp = apply(phiStar,2,sd)
+        sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
+        sd.corr = sd.qua/sd.emp
+        phiStar.corr = phiStar*t(replicate(nrow(phiStar),sd.corr))
+        # compute the lower bound if the distribution is gaussian
+        binf = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
+        bsup = apply(phiStar.corr,2,quantile,probs = 0.5+probCI/2)
+        Binf=cbind(Binf,binf*100)
+        Bsup=cbind(Bsup,bsup*100)
+      }
+      
+      if(length(Xfut)<=6|no_loess){#loess model is under constrained
+        binf=data.frame(Binf*100)
+        bsup=data.frame(Bsup*100)
+      }else{
+        binf=data.frame(apply(Binf,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
+        bsup=data.frame(apply(Bsup,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
+      }
+      colnames(binf)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+      colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
+      binf$pred=Xfut
+      bsup$pred=Xfut
+      binf=pivot_longer(data=binf,cols=!pred,names_to = "eff",values_to = "binf")
+      bsup=pivot_longer(data=bsup,cols=!pred,names_to = "eff",values_to = "bsup")
+      data=merge(med,binf,by=c("pred","eff"))
+      data=merge(data,bsup,by=c("pred","eff"))
+    }else{
+      data=med
+    }
+  }
+
+  plt=ggplot(data)+
+    geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.2)+
+    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim,expand=c(0,0))+
+    theme_bw(base_size = 18)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))
+  
+  if(add.CI|incert){
+    plt=plt+
+      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+
+      geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5,linetype="dotted")+
+      geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5,linetype="dotted")
+    #tmp=plt$layers[[1]]
+    #plt$layers[[1]]=plt$layers[[4]]
+    #plt$layers[[4]]=tmp
+    if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
+      plt=plt+
+        scale_color_discrete("Moyenne et\nintervalle de confiance",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("Moyenne et\nintervalle de confiance",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+    }else{
+      plt=plt+
+        scale_color_discrete("Moyenne et\nintervalle de confiance",type = viridis(nEff))+
+        scale_fill_discrete("Moyenne et\nintervalle de confiance",type=viridis(nEff))
+    }
+  }else{
+    if(colnames(QUALYPSOOUT$listScenarioInput$scenAvail)[iEff]=="rcp"){
+      plt=plt+
+        scale_color_discrete("",type = col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])+
+        scale_fill_discrete("",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])])
+    }else{
+      plt=plt+
+        scale_color_discrete("",type = viridis(nEff))+
+        scale_fill_discrete("",type=viridis(nEff))
+    }
+  }
+
+  
+
+  if(includeMean){
+    plt=plt+
+      scale_y_continuous(paste0("Changement relatif moyen (%)"))+
+      ggtitle(paste0("Changements des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," (",bv_full_name,")"))
+    if (is.na(folder_out)){
+      return(plt)
+    }else{
+      save.plot(plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+    }
+  }else{
+    if(is.null(includeRCP)){
+      
+      plt=plt+
+        scale_y_continuous(paste0("Effet principal (%)"))+
+        ggtitle(paste0("Effets principaux des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," (",bv_full_name,")"))
+      if (is.na(folder_out)){
+        return(plt)
+      }else{
+        save.plot(plt,Filename = paste0("effect_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+      }
+      
+    }else{
+      
+      plt=plt+
+        scale_y_continuous(paste0("Changement relatif moyen (%)"))+
+        geom_line(data=data.frame(Xfut,ref_mean),aes(x=Xfut,y=ref_mean*100,linetype="dashed"),size=1.2)+
+        scale_linetype_manual("",values=c("dashed"="dashed"),labels="Moyennne\nd'ensemble\n du RCP")+
+        theme(legend.key.width = unit(1.5,"cm"))+
+        ggtitle(paste0("Changements des des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," et le ",includeRCP," (",bv_full_name,")"))
+      if (is.na(folder_out)){
+        return(plt)
+      }else{
+        save.plot(plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",includeRCP,"_",bv_name),Folder = folder_out,Format = "jpeg")
+      }
+      
+    }
+    
+  }
+  
+}
 
 #############################################################################
 ## Make the summarize plot of a time series
@@ -1841,7 +696,7 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
     Binf=cbind(Binf,binf*100)
     Bsup=cbind(Bsup,bsup*100)
   }
-
+  
   
   Binf=data.frame(Binf)
   Bsup=data.frame(Bsup)
@@ -1870,7 +725,7 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
   }
   fake_obs$spline=smooth.spline(x=fake_obs$pred,y=fake_obs$val,spar = QUALYPSOOUT$listOption$spar)$y
   
-  idx_shrtlst=c(11,13,16)
+  idx_shrtlst=c(1,3,5,7,9,11,13,16)
   shortlist=data.frame(t(QUALYPSOOUT$CLIMATEESPONSE$phiStar[idx_shrtlst,]))*100
   colnames(shortlist)=paste0(scenAvail$rcp[idx_shrtlst],"/",scenAvail$gcm[idx_shrtlst],"/",scenAvail$rcm[idx_shrtlst])
   shortlist$pred=Xfut
@@ -1882,36 +737,71 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
   name_shortlist=name_shortlist[order(name_shortlist$y),]
   name_shortlist$x=seq(2099,2099+2*(nrow(name_shortlist)-1),2)
   shortlist=pivot_longer(shortlist,cols=!pred,names_to="chain",values_to = "val")
+  shortlist$rcp=unlist(lapply(strsplit(shortlist$chain,"/"),function(x) x[1]))
   lab_shortlist=paste0(seq(1,nrow(name_shortlist))," = ",name_shortlist$name)
   lab_shortlist=gsub("rcp","RCP",lab_shortlist)
   
+  # plt1=ggplot(data)+
+  #   geom_line(data=chains,aes(x=pred,y=val,group=chain,color=eff,size="aa"),alpha=0.2)+#raw chains
+  #   geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+#uncertainty band
+  #   geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5)+#uncertainty band limit
+  #   geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5)+#uncertainty band limit
+  #   geom_line(aes(x=pred,y=med,group=eff,color=eff,size="cc"))+#RCP mean
+  #   geom_line(data=fake_obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+#raw obs
+  #   geom_line(data=fake_obs,aes(x=pred,y=spline,color="gray50",size="cc"))+#obs spline
+  #   geom_line(data=shortlist,aes(x=pred,y=val,group=chain,size="bb"),linetype="dotted",color="gray20")+#shortlist
+  #   geom_text(data=name_shortlist,aes(x=x,y=y,label = seq(1,nrow(name_shortlist))))+
+  #   geom_point(data=name_shortlist,aes(x=2100,y=y,shape=as.character(seq(1,nrow(name_shortlist)))),size=0.01,alpha=0)+#workaround to have text legended
+  #   scale_x_continuous("",limits=xlim,expand=c(0,0))+
+  #   scale_y_continuous(paste0("Changement relatif moyen (%)"),limits=c(min(c(chains$val,fake_obs$val)),max(c(chains$val,fake_obs$val))),expand=c(0,0))+
+  #   scale_color_discrete("",type = c("gray50"="gray50",col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]]),labels=c("Observations",labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])]))+
+  #   guides(color = guide_legend(order=1,override.aes = list(size = 1.2)))+
+  #   scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=NULL)+
+  #   guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE))+
+  #   scale_size_manual("",values=c("aa"=0.15,"bb"=1,"cc"=1.2),labels=c('Ensemble de projections "brutes"','Réponse en changement\ndes chaînes de référence (shortlist)',"Réponse moyenne\nen changement"))+
+  #   guides(size = guide_legend(order=3,byrow = TRUE,override.aes = list(linetype = c("solid","dotted","solid"))))+#byrow necessary for option of spacing between lines
+  #   scale_shape_discrete("",labels=lab_shortlist)+
+  #   guides(shape = guide_legend(order=4,override.aes = list(alpha=0)))+
+  #   theme_bw(base_size = 12)+
+  #   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  #   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+  #   theme(legend.key.width = unit(1.5,"cm"))+
+  #   theme(legend.title = element_text(size=10))+
+  #   theme( legend.margin = margin(-2, 0, -2, 0))+
+  #   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=8)
+  
   plt1=ggplot(data)+
-    geom_line(data=chains,aes(x=pred,y=val,group=chain,color=eff,size="aa"),alpha=0.2)+#raw chains
+    geom_line(data=chains,aes(x=pred,y=val,group=chain,color=eff,size="aa"),alpha=0.4)+#raw chains
     geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+#uncertainty band
-    geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5)+#uncertainty band limit
-    geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5)+#uncertainty band limit
+    #geom_line(aes(x=pred,y=binf,group=eff,color=eff),size=0.5)+#uncertainty band limit
+    #geom_line(aes(x=pred,y=bsup,group=eff,color=eff),size=0.5)+#uncertainty band limit
     geom_line(aes(x=pred,y=med,group=eff,color=eff,size="cc"))+#RCP mean
     geom_line(data=fake_obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+#raw obs
     geom_line(data=fake_obs,aes(x=pred,y=spline,color="gray50",size="cc"))+#obs spline
-    geom_line(data=shortlist,aes(x=pred,y=val,group=chain,size="bb"),linetype="dotted",color="gray20")+#shortlist
-    geom_text(data=name_shortlist,aes(x=x,y=y,label = seq(1,nrow(name_shortlist))))+
-    geom_point(data=name_shortlist,aes(x=2100,y=y,shape=as.character(seq(1,nrow(name_shortlist)))),size=0.01,alpha=0)+#workaround to have text legended
-    scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim,expand=c(0,0))+
+    geom_line(data=shortlist,aes(x=pred,y=val,group=chain,size="bb",color=rcp))+#shortlist
+    #geom_text(data=name_shortlist,aes(x=x,y=y,label = seq(1,nrow(name_shortlist))))+
+    #geom_point(data=name_shortlist,aes(x=2100,y=y,shape=as.character(seq(1,nrow(name_shortlist)))),size=0.01,alpha=0)+#workaround to have text legended
+    scale_x_continuous("",limits=xlim,expand=c(0,0))+
     scale_y_continuous(paste0("Changement relatif moyen (%)"),limits=c(min(c(chains$val,fake_obs$val)),max(c(chains$val,fake_obs$val))),expand=c(0,0))+
     scale_color_discrete("",type = c("gray50"="gray50",col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]]),labels=c("Observations",labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])]))+
     guides(color = guide_legend(order=1,override.aes = list(size = 1.2)))+
     scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=NULL)+
-    guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE))+
-    scale_size_manual("",values=c("aa"=0.15,"bb"=1,"cc"=1.2),labels=c("Ensemble de projections",'Réponse en changement\ndes chaînes de référence',"Réponse moyenne\nen changement"))+
-    guides(size = guide_legend(order=3,byrow = TRUE,override.aes = list(linetype = c("solid","dotted","solid"))))+#byrow necessary for option of spacing between lines
-    scale_shape_discrete("",labels=lab_shortlist)+
-    guides(shape = guide_legend(order=4,override.aes = list(alpha=0)))+
-    theme_bw(base_size = 12)+
+    guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+    scale_size_manual("",values=c("aa"=0.15,"bb"=0.5,"cc"=1.5),labels=c('Ensemble de projections "brutes"','Réponse en changement\ndes chaînes de référence (shortlist)',"Réponse moyenne\nen changement"))+
+    guides(size = guide_legend(order=3,byrow = TRUE,override.aes = list(size=c(0.15,1,2))))+#byrow necessary for option of spacing between lines
+    #scale_shape_discrete("",labels=lab_shortlist)+
+    #guides(shape = guide_legend(order=4,override.aes = list(alpha=0)))+
+    theme_bw(base_size = 16)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     theme(legend.key.width = unit(1.5,"cm"))+
-    theme(legend.title = element_text(size=10))+
-    theme( legend.margin = margin(-2, 0, -2, 0))
+    #theme(legend.title = element_text(size=14))+
+    theme( legend.margin = margin(-2, 0, -2, 0))+
+    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=8)
+  
+  if(pred=="temp"){
+    plt1=plt1+xlab(paste0(pred_name," (",pred_unit,")"))
+  }
   
   perc_pos=vector(mode="list",length=nEff)
   for (r in 1:nEff){
@@ -1928,16 +818,17 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
   
   plt2=ggplot(data)+
     geom_point(aes(x=pred,y=rcp,fill=val),color="black",size=5,shape=21)+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les modèles sur\nle signe de la tendance (%)",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T)+#that way because stepsn deforms colors
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les modèles sur\nle signe de la tendance",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T,limits=c(0,100),breaks=c(20,40,60,80),labels=~ if(length(.x) == 2) {c("- à 100%","+ à 100%")} else {c("- à 80%","- à 60%","+ à 60%","+ à 80%")})+#that way because stepsn deforms colors
     #facet_wrap(vars(rcp),nrow=nEff,labeller = labeller(rcp = rcp.labs),strip.position = "left")+
     scale_y_discrete("",labels=rcp.labs)+
-    theme_bw(base_size = 12)+
-    theme(legend.title = element_text(size=11))+
+    theme_bw(base_size = 16)+
+    #theme(legend.title = element_text(size=14))+
     theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_blank(),axis.ticks = element_blank(),axis.text.x = element_blank())+
     theme(axis.text.y = element_text(face="bold"))+
-    theme(legend.key.height = unit(0.3,"cm"))+
+    theme(legend.key.height = unit(0.5,"cm"))+
     scale_x_continuous("",limits=xlim,expand=c(0,0))+
-    ylab("")
+    ylab("")+
+    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=8)
   
   
   
@@ -1975,15 +866,15 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
     scale_alpha_manual("Partition\nde la variance",values=c("int"=0.2,"res"=1,"rcm"=1,"gcm"=1,"rcp"=1),labels=labels_var)+
     scale_x_continuous("",limits = xlim,expand=c(0,0))+
     scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
-    theme_bw(base_size = 12)+
-    theme(legend.title = element_text(size=11))+
-    theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank(),panel.border = element_blank(),axis.ticks.x = element_blank(),axis.text.x = element_blank(),axis.line.y = element_line(colour = "black"),axis.line.x=element_blank())
+    theme_bw(base_size = 16)+
+    #theme(legend.title = element_text(size=14))+
+    theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank(),panel.border = element_blank(),axis.ticks.x = element_blank(),axis.text.x = element_blank(),axis.line.y = element_line(colour = "black"),axis.line.x=element_blank())+
+    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=8)
   
   
-  
-  plt=ggarrange(plt1,plt2,plt3,heights=c(2,0.5,1),nrow=3,ncol=1,align="v")
+  plt=ggarrange(plt1,plt2,plt3,heights=c(2,0.6,1),nrow=3,ncol=1,align="v")
   plt
-    
+  
   if (is.na(folder_out)){
     return(plt)
   }else{
@@ -1992,3 +883,1388 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
   
 }
 
+
+########################################################
+## read and fortify for ggplot plotting shp file
+
+read_shp=function(path){
+  shp=readOGR(path,encoding = "UTF-8") ## parameters allows reading
+  shp$id <- row.names(shp)
+  shp_fort=fortify(shp)
+  shp_fort <- left_join(shp_fort, shp@data, by="id")
+}
+
+
+
+
+#####################################################################################################################################
+## Make a ggplot2 base map of France with SIM2 outlets as dots and val_name the name of the column for the color scale, that can be customized afterwards
+## Data has at least longitude in x, latitude in y and a numeric filling value in val_name
+path_river="C:/Users/reverdya/Documents/Docs/2_data/SIG/processed/CoursEau_idx1_wgs84.shp"
+path_fr="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/IGN/contours_FR/gadm36_FRA_0.shp"
+river=read_shp(path_river)
+fr=read_shp(path_fr)
+
+data(wrld_simpl)
+options(warn=-1)
+wrld <- fortify(wrld_simpl)
+options(warn=0)
+
+base_map_outlets=function(data,val_name,alpha_name=NULL){
+  plt=ggplot(data=data)+
+    geom_polygon(data=fr,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)+
+    geom_path(data=river,aes(x=long,y=lat,group=group),colour="gray80",size=0.1)+
+    coord_equal(ratio=111/78,xlim = c(-6, 9.75),ylim = c(41.25,52),expand=F)+## ratio of 1lat by 1long at 45N
+    scale_x_continuous("")+
+    scale_y_continuous("")+
+    theme_bw(base_size = 10)+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    theme(axis.ticks =element_blank(),axis.text = element_blank() )+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
+    theme(strip.text = element_text(size = 12, face = "bold"))+
+    guides(fill = guide_colourbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  if(!is.null(alpha_name)){
+    plt=plt+
+      geom_point(aes(x=x,y=y,fill=get(val_name),alpha=get(alpha_name)),size=3,shape=21,stroke=0.1)
+    #geom_point(aes(x=x,y=y,color=get(val_name),alpha=get(alpha_name)),size=3,shape=16)
+  }else{
+    plt=plt+
+      geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21,stroke=0.1)
+    #geom_point(aes(x=x,y=y,color=get(val_name)),size=3,shape=16)
+  }
+  return(plt)
+}
+
+
+
+#######################################################################
+## Map of 3 quantiles by 3 RCP for one horizon
+## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
+## horiz a temporal or température horizon
+## pred_name the plain language name of the predictor
+## ind_name thenname of the indicator
+## ind_name_full the plain language name of the indicator
+## pred_unit the unit of the predictor
+## folder_out the saving folder
+
+map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,scenAvail){
+  
+  ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
+  rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
+  quant=c("5%","mean","95%")
+
+  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
+  exut$idx=seq(1:nrow(exut))
+  
+  tmp=exut
+  for (i in 1:8){
+    exut=rbind(exut,tmp)
+  }
+  exut$rcp=rep(rcp_names,each=nrow(exut)/3)
+  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
+  exut$val=0
+  exut$sign=0
+  #exut$sign_agree="Medium"
+  exut$sign_agree="<80%"
+  
+  
+  
+  for (i in 1:length(lst.QUALYPSOOUT)){
+    for(r in rcp_names){
+      idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
+      ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==r)
+      chg_mean=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,ieff_this_rcp]
+      probCI = lst.QUALYPSOOUT[[i]]$listOption$probCI
+      
+      idx_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==r)
+      # phiStar
+      phiStar = lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_this_rcp,idx_Xfut]
+      # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
+      # obtained from QUALYPSO
+      sd.qua = sqrt(lst.QUALYPSOOUT[[i]]$TOTALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,ieff_rcp])
+      sd.emp = sd(phiStar)
+      sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
+      sd.corr = sd.qua/sd.emp
+      phiStar.corr = phiStar*t(replicate(length(phiStar),sd.corr))
+      chg_q5 = quantile(phiStar.corr,probs = (1-probCI)/2)
+      chg_q95 = quantile(phiStar.corr,probs = 0.5+probCI/2)
+      #chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
+      #chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
+      
+      
+      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
+      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[1]]=chg_q5*100
+      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[3]]=chg_q95*100
+      
+      resp=lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==r),idx_Xfut]*100
+      exut$sign[exut$idx==i & exut$rcp==r]=sum(resp>0)/length(resp)*100
+    }
+  }
+  
+  # for(i in 1:nrow(exut)){
+  #   if(exut$sign[i]>80|exut$sign[i]<20){
+  #     exut$sign_agree[i]="Forte"
+  #   }
+  #   if(exut$sign[i]>40 & exut$sign[i]<60){
+  #     exut$sign_agree[i]="Faible"
+  #   }
+  # }
+  for(i in 1:nrow(exut)){
+    if(exut$sign[i]>80|exut$sign[i]<20){
+      exut$sign_agree[i]=">80%"
+    }
+  }
+  
+  
+  exut$quant=factor(exut$quant,levels=quant)
+  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","rcp","quant","val","sign","sign_agree")
+  
+  rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
+  names(rcp.labs) <- rcp_names
+  quant.labs <- c("Q5 ensemble", "Moyenne ensemble", "Q95 ensemble")
+  names(quant.labs) <- quant
+  
+  #Setting limits for color scale
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+  lim_col=max(q99pos,q99neg)
+  #lim_col=round(lim_col/bin_col)*bin_col
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  #lim_col=(lim_col%/%bin_col+1)*bin_col
+  
+  plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree")
+  plt=plt+
+    facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
+    #scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+    theme(panel.border = element_rect(colour = "black",fill=NA))+
+    scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
+    guides(alpha = guide_legend(override.aes = list(fill = "grey") ))+
+    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  plt$layers[[3]]$aes_params$size= 3
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+  }
+}
+
+
+#######################################################################
+##Map of 3 quantiles by 3 horizons for one RCP
+## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
+## horiz 3 temporal or température horizons
+## pred the predictor name in the file
+## pred_name the plain language name of the predictor
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## pred_unit the unit of the predictor
+## rcp_name the name of the wanted rcp
+## folder_out the saving folder
+
+map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
+
+  ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
+  ieff_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]==rcp_name)
+  probCI=lst.QUALYPSOOUT[[1]]$listOption$probCI
+  quant=c("5%","mean","95%")
+  
+  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
+  exut$idx=seq(1:nrow(exut))
+  
+  tmp=exut
+  for (i in 1:8){
+    exut=rbind(exut,tmp)
+  }
+  exut$horiz=rep(horiz,each=nrow(exut)/3)
+  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
+  exut$val=0
+  exut$sign=0
+  # exut$sign_agree="Medium"
+  exut$sign_agree="<80%"
+  
+  for (i in 1:length(lst.QUALYPSOOUT)){
+    for(h in horiz){
+      idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==h)
+      chg_mean=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,ieff_this_rcp]
+      
+      idx_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==rcp_name)
+      # phiStar
+      phiStar = lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_rcp,idx_Xfut]
+      # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
+      # obtained from QUALYPSO
+      sd.qua = sqrt(lst.QUALYPSOOUT[[i]]$TOTALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,ieff_rcp])
+      sd.emp = sd(phiStar)
+      sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
+      sd.corr = sd.qua/sd.emp
+      phiStar.corr = phiStar*t(replicate(length(phiStar),sd.corr))
+      chg_q5 = quantile(phiStar.corr,probs = (1-probCI)/2)
+      chg_q95 = quantile(phiStar.corr,probs = 0.5+probCI/2)
+    
+      #chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
+      #chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[1]]=chg_q5*100
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[3]]=chg_q95*100
+      
+      resp=lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==rcp_name),idx_Xfut]*100
+      exut$sign[exut$idx==i & exut$horiz==h]=sum(resp>0)/length(resp)*100
+    }
+  }
+  
+  # for(i in 1:nrow(exut)){
+  #   if(exut$sign[i]>80|exut$sign[i]<20){
+  #     exut$sign_agree[i]="Forte"
+  #   }
+  #   if(exut$sign[i]>40 & exut$sign[i]<60){
+  #     exut$sign_agree[i]="Faible"
+  #   }
+  # }
+  for(i in 1:nrow(exut)){
+    if(exut$sign[i]>80|exut$sign[i]<20){
+      exut$sign_agree[i]=">80%"
+    }
+  }
+  
+  
+  exut$quant=factor(exut$quant,levels=quant)
+  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","horiz","quant","val","sign","sign_agree")
+  
+  horiz.labs <- paste0(horiz," ",pred_unit)
+  names(horiz.labs) <- horiz
+  quant.labs <- c("Q5 ensemble", "Moyenne ensemble", "Q95 ensemble")
+  names(quant.labs) <- quant
+  
+  #Setting limits for color scale
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+  lim_col=max(q99pos,q99neg)
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  #lim_col=(lim_col%/%bin_col+1)*bin_col
+  
+  plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree")
+  plt=plt+
+    facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
+    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+    #binned_scale(aesthetics = "color",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=~ if(length(.x) == 2) {c(paste0("< -",lim_col),paste0("> ",lim_col))} else {seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5)})+#that way because stepsn deforms colors
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990)"))+
+    theme(panel.border = element_rect(colour = "black",fill=NA))+
+    #scale_alpha_manual("Accord sur le signe du changement",values = c("Faible"=0.2,"Medium"=0.6,"Forte"=1),labels=c("Faible (<60%)","Medium (60-80%)","Forte (>80%)"))+
+    scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
+    guides(alpha = guide_legend(override.aes = list(fill = "grey") ))+
+    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  plt$layers[[3]]$aes_params$size= 3
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name),Folder = folder_out,Format = "jpeg")
+  }
+
+
+}
+
+
+#######################################################################
+##Map of 3 quantiles by 3 horizons of température
+## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
+## horiz 3 temporal or température horizons
+## pred the predictor name in the file
+## pred_name the plain language name of the predictor
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## pred_unit the unit of the predictor
+## rcp_name the name of the wanted rcp
+## folder_out the saving folder
+
+map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,ind_name_full,folder_out,freq_col=0.99){
+  
+  quant=c("5%","mean","95%")
+  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
+  exut$idx=seq(1:nrow(exut))
+  horiz=c(1.5,2,2.5)
+  
+  tmp=exut
+  for (i in 1:8){
+    exut=rbind(exut,tmp)
+  }
+  exut$horiz=rep(horiz,each=nrow(exut)/3)
+  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
+  exut$val=0
+  exut$sign=0
+  exut$sign_agree="<80%"
+  
+  for (i in 1:length(lst.QUALYPSOOUT3)){
+    for(h in horiz[1]){# all RCP
+      idx_Xfut=which(lst.QUALYPSOOUT3[[i]]$Xfut==h)
+      chg_mean=lst.QUALYPSOOUT3[[i]]$GRANDMEAN$MEAN[idx_Xfut]
+      probCI = lst.QUALYPSOOUT3[[i]]$listOption$probCI
+      
+      # phiStar
+      phiStar = lst.QUALYPSOOUT3[[i]]$CLIMATEESPONSE$phiStar[,idx_Xfut]
+      # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
+      # obtained from QUALYPSO
+      sd.qua = sqrt(lst.QUALYPSOOUT3[[i]]$TOTALVAR[idx_Xfut]-lst.QUALYPSOOUT3[[i]]$INTERNALVAR[idx_Xfut])
+      sd.emp = sd(phiStar)
+      sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
+      sd.corr = sd.qua/sd.emp
+      phiStar.corr = phiStar*t(replicate(length(phiStar),sd.corr))
+      chg_q5 = quantile(phiStar.corr,probs = (1-probCI)/2)
+      chg_q95 = quantile(phiStar.corr,probs = 0.5+probCI/2)
+      
+      #chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
+      #chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
+      
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[1]]=chg_q5*100
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[3]]=chg_q95*100
+      
+      resp=lst.QUALYPSOOUT3[[i]]$CLIMATEESPONSE$phiStar[,idx_Xfut]*100
+      exut$sign[exut$idx==i & exut$horiz==h]=sum(resp>0)/length(resp)*100
+      
+    }
+    for(h in horiz[2:3]){#2 RCP only
+      idx_Xfut=which(lst.QUALYPSOOUT2[[i]]$Xfut==h)
+      chg_mean=lst.QUALYPSOOUT2[[i]]$GRANDMEAN$MEAN[idx_Xfut]
+      probCI = lst.QUALYPSOOUT2[[i]]$listOption$probCI
+      
+      # phiStar
+      phiStar = lst.QUALYPSOOUT2[[i]]$CLIMATEESPONSE$phiStar[,idx_Xfut]
+      # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
+      # obtained from QUALYPSO
+      sd.qua = sqrt(lst.QUALYPSOOUT2[[i]]$TOTALVAR[idx_Xfut]-lst.QUALYPSOOUT2[[i]]$INTERNALVAR[idx_Xfut])
+      sd.emp = sd(phiStar)
+      sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
+      sd.corr = sd.qua/sd.emp
+      phiStar.corr = phiStar*t(replicate(length(phiStar),sd.corr))
+      chg_q5 = quantile(phiStar.corr,probs = (1-probCI)/2)
+      chg_q95 = quantile(phiStar.corr,probs = 0.5+probCI/2)
+      
+      #chg_q5 = qnorm(p = (1 - probCI)/2, mean = chg_mean, sd = sqrt(Vtot))
+      #chg_q95 = qnorm(p = 0.5 + probCI/2, mean = chg_mean, sd = sqrt(Vtot))
+      
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[1]]=chg_q5*100
+      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[3]]=chg_q95*100
+      
+      resp=lst.QUALYPSOOUT2[[i]]$CLIMATEESPONSE$phiStar[,idx_Xfut]*100
+      exut$sign[exut$idx==i & exut$horiz==h]=sum(resp>0)/length(resp)*100
+    }
+  }
+  
+  for(i in 1:nrow(exut)){
+    if(exut$sign[i]>80|exut$sign[i]<20){
+      exut$sign_agree[i]=">80%"
+    }
+  }
+  
+  exut$quant=factor(exut$quant,levels=quant)
+  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","horiz","quant","val","sign","sign_agree")
+  
+  horiz.labs <- paste0(as.character(horiz),"°C")
+  names(horiz.labs) <- horiz
+  quant.labs <- c("Q5 ensemble", "Moyenne ensemble", "Q95 ensemble")
+  names(quant.labs) <- quant
+  
+  #Setting limits for color scale
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+  lim_col=max(q99pos,q99neg)
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  #lim_col=(lim_col%/%bin_col+1)*bin_col
+  
+  plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree")
+  plt=plt+
+    facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
+    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons de réchauffement planétaire post 1860-1900 (°C)\n(avec référence 1990, 3 RCP pour 1.5°C et 2 RCP pour 2 et 3°C)"))+
+    theme(panel.border = element_rect(colour = "black",fill=NA))+
+    scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
+    guides(alpha = guide_legend(override.aes = list(fill = "grey") ))+
+    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  plt$layers[[3]]$aes_params$size= 3
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_temp_1.5_2_2.5"),Folder = folder_out,Format = "jpeg")
+  }
+  
+}
+
+
+
+#############################################################################################
+## Map of 3 quantiles by 3 RCP for one horizon of time using basic mean and q5/q95
+## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
+## horiz a temporal horizon
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## folder_out the saving folder
+
+
+map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,freq_col=0.99){
+  
+  ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
+  rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
+  quant=c("5%","mean","95%")
+  idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
+  
+  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
+  exut$idx=seq(1:nrow(exut))
+  
+  tmp=exut
+  for (i in 1:8){
+    exut=rbind(exut,tmp)
+  }
+  exut$rcp=rep(rcp_names,each=nrow(exut)/3)
+  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
+  exut$val=0
+  exut$sign=0
+  exut$sign_agree="<80%"
+  
+  for (i in 1:length(lst.QUALYPSOOUT)){
+    for(r in rcp_names){
+      
+      idx_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==r)
+      
+      chg_mean=mean(lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_rcp,idx_Xfut])*100 #*100 for percentages
+      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[2]]=chg_mean
+      chg_q5=quantile(lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_rcp,idx_Xfut],probs=0.05)*100 #*100 for percentages ; 1 is for 5%
+      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[1]]=chg_q5
+      chg_q95=quantile(lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_rcp,idx_Xfut],probs=0.95)*100  #*100 for percentages ; 2 is for 95%
+      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[3]]=chg_q95
+      
+      resp=lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_rcp,idx_Xfut]*100
+      exut$sign[exut$idx==i & exut$horiz==h]=sum(resp>0)/length(resp)*100
+    }
+  }
+  
+  for(i in 1:nrow(exut)){
+    if(exut$sign[i]>80|exut$sign[i]<20){
+      exut$sign_agree[i]=">80%"
+    }
+  }
+  
+  
+  exut$quant=factor(exut$quant,levels=quant)
+  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","rcp","quant","val","sign","sign_agree")
+  
+  rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
+  names(rcp.labs) <- rcp_names
+  quant.labs <- c("Q5 ensemble", "Moyenne ensemble", "Q95 ensemble")
+  names(quant.labs) <- quant
+  
+  #Setting limits for color scale
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+  lim_col=max(q99pos,q99neg)
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  #lim_col=(lim_col%/%bin_col+1)*bin_col
+  
+  plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree")
+  plt=plt+
+    facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
+    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+    ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz," VS 1990), fonctions de réponse de l'ensemble non balancé"))+
+    theme(panel.border = element_rect(colour = "black",fill=NA))+
+    scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
+    guides(alpha = guide_legend(override.aes = list(fill = "grey") ))+
+    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  plt$layers[[3]]$aes_params$size= 3
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz),Folder = folder_out,Format = "jpeg")
+  }
+}
+
+
+
+
+
+#######################################################################
+## Map of effects GCM or RCM (température or time)
+## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
+## includeMean if true adds mean change to effect
+## name_eff "gcm" ou "rcm"...
+## pred_name the plain language name of the predictor
+## pred the predictor name in the file
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## pred_unit the unit of the predictor
+## folder_out the saving folder
+## horiz he horizon of predictor wanted
+## name_eff_plain plain langauge name of principal effects
+
+map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
+  
+  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
+  exut$idx=seq(1:nrow(exut))
+  
+  ieff=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)==name_eff)
+  effs.labs <- lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff]]
+  effs=seq(1,length(effs.labs))
+  names(effs.labs) <- effs
+  
+  
+  tmp=exut
+  for (i in 1:(length(effs)-1)){
+    exut=rbind(exut,tmp)
+  }
+  exut$effs=rep(effs,each=nrow(exut)/length(effs))
+  exut$val=0
+  
+  
+  for (i in 1:length(lst.QUALYPSOOUT)){
+    idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
+    if(includeMean){
+      chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
+    }else{
+      chg=lst.QUALYPSOOUT[[i]]$MAINEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
+    }
+    if(!is.null(includeRCP)){
+      ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
+      i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==includeRCP)
+      chg = chg+lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]*100
+    }
+    for(j in 1:length(chg)){
+      exut$val[exut$idx==i & exut$effs==j]=chg[j]
+    }
+  }
+  
+  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","effs","val")
+  
+  #Setting limits for color scale
+  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+  lim_col=max(q99pos,q99neg)
+  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  #lim_col=(lim_col%/%bin_col+1)*bin_col
+  
+  plt=base_map_outlets(data = exut,val_name = "val")
+  if(includeMean){
+    plt=plt+
+      facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
+      #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+      theme(panel.border = element_rect(colour = "black",fill=NA))
+    plt$layers[[3]]$aes_params$size= 3
+    if (is.na(folder_out)){
+      return(plt)
+    }else{
+      save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+    }
+       
+  }else{
+    if(is.null(includeRCP)){
+      plt=plt+
+        facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
+        #scale_fill_stepsn("Effet principal (%)",colours = precip_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+        ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+        theme(panel.border = element_rect(colour = "black",fill=NA))
+      plt$layers[[3]]$aes_params$size= 3
+      if (is.na(folder_out)){
+        return(plt)
+      }else{
+        save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+      }
+      
+    }else{
+      plt=plt+
+        facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
+        #scale_fill_stepsn("Effet principal (%)",colours = precip_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+        ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full," le ",includeRCP,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+        theme(panel.border = element_rect(colour = "black",fill=NA))
+      plt$layers[[3]]$aes_params$size= 3
+      if (is.na(folder_out)){
+        return(plt)
+      }else{
+        save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",includeRCP,"_",horiz),Folder = folder_out,Format = "jpeg")
+      }
+      
+    }
+   
+    
+  }
+}
+
+
+############################################################################
+## Map mean change or internal variability or total variability or res var
+## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
+## vartype the variable to be plotted (one of varint, mean, vartot)
+## pred_name the plain language name of the predictor
+## pred the predictor name in the file
+## ind_name the name of the indicator
+## ind_name_full the plain language name of the indicator
+## pred_unit the unit of the predictor
+## folder_out the saving folder
+## horiz he horizon of predictor wanted
+## name_eff_plain plain langauge name of principal effects
+
+map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99){
+  
+  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
+  exut$idx=seq(1:nrow(exut))
+  exut$val=0
+  #exut$sign="no"
+  
+  for (i in 1:length(lst.QUALYPSOOUT)){
+    idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
+    
+    if(vartype=="mean"){
+      chg=lst.QUALYPSOOUT[[i]]$GRANDMEAN$MEAN[idx_Xfut]*100
+      #chains=reconstruct_chains(lst.QUALYPSOOUT[[i]])
+      #if(sum(chains[,idx_Xfut]>0)/nrow(chains)>=0.8 | sum(chains[,idx_Xfut]>0)/nrow(chains)<=0.2){#80% agreement on the sign
+      #  exut$sign[exut$idx==i]="yes"
+      #}
+    }
+    if(vartype=="varint"){
+      chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]*100^2#because variance is square of standard deviation unit
+      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
+    }
+    if(vartype=="varres"){
+      chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]*100^2
+      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
+    }
+    if(vartype=="vartot"){
+      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
+      chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])*100^2
+      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
+    }
+    if(vartype=="incert"){
+      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
+      chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])*100^2
+      chg=(qnorm(p = 0.95, mean = 0, sd = sqrt(chg))-qnorm(p = 0.05, mean = 0, sd = sqrt(chg)))/2
+    }
+    if(vartype=="rcp8.5"){
+      ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
+      i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==vartype)
+      chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]*100
+    }
+    exut$val[exut$idx==i]=chg
+  }
+  
+  colnames(exut)=c("Num_ordre_Modcou","y","x","idx","val","sign")
+  
+  ## We show uncertainties not variances
+  
+  plt=base_map_outlets(data = exut,val_name = "val")
+  if(vartype=="mean"){
+    #plt=base_map_outlets(data = exut,val_name = "val",alpha_name ="sign")
+    plt=base_map_outlets(data = exut,val_name = "val")
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    lim_col=max(q99pos,q99neg)
+    lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+    plt=plt+
+      #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))#+
+      #scale_alpha_manual("",values = c("no"=0.2,"yes"=1),labels=c("Pas d'accord sur le signe du changement","Plus de 80% des chaînes en accord"))+
+      #guides(alpha = guide_legend(override.aes = list(fill = "grey") ,label.theme = element_text(size = 11, face = "bold")))
+  }
+  if(vartype=="vartot"){
+    q99=quantile(exut$val,probs=freq_col)
+    lim_col=round(q99/25)*25
+    plt=plt+
+      #scale_fill_stepsn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,show.limits = T,labels=c(0,seq(0+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+  }
+  if(vartype=="incert"){
+    q99=quantile(exut$val,probs=freq_col)
+    lim_col=round(q99/25)*25
+    plt=plt+
+      #scale_fill_stepsn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,show.limits = T,labels=c(0,seq(0+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+  }
+  if(vartype=="varint"){
+    q99=quantile(exut$val,probs=freq_col)
+    lim_col=round(q99/25)*25
+    plt=plt+
+      #scale_fill_stepsn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,show.limits = T,labels=c(0,seq(0+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+  }
+  
+  if(vartype=="varres"){
+    q99=quantile(exut$val,probs=freq_col)
+    lim_col=round(q99/25)*25
+    plt=plt+
+      #scale_fill_stepsn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,show.limits = T,labels=c(0,seq(0+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+  }
+  if(vartype=="rcp8.5"){
+    plt=base_map_outlets(data = exut,val_name = "val")
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    lim_col=max(q99pos,q99neg)
+    lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+    plt=plt+
+      #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," et le RCP 8.5 (",horiz," ",pred_unit," VS 1990)"))
+  }
+  plt$layers[[3]]$aes_params$size=5
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+  }
+  
+}
+
+
+
+
+#####################################################
+## Plot watershed areas
+
+plot_bv_areas=function(folder_out){
+  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon","Surf_mod")]
+  colnames(exut)=c("Num_ordre_Modcou","y","x","val")
+  plt=base_map_outlets(data = exut,val_name = "val")
+  plt=plt+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Superficie (km2)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",trans="log10",show.limits = T,breaks=c(500,1000,5000,1e4),limits=c(100,5e4),oob=squish)+#that way because stepsn deforms colors and with trans cannot show limits
+    ggtitle("Superficie des bassins versants")
+  plt$layers[[3]]$aes_params$size=5
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(plt,Filename = "superficie_bv",Folder = folder_out,Format = "jpeg")
+  }
+  
+}
+
+
+
+
+
+
+# ##############################################################################
+# ## Time series of mu + uncertainties
+# ## returns a ggplot 2 object
+# ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+# ## pred the predictor name in the file
+# ## pred_name the plain language name of the predictor
+# ## ind_name the name of the indicator
+# ## ind_name_full the plain language name of the indicator
+# ## bv_name the name of the watershed
+# ## bc_full_name plain language name of the watershed
+# ## pred_unit the unit of the predictor
+# ## folder_out the saving folder
+# 
+# plotQUALYPSOMeanChangeAndUncertainties_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
+#   
+#   probCI = QUALYPSOOUT$listOption$probCI
+#   Xfut = QUALYPSOOUT$Xfut
+#   nFut = length(Xfut)
+#   meanPred = QUALYPSOOUT$GRANDMEAN$MEAN
+#   if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#     meanPred=meanPred
+#   }else{
+#     meanPred=predict(loess(meanPred ~ Xfut))
+#   }
+#   vNorm = t(QUALYPSOOUT$DECOMPVAR)
+#   Vtot = QUALYPSOOUT$TOTALVAR
+#   nEff = nrow(vNorm) - 2
+#   vNormRev = apply(vNorm, 2, rev)
+#   binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
+#   bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
+#   limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
+#   if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#     limIntInf[1, ] =binf
+#     limIntSup[1, ] =bsup
+#   }else{
+#     limIntInf[1, ] = predict(loess(binf ~ Xfut))
+#     limIntSup[1, ] = predict(loess(bsup ~ Xfut))
+#   }
+#   for (i in 1:(nEff + 1)) {
+#     binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
+#     bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
+#     if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#       limIntInf[i + 1, ] =binfi
+#       limIntSup[i + 1, ] =bsupi
+#     }else{
+#       limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
+#       limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
+#     }
+#   }
+#   
+#   namesEff = QUALYPSOOUT$names
+#   names_var=c("int","res",rev(namesEff))
+# 
+#   
+#   data=data.frame(Xfut=Xfut,mean=meanPred)
+#   data=cbind(data,t(limIntInf))
+#   colnames(data)[-c(1:2)]=names_var
+#   data2=pivot_longer(data=data,cols=-c(Xfut,mean),names_to = "var",values_to = "inf")
+#   data=data.frame(Xfut=Xfut)
+#   data=cbind(data,t(limIntSup))
+#   colnames(data)[-c(1)]=names_var
+#   data3=pivot_longer(data=data,cols=!Xfut,names_to = "var",values_to = "sup")
+#   data=merge(data2,data3,by=c("Xfut","var"))
+#   data$var=factor(data$var,levels=c(names_var))
+#   data$mean=data$mean*100#pourcentage
+#   data$inf=data$inf*100
+#   data$sup=data$sup*100
+#   
+#   vec_color=col_7var[names(col_7var) %in% names_var]
+#   data$var=factor(data$var,levels=rev(names(vec_color)))
+#   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
+#   
+#   plt=ggplot(data)+
+#     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
+#     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
+#     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
+#     geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
+#     scale_fill_discrete("Incertitude totale et\npartition de variance",type = vec_color,labels=labels_var)+
+#     scale_color_discrete("",type="black",label="Moyenne d'ensemble")+
+#     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
+#     theme_bw(base_size = 18)+
+#     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+#     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+#     scale_y_continuous(paste0("Changement moyen (%)"))+
+#     ggtitle(paste0("Changement moyen et partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
+#   if (is.na(folder_out)){
+#     return(plt)
+#   }else{
+#     save.plot(plt,Filename = paste0("meanchange_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+#   }
+# }
+# 
+# ##############################################################################
+# ## Time series of mu + uncertainties without IV
+# ## returns a ggplot 2 object
+# ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+# ## pred the predictor name in the file
+# ## pred_name the plain language name of the predictor
+# ## ind_name thename of the indicator
+# ## ind_name_full the plain language name of the indicator
+# ## bv_name the name of the watershed
+# ## bc_full_name plain language name of the watershed
+# ## pred_unit the unit of the predictor
+# ## folder_out the saving folder
+# ## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
+# 
+# plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="tot",no_loess=T){
+#   
+#   probCI = QUALYPSOOUT$listOption$probCI
+#   Xfut = QUALYPSOOUT$Xfut
+#   nFut = length(Xfut)
+#   meanPred = QUALYPSOOUT$GRANDMEAN$MEAN
+#   if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#     meanPred=meanPred
+#   }else{
+#     meanPred=predict(loess(meanPred ~ Xfut))
+#   }
+#   Veff = QUALYPSOOUT$EFFECTVAR
+#   Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN)
+#   nEff = nrow(Vbind) - 1
+#   Vuncer = colSums(Vbind)
+#   Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vuncer))
+#   vNormRev = apply(Vnorm, 2, rev)
+#   vNormRev[is.na(vNormRev)]=0 #year of référence where uncertainty without IV is 0
+#   binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vuncer))
+#   bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vuncer))
+#   
+#   Vbind_all=rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN,QUALYPSOOUT$INTERNALVAR)
+#   Vtot=colSums(Vbind_all)
+#   binf_tot = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
+#   bsup_tot = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
+#   
+#   IV=QUALYPSOOUT$INTERNALVAR
+#   binf_iv = binf+ qnorm(p = (1 - probCI)/2, mean = 0, sd = sqrt(IV))
+#   bsup_iv = bsup+ qnorm(p = 0.5 + probCI/2, mean = 0, sd = sqrt(IV))
+#   
+#   limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
+#   if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#     limIntInf[1, ] =binf
+#     limIntSup[1, ] =bsup
+#   }else{
+#     limIntInf[1, ] = predict(loess(binf ~ Xfut))
+#     limIntSup[1, ] = predict(loess(bsup ~ Xfut))
+#     binf_tot=predict(loess(binf_tot ~ Xfut))
+#     bsup_tot=predict(loess(bsup_tot ~ Xfut))
+#     binf_iv=predict(loess(binf_iv ~ Xfut))
+#     bsup_iv=predict(loess(bsup_iv ~ Xfut))
+#   }
+#   for (i in 1:(nEff + 0)) {
+#     binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
+#     bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
+#     if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#       limIntInf[i + 1, ] =binfi
+#       limIntSup[i + 1, ] =bsupi
+#     }else{
+#       limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
+#       limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
+#     }
+#   }
+#   if(iv_type=="sum"){
+#     limIntInf[i + 2, ]=binf_iv
+#     limIntSup[i + 2, ] =bsup_iv
+#   }
+#   if(iv_type=="tot"){
+#     limIntInf[i + 2, ]=binf_tot
+#     limIntSup[i + 2, ] = bsup_tot
+#   }
+#   
+#   namesEff = QUALYPSOOUT$names
+#   names_var=c("res",rev(namesEff))
+#   
+#   
+#   data=data.frame(Xfut=Xfut,mean=meanPred)
+#   data=cbind(data,t(limIntInf))
+#   colnames(data)[-c(1:2)]=c(names_var,"iv_inf")
+#   data2=pivot_longer(data=data,cols=-c(Xfut,mean,iv_inf),names_to = "var",values_to = "inf")
+#   data=data.frame(Xfut=Xfut)
+#   data=cbind(data,t(limIntSup))
+#   colnames(data)[-c(1)]=c(names_var,"iv_sup")
+#   data3=pivot_longer(data=data,cols=-c(Xfut,iv_sup),names_to = "var",values_to = "sup")
+#   data=merge(data2,data3,by=c("Xfut","var"))
+#   data$var=factor(data$var,levels=c(names_var))
+#   data$mean=data$mean*100#pourcentage
+#   data$inf=data$inf*100
+#   data$sup=data$sup*100
+#   data$iv_inf=data$iv_inf*100
+#   data$iv_sup=data$iv_sup*100
+#   
+#   vec_color=col_7var[names(col_7var) %in% names_var]
+#   data$var=factor(data$var,levels=rev(names(vec_color)))
+#   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
+#   
+#   #warning from xlim
+#   plt=ggplot(data)+
+#     geom_ribbon(aes(x=Xfut,ymin=iv_inf,ymax=iv_sup),fill=as.vector(col_7var[7]),alpha=0.2)+
+#     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
+#     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
+#     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
+#     geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"),size=1)+
+#     geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
+#     geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
+#     scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = vec_color,labels=labels_var)+
+#     scale_color_discrete("",type=c(as.vector(col_7var[7]),"#000000"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
+#     scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
+#     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
+#     theme_bw(base_size = 18)+
+#     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+#     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+#     scale_y_continuous(paste0("Changement moyen (%)"))+
+#     theme(legend.key.width = unit(1.5,"cm"))+
+#     ggtitle(paste0("Changement moyen et partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
+# 
+#   if (is.na(folder_out)){
+#     return(plt)
+#   }else{
+#     save.plot(plt,Filename = paste0("meanchange_variance_",ind_name,"_",pred,"_",bv_name,"_",iv_type),Folder = folder_out,Format = "jpeg")
+#   }
+# }
+# 
+# ##############################################################################
+# ## Time series of variance partition
+# ## returns a ggplot 2 object
+# ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+# ## pred the predictor name in the file
+# ## pred_name the plain language name of the predictor
+# ## ind_name the name of the indicator
+# ## ind_name_full the plain language name of the indicator
+# ## bv_name the name of the watershed
+# ## bc_full_name plain language name of the watershed
+# ## pred_unit the unit of the predictor
+# ## folder_out the saving folder
+# 
+# plotQUALYPSOTotalVarianceDecomposition_ggplot=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
+#   
+#   Xfut = QUALYPSOOUT$Xfut
+#   nFut = length(Xfut)
+#   nEff = QUALYPSOOUT$listScenarioInput$nEff
+#   vecEff = 1:nEff
+#   VARDECOMP = QUALYPSOOUT$DECOMPVAR
+#   VARDECOMP[, 1:nEff] = VARDECOMP[, vecEff]
+#   cum = cum.smooth = rep(0, nFut)
+#   data=VARDECOMP
+#   for (i in 1:(nEff + 2)) {
+#     cumPrevious = cum.smooth
+#     cum = cum + VARDECOMP[, i]
+#     if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#       cum.smooth = cum
+#     }else{
+#       cum.smooth = predict(loess(cum ~ Xfut))
+#     }
+#     cum.smooth[cum.smooth < 0] = 0
+#     cum.smooth[cum.smooth > 1] = 1
+#     data[,i]=cum.smooth
+#   }
+#   data=data.frame(cbind(Xfut,data))
+#   namesEff = QUALYPSOOUT$names
+#   names_var=c(namesEff,"res","int")
+#   colnames(data)=c("Xfut",names_var)
+#   data=pivot_longer(data=data,cols=-c(Xfut),names_to = "var",values_to = "val")
+#   data$val=data$val*100 #percentage
+#   
+#   vec_color=col_7var[names(col_7var) %in% names_var]
+#   data$var=factor(data$var,levels=rev(names(vec_color)))
+#   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
+#   
+#   plt=ggplot(data)+
+#     geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var))+
+#     geom_line(aes(x=Xfut,y=val,group=var),color="white",linetype="dashed",size=0.3)+
+#     scale_fill_discrete("Partition\nde la variance",type = vec_color,labels=labels_var)+
+#     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
+#     theme_bw(base_size = 18)+
+#     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+#     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+#     scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
+#     ggtitle(paste0("Partition de variance pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full," (",bv_full_name,")"))
+#   if (is.na(folder_out)){
+#     return(plt)
+#   }else{
+#     save.plot(plt,Filename = paste0("partition_variance_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+#   }
+# }
+# 
+# ##############################################################################
+# ## Time series of one scenario + uncertainties
+# ## returns a ggplot 2 object
+# ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+# ## nameEff name of effect as in QUALYPSOOUT
+# ## nameScenario name of scenario as in nameEff
+# ## plain_name_Scen plain language name of scenario for legend
+# ## pred the predictor name in the file
+# ## pred_name the plain language name of the predictor
+# ## ind_name the name of the indicator
+# ## ind_name_full the plain language name of the indicator
+# ## bv_name the name of the watershed
+# ## bc_full_name plain language name of the watershed
+# ## pred_unit the unit of the predictor
+# ## folder_out the saving folder
+# 
+# plotQUALYPSOTotalVarianceByScenario_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,no_loess=T){
+#   
+#   probCI = QUALYPSOOUT$listOption$probCI
+#   Xfut = QUALYPSOOUT$Xfut
+#   nFut = length(Xfut)
+#   iEff = which(QUALYPSOOUT$namesEff == nameEff)
+#   if (length(iEff) == 0){stop("wrong value for nameEff")}
+#   iScenario = which(QUALYPSOOUT$listScenarioInput$listEff[[iEff]] == 
+#                       nameScenario)
+#   meanPred = QUALYPSOOUT$CHANGEBYEFFECT[[nameEff]]$MEAN[,iScenario]
+#   if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#     meanPred=meanPred
+#   }else{
+#     meanPred=predict(loess(meanPred ~ Xfut))
+#   }
+#   Veff = QUALYPSOOUT$EFFECTVAR[, -iEff]
+#   Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN, QUALYPSOOUT$INTERNALVAR)
+#   nEff = nrow(Vbind) - 2
+#   Vtot = colSums(Vbind)
+#   Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vtot))
+#   vNormRev = apply(Vnorm, 2, rev)
+#   binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
+#   bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
+#   limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
+#   if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#     limIntInf[1, ] =binf
+#     limIntSup[1, ] =bsup
+#   }else{
+#     limIntInf[1, ] = predict(loess(binf ~ Xfut))
+#     limIntSup[1, ] = predict(loess(bsup ~ Xfut))
+#   }
+#   for (i in 1:(nEff + 1)) {
+#     binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - 
+#                                                 binf)
+#     bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
+#     if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#       limIntInf[i + 1, ] =binfi
+#       limIntSup[i + 1, ] =bsupi
+#     }else{
+#       limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
+#       limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
+#     }
+#   }
+#   
+#   namesEff = QUALYPSOOUT$names
+#   namesEff=namesEff[namesEff!=nameEff]
+#   names_var=c("int","res",rev(namesEff))
+#   
+#   
+#   data=data.frame(Xfut=Xfut,mean=meanPred)
+#   data=cbind(data,t(limIntInf))
+#   colnames(data)[-c(1:2)]=names_var
+#   data2=pivot_longer(data=data,cols=-c(Xfut,mean),names_to = "var",values_to = "inf")
+#   data=data.frame(Xfut=Xfut)
+#   data=cbind(data,t(limIntSup))
+#   colnames(data)[-c(1)]=names_var
+#   data3=pivot_longer(data=data,cols=-c(Xfut),names_to = "var",values_to = "sup")
+#   data=merge(data2,data3,by=c("Xfut","var"))
+#   data$var=factor(data$var,levels=c(names_var))
+#   data$mean=data$mean*100#pourcentage
+#   data$inf=data$inf*100
+#   data$sup=data$sup*100
+#   
+#   vec_color=col_7var[names(col_7var) %in% names_var]
+#   data$var=factor(data$var,levels=rev(names(vec_color)))
+#   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
+#   
+#   
+#   plt=ggplot(data)+
+#     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
+#     geom_line(aes(x=Xfut,y=mean,color="black"),size=1)+
+#     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
+#     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
+#     scale_fill_discrete("Incertitude totale et\npartition de variance",type = vec_color,labels=labels_var)+
+#     scale_color_discrete("",type="black",label="Moyenne d'ensemble")+
+#     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
+#     theme_bw(base_size = 18)+
+#     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+#     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+#     scale_y_continuous(paste0("Changement moyen (%)"))+
+#     ggtitle(paste0("Changement et partition de variance pour les expériences ",plain_name_Scen,"\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
+#   if (is.na(folder_out)){
+#     return(plt)
+#   }else{
+#     save.plot(plt,Filename = paste0("change_variance_",nameScenario,"_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+#   }
+# }
+# 
+# ##############################################################################
+# ## Time series of one scenario + uncertainties without IV
+# ## returns a ggplot 2 object
+# ## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+# ## nameEff name of effect as in QUALYPSOOUT
+# ## nameScenario name of scenario as in nameEff
+# ## plain_name_Scen plain language name of scenario for legend
+# ## pred the predictor name in the file
+# ## pred_name the plain language name of the predictor
+# ## ind_name the of the indicator
+# ## ind_name_full the plain language name of the indicator
+# ## bv_name the name of the watershed
+# ## bc_full_name plain language name of the watershed
+# ## pred_unit the unit of the predictor
+# ## folder_out the saving folder
+# ## iv_type : how IV is represented: "sum" is uncertainty + uncertainty IV / "tot" is uncertainty of vartot
+# 
+# plotQUALYPSOTotalVarianceByScenario_noIV_ggplot=function(QUALYPSOOUT,nameEff, nameScenario,plain_name_Scen,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,iv_type="tot",no_loess=T){
+#   
+#   probCI = QUALYPSOOUT$listOption$probCI
+#   Xfut = QUALYPSOOUT$Xfut
+#   nFut = length(Xfut)
+#   iEff = which(QUALYPSOOUT$namesEff == nameEff)
+#   if (length(iEff) == 0){stop("wrong value for nameEff")}
+#   iScenario = which(QUALYPSOOUT$listScenarioInput$listEff[[iEff]] == 
+#                       nameScenario)
+#   meanPred = QUALYPSOOUT$CHANGEBYEFFECT[[nameEff]]$MEAN[,iScenario]
+#   if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#     meanPred=meanPred
+#   }else{
+#     meanPred=predict(loess(meanPred ~ Xfut))
+#   }
+#   Veff = QUALYPSOOUT$EFFECTVAR[, -iEff]
+#   Vbind = rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN)
+#   nEff = nrow(Vbind) - 1
+#   Vuncer = colSums(Vbind)
+#   Vnorm = Vbind/t(replicate(n = nrow(Vbind), Vuncer))
+#   vNormRev = apply(Vnorm, 2, rev)
+#   vNormRev[is.na(vNormRev)]=0 #year of référence where uncertainty without IV is 0
+#   binf = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vuncer))
+#   bsup = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vuncer))
+#   
+#   Vbind_all=rbind(t(Veff), QUALYPSOOUT$RESIDUALVAR$MEAN,QUALYPSOOUT$INTERNALVAR)
+#   Vtot=colSums(Vbind_all)
+#   binf_tot = qnorm(p = (1 - probCI)/2, mean = meanPred, sd = sqrt(Vtot))
+#   bsup_tot = qnorm(p = 0.5 + probCI/2, mean = meanPred, sd = sqrt(Vtot))
+#   
+#   IV=QUALYPSOOUT$INTERNALVAR
+#   binf_iv = binf+ qnorm(p = (1 - probCI)/2, mean = 0, sd = sqrt(IV))
+#   bsup_iv = bsup+ qnorm(p = 0.5 + probCI/2, mean = 0, sd = sqrt(IV))
+#   
+#   limIntInf = limIntSup = matrix(nrow = nEff + 2, ncol = nFut)
+#   if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#     limIntInf[1, ] =binf
+#     limIntSup[1, ] =bsup
+#   }else{
+#     limIntInf[1, ] = predict(loess(binf ~ Xfut))
+#     limIntSup[1, ] = predict(loess(bsup ~ Xfut))
+#     binf_tot=predict(loess(binf_tot ~ Xfut))
+#     bsup_tot=predict(loess(bsup_tot ~ Xfut))
+#     binf_iv=predict(loess(binf_iv ~ Xfut))
+#     bsup_iv=predict(loess(bsup_iv ~ Xfut))
+#   }
+#   for (i in 1:(nEff + 0)) {
+#     binfi = limIntInf[i, ] + vNormRev[i, ] * (meanPred - binf)
+#     bsupi = limIntSup[i, ] - vNormRev[i, ] * (bsup - meanPred)
+#     if(length(Xfut)<=6|no_loess){#loess model is under constrained
+#       limIntInf[i + 1, ] =binfi
+#       limIntSup[i + 1, ] =bsupi
+#     }else{
+#       limIntInf[i + 1, ] = predict(loess(binfi ~ Xfut))
+#       limIntSup[i + 1, ] = predict(loess(bsupi ~ Xfut))
+#     }
+#   }
+#   if(iv_type=="sum"){
+#     limIntInf[i + 2, ]=binf_iv
+#     limIntSup[i + 2, ] =bsup_iv
+#   }
+#   if(iv_type=="tot"){
+#     limIntInf[i + 2, ]=binf_tot
+#     limIntSup[i + 2, ] = bsup_tot
+#   }
+#   
+#   namesEff = QUALYPSOOUT$names
+#   namesEff=namesEff[namesEff!=nameEff]
+#   names_var=c("res",rev(namesEff))
+#   
+#   
+#   data=data.frame(Xfut=Xfut,mean=meanPred)
+#   data=cbind(data,t(limIntInf))
+#   colnames(data)[-c(1:2)]=c(names_var,"iv_inf")
+#   data2=pivot_longer(data=data,cols=-c(Xfut,mean,iv_inf),names_to = "var",values_to = "inf")
+#   data=data.frame(Xfut=Xfut)
+#   data=cbind(data,t(limIntSup))
+#   colnames(data)[-c(1)]=c(names_var,"iv_sup")
+#   data3=pivot_longer(data=data,cols=-c(Xfut,iv_sup),names_to = "var",values_to = "sup")
+#   data=merge(data2,data3,by=c("Xfut","var"))
+#   data$var=factor(data$var,levels=c(names_var))
+#   data$mean=data$mean*100#pourcentage
+#   data$inf=data$inf*100
+#   data$sup=data$sup*100
+#   data$iv_inf=data$iv_inf*100
+#   data$iv_sup=data$iv_sup*100
+#   
+#   vec_color=col_7var[names(col_7var) %in% names_var]
+#   data$var=factor(data$var,levels=rev(names(vec_color)))
+#   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
+#   
+#   #warning from xlim
+#   plt=ggplot(data)+
+#     geom_ribbon(aes(x=Xfut,ymin=iv_inf,ymax=iv_sup),fill=as.vector(col_7var[7]),alpha=0.2)+
+#     geom_ribbon(aes(x=Xfut,ymin=inf,ymax=sup,fill=var))+
+#     geom_line(aes(x=Xfut,y=inf,group=var),color="white",linetype="dashed",size=0.3)+
+#     geom_line(aes(x=Xfut,y=sup,group=var),color="white",linetype="dashed",size=0.3)+
+#     geom_line(aes(x=Xfut,y=mean,color="mean",linetype="mean"),size=1)+
+#     geom_line(aes(x=Xfut,y=iv_inf,color="iv",linetype="iv"),size=1.5)+
+#     geom_line(aes(x=Xfut,y=iv_sup,color="iv",linetype="iv"),size=1.5)+
+#     scale_fill_discrete("Incertitude de la\nréponse climatique et\npartition de variance",type = vec_color,labels=labels_var)+
+#     scale_color_discrete("",type=c(as.vector(col_7var[7]),"#000000"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
+#     scale_linetype_manual("",values=c("dotted","solid"),label=c("Incertitude avec\nvariabilité naturelle","Moyenne d'ensemble"))+
+#     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim,expand=c(0,0))+
+#     theme_bw(base_size = 18)+
+#     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+#     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+#     scale_y_continuous(paste0("Changement moyen (%)"))+
+#     theme(legend.key.width = unit(1.5,"cm"))+
+#     ggtitle(paste0("Changement et partition de variance pour les expériences ",plain_name_Scen,"\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
+#   if (is.na(folder_out)){
+#     return(plt)
+#   }else{
+#     save.plot(plt,Filename = paste0("change_variance_",nameScenario,"_",ind_name,"_",pred,"_",bv_name,"_",iv_type),Folder = folder_out,Format = "jpeg")
+#   }
+# }
+# 
+# 
+# ###########################################################################################
+# ## Make a time/temperature series of percentage of chains with positive or negative change
+# 
+# plotQUALYPSO_chronique_accordsigne=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim){
+#   chains=reconstruct_chains(QUALYPSOOUT)
+#   n_chain=nrow(chains)
+#   data=data.frame(Xfut=QUALYPSOOUT$Xfut,pos=QUALYPSOOUT$Xfut,neg=QUALYPSOOUT$Xfut)
+#   for (i in 1: ncol(chains)){
+#     data$pos[i]=sum(chains[,i]>0)/n_chain*100
+#     data$neg[i]=sum(chains[,i]<0)/n_chain*100
+#   }
+#   plt=ggplot(data)+
+#     geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=pos),color=temp_5[5],size=1)+
+#     #geom_point(aes(x=Xfut,y=pos),color=temp_5[5],size=4)+
+#     geom_segment(aes(x=Xfut,xend=Xfut,y=0,yend=-neg),color=temp_5[1],size=1)+
+#     #geom_point(aes(x=Xfut,y=-neg),color=temp_5[1],size=4)+
+#     geom_hline(aes(yintercept=0))+
+#     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = xlim)+
+#     theme_bw(base_size = 18)+
+#     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+#     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+#     scale_y_continuous(paste0("Accord sur le signe (%)"),limits=c(-100,100),breaks=seq(-100,100,20),labels=abs(seq(-100,100,20)),expand=c(0,0))+
+#     ggtitle(paste0("Pourcentage de chaînes en accord sur le signe pour\nle prédicteur ",pred_name," et l'indicateur ",ind_name_full,"\n(",bv_full_name,")"))
+#   # if(pred=="time"){
+#   #   plt=plt+
+#   #     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits = c(1991,2100))
+#   # }
+#   if (is.na(folder_out)){
+#     return(plt)
+#   }else{
+#     save.plot(plt,Filename = paste0("accord-signe_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+#   }
+# }
+# 
+# 
+# 
+# #####################################################
+# ## Compare results out of QUALYSPO and LM method
+# ## lm the list of QUALYPSOOUT for all watersheds and the lm method
+# ## qu the list of QUALYPSOOUT for all watersheds and the qualypso method
+# ## type the variable of interest (one of resvar,grandmean or eff)
+# ## nameEff in the case of eff the name of the effect considered as in QUALYPSOOUT
+# ## pred_name the name of the predictor used
+# ## ind_name the name of the indicator used
+# ## var_name the plain language name of the variable of interest (Effet RCP, Moyenne d'ensemble...)
+# ## folder_out the saving folder
+# 
+# plot_comp_anova=function(LM,QU,type,nameEff=NULL,pred_name,ind_name,var_name,folder_out,interactive_plt=F){
+#   if (type=="resvar"){
+#     x=unlist(lapply(LM,function(x) x$RESIDUALVAR$MEAN))
+#     y=unlist(lapply(QU,function(x) x$RESIDUALVAR$MEAN))
+#     data=data.frame(x=x,y=y)
+#   }
+#   if (type=="grandmean"){
+#     x=unlist(lapply(LM,function(x) x$GRANDMEAN$MEAN))
+#     y=unlist(lapply(QU,function(x) x$GRANDMEAN$MEAN))
+#     data=data.frame(x=x,y=y)
+#   }
+#   if (type=="eff"){
+#     ieff=which(colnames(LM[[1]]$listScenarioInput$scenAvail)==nameEff)
+#     
+#     x=lapply(LM,function(x) x$MAINEFFECT[[nameEff]]$MEAN)
+#     x=lapply(x,"colnames<-",LM[[1]]$listScenarioInput$listEff[[ieff]])
+#     x=lapply(x,function(z) pivot_longer(data=data.frame(z),names_to = "eff",values_to = "x"))
+#     x=do.call("rbind",x)
+#     
+#     y=lapply(QU,function(y) y$MAINEFFECT[[nameEff]]$MEAN)
+#     y=lapply(y,"colnames<-",LM[[1]]$listScenarioInput$listEff[[ieff]])
+#     y=lapply(y,function(z) pivot_longer(data=data.frame(z),names_to = "eff",values_to = "y"))
+#     y=do.call("rbind",y)
+#     data=cbind(x,y$y)#merge does not work because too many rows
+#     colnames(data)=c("eff","x","y")
+#   }
+#   
+#   plt=ggplot(data)+
+#     geom_point(aes(x=x,y=y),size=0.5)+
+#     geom_abline(slope=1,size=0.3,col="red")+
+#     xlab("Méthode linéaire")+
+#     ylab("Qualypso")+
+#     theme_bw(base_size = 18)+
+#     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+#     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+#     ggtitle(paste0("Comparaison méthodes ANOVA (tous les bassins et dates)\npour le prédicteur ",pred_name,", l'indicateur ",ind_name,"\net la grandeur ",var_name))
+#   if (type=="eff"){
+#     plt=plt+
+#       facet_wrap(~eff,ncol=3)
+#   }
+#   save.plot(plt,Filename = paste0("comparison_anova_",ind_name,"_",pred_name,"_",type,nameEff),Folder = folder_out,Format = "jpeg")
+#   if (interactive_plt){
+#     pltly=ggplotly(plt,tooltip = c("x","y"))
+#     setwd(folder_out)
+#     saveWidget(pltly,paste0("comparison_anova_",ind_name,"_",pred_name,"_",type,nameEff,".html"))
+#   }
+# 
+# 
+# }
