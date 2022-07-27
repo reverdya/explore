@@ -132,7 +132,7 @@ for (r in lst_names_eff$rcp){
     theme(panel.spacing.x = unit(2, "lines"))
   plt_spline_time[[r]]=ggplot(data)+#Warnings okay
     geom_line(aes(x=year,y=val,size=type,color=rcm))+
-    scale_size_manual("",values=c(0.7,1.7),label=c('Module "brut"',"Réponse climatique"))+
+    scale_size_manual("",values=c(0.7,1.7),label=c('Débit moyen\nannuel "brut"',"Réponse climatique"))+
     scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
     theme_bw(base_size = 18)+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -193,7 +193,7 @@ plt_spline_time_rel=ggplot(data[data$rcp==r,])+#Warnings okay
   geom_line(aes(x=year,y=val,size=type,color=rcm))+
   #geom_line(aes(x=year,y=ciinf,color=rcm))+
   #geom_line(aes(x=year,y=cisup,color=rcm))+
-  scale_size_manual("",values=c(0.7,1.7),label=c('Module "brut"',"Réponse en\n changement climatique"))+
+  scale_size_manual("",values=c(0.7,1.7),label=c('Débit moyen\nannuel "brut relatif"',"Réponse en\n changement climatique"))+
   scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
   theme_bw(base_size = 18)+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -219,21 +219,23 @@ xlim=c(1990,2100)
 b=1
 idx=select_stations$idx[b]
 
-plt_var_rcp8.5=plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,iv_type = "tot")
-plt_var_rcp8.5=plt_var_rcp8.5+
-  labs(title=NULL,)+
-  scale_y_continuous("[%]")+
-  theme(axis.title.x = element_blank())+
-  guides(fill=guide_legend(title="Incertitude de la\nréponse climatique"))+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
+plt_bilan=plotQUALYPSO_summary_change(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred = "time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA)
 
-plt_var_rcp8.5_bis=plotQUALYPSOTotalVarianceByScenario_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
-plt_var_rcp8.5_bis=plt_var_rcp8.5_bis+
-  labs(title=NULL)+
-  scale_y_continuous("[%]")+
-  theme(axis.title.x = element_blank())+
-  guides(fill=guide_legend(title="Incertitude totale"))+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)
+# plt_var_rcp8.5=plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,iv_type = "tot")
+# plt_var_rcp8.5=plt_var_rcp8.5+
+#   labs(title=NULL,)+
+#   scale_y_continuous("[%]")+
+#   theme(axis.title.x = element_blank())+
+#   guides(fill=guide_legend(title="Incertitude de la\nréponse climatique"))+
+#   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
+# 
+# plt_var_rcp8.5_bis=plotQUALYPSOTotalVarianceByScenario_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+# plt_var_rcp8.5_bis=plt_var_rcp8.5_bis+
+#   labs(title=NULL)+
+#   scale_y_continuous("[%]")+
+#   theme(axis.title.x = element_blank())+
+#   guides(fill=guide_legend(title="Incertitude totale"))+
+#   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)
 
 #####################################
 ## Effet GCM, effet RCM
@@ -261,12 +263,12 @@ data_bc$bc2=-data_bc$bc1
 data_bc=pivot_longer(data=data_bc,cols=!year,names_to = "bc",values_to = "val")
 
 plt_bc_effect=ggplot(data_bc)+
-  geom_line(aes(x=year,y=val,group=bc,color=bc),size=1)+
+  geom_line(aes(x=year,y=val,group=bc,color=bc),size=1.2)+
   scale_x_continuous("",limits=xlim)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = ipcc_6col[1:2],labels=c("Correction A","Correction B"))+
+  scale_color_discrete("",type = viridis(2),labels=c("Correction A","Correction B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)
@@ -278,12 +280,12 @@ data_hm$hm2=-data_hm$hm1
 data_hm=pivot_longer(data=data_hm,cols=!year,names_to = "hm",values_to = "val")
 
 plt_hm_effect=ggplot(data_hm)+
-  geom_line(aes(x=year,y=val,group=hm,color=hm),size=1)+
+  geom_line(aes(x=year,y=val,group=hm,color=hm),size=1.2)+
   scale_x_continuous("",limits=xlim)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = ipcc_6col[1:2],labels=c("Modèle A","Modèle B"))+
+  scale_color_discrete("",type = viridis(2),labels=c("Modèle A","Modèle B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(d))", vjust=1, hjust=-2,parse=T,size=10)
@@ -292,66 +294,72 @@ plt_hm_effect=ggplot(data_hm)+
 #######################################
 ## Changements RCM, GCM, BC, HM
 
-plt_gcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeMean = T)
+plt_gcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp8.5")
 plt_gcm_change=plt_gcm_change+
   labs(title=NULL)+
   scale_y_continuous("[%]")+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
 
-plt_rcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeMean = T)
+plt_rcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp8.5")
 plt_rcm_change=plt_rcm_change+
   labs(title=NULL)+
   scale_y_continuous("[%]")+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)
 
-grand_mean=rep(lst.QUALYPSOOUT[[idx]]$GRANDMEAN$MEAN,2)
-grand_mean=grand_mean[which(lst.QUALYPSOOUT[[idx]]$Xfut>=1990&lst.QUALYPSOOUT[[idx]]$Xfut<=last_full_year)]
-data_bc$val_ch=data_bc$val+rep(grand_mean,2)*100
-data_hm$val_ch=data_hm$val+rep(grand_mean,2)*100
+grand_mean_rcp=lst.QUALYPSOOUT[[idx]]$CHANGEBYEFFECT$rcp$MEAN[,3]
+grand_mean_rcp=grand_mean_rcp[which(lst.QUALYPSOOUT[[idx]]$Xfut>=1990&lst.QUALYPSOOUT[[idx]]$Xfut<=last_full_year)]
+data_bc$val_ch=data_bc$val+rep(grand_mean_rcp,each=2)*100
+data_hm$val_ch=data_hm$val+rep(grand_mean_rcp,each=2)*100
 
 plt_bc_change=ggplot(data_bc)+
-  geom_line(aes(x=year,y=val_ch,group=bc,color=bc),size=1)+
+  geom_line(aes(x=year,y=val_ch,group=bc,color=bc),size=1.2)+
+  geom_line(data=data.frame(x=seq(1990,last_full_year),y=grand_mean_rcp*100),aes(x=x,y=y,linetype="dashed"),color="black",size=1)+
+  scale_linetype_manual("",values=c("dashed"="dashed"),labels="Moyennne\nd'ensemble\n du RCP")+
   scale_x_continuous("",limits=xlim)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = ipcc_6col[1:2],labels=c("Correction A","Correction B"))+
+  scale_color_discrete("",type = viridis(2),labels=c("Correction A","Correction B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
+  theme(legend.key.width = unit(1.5,"cm"))+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)
 
 plt_hm_change=ggplot(data_hm)+
-  geom_line(aes(x=year,y=val_ch,group=hm,color=hm),size=1)+
+  geom_line(aes(x=year,y=val_ch,group=hm,color=hm),size=1.2)+
+  geom_line(data=data.frame(x=seq(1990,last_full_year),y=grand_mean_rcp*100),aes(x=x,y=y,linetype="dashed"),color="black",size=1)+
+  scale_linetype_manual("",values=c("dashed"="dashed"),labels="Moyennne\nd'ensemble\n du RCP")+
   scale_x_continuous("",limits=xlim)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = ipcc_6col[1:2],labels=c("Modèle A","Modèle B"))+
+  scale_color_discrete("",type = viridis(2),labels=c("Modèle A","Modèle B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
+  theme(legend.key.width = unit(1.5,"cm"))+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(d))", vjust=1, hjust=-2,parse=T,size=10)
 
 ########################################
 ## Variance partition
 
-plt_var_decomp=plotQUALYPSOTotalVarianceDecomposition_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
-plt_var_decomp=plt_var_decomp+
-  labs(title=NULL)+
-  scale_y_continuous("[%]")+
-  theme(legend.title=element_blank())+
-  theme(axis.title.x = element_blank())
+#plt_var_decomp=plotQUALYPSOTotalVarianceDecomposition_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+#plt_var_decomp=plt_var_decomp+
+#  labs(title=NULL)+
+#  scale_y_continuous("[%]")+
+#  theme(legend.title=element_blank())+
+#  theme(axis.title.x = element_blank())
 
 ############################################
 ## Change by RCP + CI in time
 
-plt_change_rcp_time=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,includeMean = T,xlim=xlim,incert=T)
-plt_change_rcp_time=plt_change_rcp_time+
-  labs(title=NULL)+
-  scale_y_continuous("[%]")+
-  theme(legend.title=element_blank())+
-  theme(axis.title.x = element_blank())
+#plt_change_rcp_time=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcp",plain_nameEff = "RCP",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,includeMean = T,xlim=xlim,incert=T)
+#plt_change_rcp_time=plt_change_rcp_time+
+#  labs(title=NULL)+
+#  scale_y_continuous("[%]")+
+#  theme(legend.title=element_blank())+
+#  theme(axis.title.x = element_blank())
 
 
 ###############################################
@@ -361,23 +369,32 @@ map_iv=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = 20
 map_iv=map_iv+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+map_iv$layers[[3]]$aes_params$size=5
+
 map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = NA)
 map_quant_horiz=map_quant_horiz+
   labs(title=NULL)+
-  guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
+  guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  
+#map_quant_horiz$layers[[3]]$aes_params$size=2
+
 map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
 map_rcmeff=map_rcmeff+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+
 map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
 map_gcmeff=map_gcmeff+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
-map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
+
+map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp8.5",horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
 map_rcmchang=map_rcmchang+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
-map_gcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
+
+map_gcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp8.5",horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
 map_gcmchang=map_gcmchang+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
