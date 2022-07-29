@@ -30,6 +30,9 @@ ref_year=1990# central year of 1975-2005 reference period
 first_ref_year=1975
 last_ref_year=2005
 
+labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualypsoout, same for color scale. Used inside plot functions
+
+
 
 
 ######
@@ -113,9 +116,9 @@ save(QUALYPSOOUT_temp_2rcp,file=paste0(path_data,"processed/qualypso/QUALYPSOOUT
 ###############################################
 ## Figures QUALYPSO
 
-plotQUALYPSO_summary_change(QUALYPSOOUT = QUALYPSOOUT_time,pred="time",pred_name = "temps",ind_name = "fictive T",ind_name_full="Température local fictive",bv_name = "",bv_full_name = "",pred_unit = "",folder_out=path_fig)
-plotQUALYPSO_summary_change(QUALYPSOOUT = QUALYPSOOUT_temp_3rcp,pred="temp_3rcp",pred_name = "Température",ind_name = "fictive T",ind_name_full="Température local fictive",bv_name = "",bv_full_name = "",pred_unit = "deg C",folder_out=path_fig)
-plotQUALYPSO_summary_change(QUALYPSOOUT = QUALYPSOOUT_temp_2rcp,pred="temp_2rcp",pred_name = "Température",ind_name = "fictive T",ind_name_full="Température local fictive",bv_name = "",bv_full_name = "",pred_unit = "deg C",folder_out=path_fig)
+plotQUALYPSO_summary_change(QUALYPSOOUT = QUALYPSOOUT_time,pred="time",pred_name = "temps",ind_name = "fictive T",ind_name_full="Température local fictive",bv_name = "",bv_full_name = "",pred_unit = "",folder_out=path_fig,xlim=c(1990,2100))
+plotQUALYPSO_summary_change(QUALYPSOOUT = QUALYPSOOUT_temp_3rcp,pred="temp_3rcp",pred_name = "Température",ind_name = "fictive T",ind_name_full="Température local fictive",bv_name = "",bv_full_name = "",pred_unit = "deg C",folder_out=path_fig,xlim=c(0.7,max(QUALYPSOOUT_temp_3rcp$Xfut)))
+plotQUALYPSO_summary_change(QUALYPSOOUT = QUALYPSOOUT_temp_2rcp,pred="temp_2rcp",pred_name = "Température",ind_name = "fictive T",ind_name_full="Température local fictive",bv_name = "",bv_full_name = "",pred_unit = "deg C",folder_out=path_fig,xlim=c(0.7,max(QUALYPSOOUT_temp_2rcp$Xfut)))
 
 
 # plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot(QUALYPSOOUT = QUALYPSOOUT_time,pred="time",pred_name = "temps",ind_name = "fictive T",ind_name_full="Température local fictive",bv_name = "",bv_full_name = "",pred_unit = "",folder_out=path_fig,xlim=c(1990,2100),iv_type = "tot")
