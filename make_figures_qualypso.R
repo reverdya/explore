@@ -315,6 +315,7 @@ for (i in 1:length(lst_indic2)){
       #scale_fill_gradientn("",colours = rescale_col(brewer.blues(100),exut$val,scale_col),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col[i]),oob=squish,labels=c(seq(0,lim_col-bin_col[i],bin_col[i]),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",trans="log10")+#that way because stepsn deforms colors
       ggtitle(paste0("Valeurs de référence (1990) du ",name_indic2[i],"\n(moyenne des fonctions de réponse disponibles)"))
+    plt$layers[[3]]$aes_params$size=5
     save.plot(plt,Filename = paste0("ref1990_response_",lst_indic2[i]),Folder = path_fig,Format = "jpeg")
 }
 

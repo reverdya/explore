@@ -549,11 +549,11 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,include
       }
       
       if(length(Xfut)<=6|no_loess){#loess model is under constrained
-        binf=data.frame(Binf*100)
-        bsup=data.frame(Bsup*100)
+        binf=data.frame(Binf)
+        bsup=data.frame(Bsup)
       }else{
-        binf=data.frame(apply(Binf,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
-        bsup=data.frame(apply(Bsup,MARGIN=2, function(x) predict(loess(x ~ Xfut)))*100)
+        binf=data.frame(apply(Binf,MARGIN=2, function(x) predict(loess(x ~ Xfut))))
+        bsup=data.frame(apply(Bsup,MARGIN=2, function(x) predict(loess(x ~ Xfut))))
       }
       colnames(binf)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
       colnames(bsup)=QUALYPSOOUT$listScenarioInput$listEff[[iEff]]
@@ -634,7 +634,7 @@ plotQUALYPSOeffect_ggplot=function(QUALYPSOOUT,nameEff,includeMean=FALSE,include
         geom_line(data=data.frame(Xfut,ref_mean),aes(x=Xfut,y=ref_mean*100,linetype="dashed"),size=1.2)+
         scale_linetype_manual("",values=c("dashed"="dashed"),labels="Moyennne\nd'ensemble\n du RCP")+
         theme(legend.key.width = unit(1.5,"cm"))+
-        ggtitle(paste0("Changements des des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," et le ",includeRCP," (",bv_full_name,")"))
+        ggtitle(paste0("Changements des des ",plain_nameEff," pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full," et le ",includeRCP,"\n(",bv_full_name,")"))
       if (is.na(folder_out)){
         return(plt)
       }else{
@@ -717,7 +717,7 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
   
   if(pred=="time"){
     chains=chains[chains$pred>=xlim[1] & chains$pred<=2098,]
-    xlim=c(1950,xlim[2])
+    xlim2=c(1950,xlim[2])
 
     fake_obs=data.frame(QUALYPSOOUT$Xmat[2,],QUALYPSOOUT$CLIMATEESPONSE$YStar[2,]*100)
     colnames(fake_obs)=c("pred","val")
@@ -726,6 +726,7 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
   }
   if(pred=="temp_3rcp"|pred=="temp_2rcp"){
     chains=chains[chains$pred>=xlim[1],]
+    xlim2=xlim
   }
   
   if(pred=="time"|pred=="temp_3rcp"){
@@ -785,7 +786,7 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
     geom_line(data=shortlist,aes(x=pred,y=val,group=chain,size="bb",color=rcp))+#shortlist
     #geom_text(data=name_shortlist,aes(x=x,y=y,label = seq(1,nrow(name_shortlist))))+
     #geom_point(data=name_shortlist,aes(x=2100,y=y,shape=as.character(seq(1,nrow(name_shortlist)))),size=0.01,alpha=0)+#workaround to have text legended
-    scale_x_continuous("",limits=xlim,expand=c(0,0))+
+    scale_x_continuous("",limits=xlim2,expand=c(0,0))+
     scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type=col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]],labels=NULL)+
     guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
     scale_size_manual("",values=c("aa"=0.15,"bb"=0.5,"cc"=1.5),labels=c('Ensemble de projections "brutes"','Réponse en changement\ndes chaînes de référence (shortlist)',"Réponse moyenne\nen changement"))+
@@ -796,24 +797,23 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     theme(legend.key.width = unit(1.5,"cm"))+
-    #theme(legend.title = element_text(size=14))+
+    theme(legend.title = element_text(size=13))+
     theme( legend.margin = margin(-2, 0, -2, 0))+
-    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=8)
+    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=8)+
+    scale_y_continuous(paste0("Changement relatif moyen (%)"),limits=c(min(data$binf,quantile(c(chains$val[chains$val<=0],fake_obs$val[fake_obs$val<=0]),probs=0.01)),max(data$bsup,quantile(c(chains$val[chains$val>=0],fake_obs$val[fake_obs$val>=0],data$binf[data$binf>=0],data$bsup[data$bsup>=0]),probs=0.99))),expand=c(0,0))
   if(pred=="time"){
     plt1=plt1+
       geom_line(data=fake_obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+#raw obs
       geom_line(data=fake_obs,aes(x=pred,y=spline,color="gray50",size="cc"))+#obs spline
       scale_color_discrete("",type = c("gray50"="gray50",col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]]),labels=c("Observations",labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])]))+
-      guides(color = guide_legend(order=1,override.aes = list(size = 1.2)))+
-      scale_y_continuous(paste0("Changement relatif moyen (%)"),limits=c(min(c(chains$val,fake_obs$val)),max(c(chains$val,fake_obs$val))),expand=c(0,0))
+      guides(color = guide_legend(order=1,override.aes = list(size = 1.2)))
   }
   
   if(pred=="temp_3rcp"|pred=="temp_2rcp"){
     plt1=plt1+
       xlab(paste0(pred_name," (",pred_unit,")"))+
       scale_color_discrete("",type = c(col_3rcp[QUALYPSOOUT$listScenarioInput$listEff[[iEff]]]),labels=c(labels_rcp[which(names(col_3rcp)%in%QUALYPSOOUT$listScenarioInput$listEff[[iEff]])]))+
-      guides(color = guide_legend(order=1,override.aes = list(size = 1.2)))+
-      scale_y_continuous(paste0("Changement relatif moyen (%)"),limits=c(min(chains$val),max(chains$val)),expand=c(0,0))
+      guides(color = guide_legend(order=1,override.aes = list(size = 1.2)))
   }
   
   perc_pos=vector(mode="list",length=nEff)
@@ -840,11 +840,11 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
     #facet_wrap(vars(rcp),nrow=nEff,labeller = labeller(rcp = rcp.labs),strip.position = "left")+
     scale_y_discrete("",labels=rcp.labs)+
     theme_bw(base_size = 16)+
-    #theme(legend.title = element_text(size=14))+
+    theme(legend.title = element_text(size=13))+
     theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_blank(),axis.ticks = element_blank(),axis.text.x = element_blank())+
     theme(axis.text.y = element_text(face="bold"))+
     theme(legend.key.height = unit(0.5,"cm"))+
-    scale_x_continuous("",limits=xlim,expand=c(0,0))+
+    scale_x_continuous("",limits=xlim2,expand=c(0,0))+
     ylab("")+
     annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=8)
   
@@ -882,10 +882,10 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
     geom_line(aes(x=Xfut,y=val,group=var),color="white",linetype="dashed",size=0.3)+
     scale_fill_discrete("Partition\nde la variance",type = vec_color,labels=labels_var)+
     scale_alpha_manual("Partition\nde la variance",values=c("int"=0.2,"res"=1,"rcm"=1,"gcm"=1,"rcp"=1),labels=labels_var)+
-    scale_x_continuous("",limits = xlim,expand=c(0,0))+
+    scale_x_continuous("",limits = xlim2,expand=c(0,0))+
     scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
     theme_bw(base_size = 16)+
-    #theme(legend.title = element_text(size=14))+
+    theme(legend.title = element_text(size=13))+
     theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank(),panel.border = element_blank(),axis.ticks.x = element_blank(),axis.text.x = element_blank(),axis.line.y = element_line(colour = "black"),axis.line.x=element_blank())+
     annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=8)
   
@@ -1056,10 +1056,10 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     #scale_fill_gradientn("Changement relatif (%)",colours = rescale_divergent_col( warmcool(100),exut$val,scale_col),limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,bin_col),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+bin_col,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
     #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+    ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))+
     scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
-    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30")))
+    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30",color="grey30")))
   plt$layers[[3]]$aes_params$size= 3
   if (is.na(folder_out)){
     return(plt)
@@ -1171,7 +1171,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     theme(panel.border = element_rect(colour = "black",fill=NA))+
     #scale_alpha_manual("Accord sur le signe du changement",values = c("Faible"=0.2,"Medium"=0.6,"Forte"=1),labels=c("Faible (<60%)","Medium (60-80%)","Forte (>80%)"))+
     scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
-    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30")))
+    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30",color="grey30")))
   plt$layers[[3]]$aes_params$size= 3
   if (is.na(folder_out)){
     return(plt)
@@ -1299,7 +1299,7 @@ map_3quant_1.5_2_2.5_degC=function(lst.QUALYPSOOUT3,lst.QUALYPSOOUT2,ind_name,in
     ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons de réchauffement planétaire post 1860-1900 (°C)\n(avec référence 1990, 3 RCP pour 1.5°C et 2 RCP pour 2 et 3°C)"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))+
     scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
-    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30")))
+    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30",color="grey30")))
   plt$layers[[3]]$aes_params$size= 3
   if (is.na(folder_out)){
     return(plt)
@@ -1384,10 +1384,10 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
     facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
     #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-    ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz," VS 1990), fonctions de réponse de l'ensemble non balancé"))+
+    ggtitle(paste0('Changement relatif du ',ind_name_full,' et son incertitude pour\ndifférents RCP (',horiz," VS 1990),\nfonctions de réponse de l'ensemble non balancé"))+
     theme(panel.border = element_rect(colour = "black",fill=NA))+
     scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
-    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30")))
+    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30",color="grey30")))
   plt$layers[[3]]$aes_params$size= 3
   if (is.na(folder_out)){
     return(plt)
@@ -1581,7 +1581,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))#+
+      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))#+
       #scale_alpha_manual("",values = c("no"=0.2,"yes"=1),labels=c("Pas d'accord sur le signe du changement","Plus de 80% des chaînes en accord"))+
       #guides(alpha = guide_legend(override.aes = list(fill = "grey") ,label.theme = element_text(size = 11, face = "bold")))
   }
@@ -1591,7 +1591,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Incertitude\ntotale (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,show.limits = T,labels=c(0,seq(0+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude (demi-IC)\nliée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="incert"){
     q99=quantile(exut$val,probs=freq_col)
@@ -1599,7 +1599,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Incertitude (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,show.limits = T,labels=c(0,seq(0+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude (demi-IC)\nliée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="varint"){
     q99=quantile(exut$val,probs=freq_col)
@@ -1607,7 +1607,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Incertitude\ninterne (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,show.limits = T,labels=c(0,seq(0+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude (demi-IC)\nliée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   
   if(vartype=="varres"){
@@ -1616,7 +1616,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Incertitude\nrésiduelle (%)",colours = parula(100),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col),oob=squish,labels=c(seq(0,lim_col-bin_col,bin_col),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),oob=squish,show.limits = T,labels=c(0,seq(0+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Incertitude (demi-IC) liée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
+      ggtitle(paste0("Incertitude (demi-IC)\nliée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
   }
   if(vartype=="rcp8.5"){
     plt=base_map_outlets(data = exut,val_name = "val")
@@ -1627,7 +1627,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     plt=plt+
       #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
-      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," et le RCP 8.5 (",horiz," ",pred_unit," VS 1990)"))
+      ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," et le RCP 8.5\n(",horiz," ",pred_unit," VS 1990)"))
   }
   plt$layers[[3]]$aes_params$size=5
   if (is.na(folder_out)){
