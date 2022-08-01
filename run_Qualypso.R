@@ -84,24 +84,29 @@ for (indc in lst_indic){
     #Y=t(do.call(cbind,ClimateProjections))
     
     ##Time predictor
-    if(indc=="VCN10"){ #transformation to log to avoid negative values
-      tmp=prepare_clim_resp(Y=Y,X=seq(first_data_year,last_data_year),Xref = ref_year,Xfut = vecYears,typeChangeVariable = "rel",spar = rep(1.1,nrow(simu_lst)),type = "log_spline")
-      listOption = list(spar=1.1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),climResponse=tmp)
-    }else{
-      listOption = list(spar=1.1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
-    }
-    lst.QUALYPSOOUT_time[[i-1]] = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
-                                           scenAvail=scenAvail,
-                                           X=seq(first_data_year,last_data_year),
-                                           Xref = ref_year,
-                                           Xfut = vecYears,
-                                           listOption=listOption)# no Xfut or iFut because we want all values
+    # if(indc=="VCN10"){ #transformation to log to avoid negative values
+    #   tmp=prepare_clim_resp(Y=Y,X=seq(first_data_year,last_data_year),Xref = ref_year,Xfut = vecYears,typeChangeVariable = "rel",spar = rep(1.1,nrow(simu_lst)),type = "log_spline")
+    #   listOption = list(spar=1.1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),climResponse=tmp)
+    # }else{
+    #   listOption = list(spar=1.1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
+    # }
+    # lst.QUALYPSOOUT_time[[i-1]] = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
+    #                                        scenAvail=scenAvail,
+    #                                        X=seq(first_data_year,last_data_year),
+    #                                        Xref = ref_year,
+    #                                        Xfut = vecYears,
+    #                                        listOption=listOption)# no Xfut or iFut because we want all values
     ##Temperature predictor
-    spar_tmp=rep(1.1,nrow(simu_lst))
-    idx_mpi=which(simu_lst$gcm=="MPI-ESM-LR")
-    spar_tmp[idx_mpi]=1.5
-    tmp=prepare_clim_resp(Y=Y,X=mat_Globaltas,Xref =ref_Globaltas,Xfut = seq(0.5,1.5,0.01),typeChangeVariable = "rel",spar = spar_tmp,type = "spline")
-    listOption = list(spar=1.2,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),climResponse=tmp)
+    spar_tmp=rep(1.5,nrow(simu_lst))
+    #idx_mpi=which(simu_lst$gcm=="MPI-ESM-LR")
+    #spar_tmp[idx_mpi]=1.5
+    
+    if(indc=="VCN10"){ #transformation to log to avoid negative values
+      tmp=prepare_clim_resp(Y=Y,X=mat_Globaltas,Xref =ref_Globaltas,Xfut = seq(0.5,1.5,0.01),typeChangeVariable = "rel",spar = spar_tmp,type = "log_spline")
+      listOption = list(spar=1.5,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),climResponse=tmp)
+    }else{
+      listOption = list(spar=1.5,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
+    }
     lst.QUALYPSOOUT_temp_3rcp[[i-1]] = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
                                            scenAvail=scenAvail,
                                            X = mat_Globaltas,
@@ -110,8 +115,12 @@ for (indc in lst_indic){
                                            listOption=listOption)# no iFut because we want all values
     
     idx_2rcp=which(scenAvail$rcp=="rcp4.5"|scenAvail$rcp=="rcp8.5")
-    tmp=prepare_clim_resp(Y=Y[idx_2rcp,],X=mat_Globaltas[idx_2rcp,],Xref = ref_Globaltas[idx_2rcp],Xfut = seq(0.5,2.5,0.01),typeChangeVariable = "rel",spar = spar_tmp,type = "spline")
-    listOption = list(spar=1.2,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),climResponse=tmp)
+    if(indc=="VCN10"){ #transformation to log to avoid negative values
+      tmp=prepare_clim_resp(Y=Y[idx_2rcp,],X=mat_Globaltas[idx_2rcp,],Xref = ref_Globaltas[idx_2rcp],Xfut = seq(0.5,2.5,0.01),typeChangeVariable = "rel",spar = spar_tmp,type = "log_spline")
+      listOption = list(spar=1.5,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),climResponse=tmp)
+    }else{
+      listOption = list(spar=1.5,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
+    }
     lst.QUALYPSOOUT_temp_2rcp[[i-1]] = QUALYPSO(Y=Y[idx_2rcp,], #one Y and run per basin because otherwise we cannot have several future times
                                                 scenAvail=scenAvail[idx_2rcp,],
                                                 X = mat_Globaltas[idx_2rcp,],
@@ -133,7 +142,7 @@ for (indc in lst_indic){
   }
   toc()  
   
-  save(lst.QUALYPSOOUT_time,file=paste0(path_data,"processed/qualypso/",indc,"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
+  # save(lst.QUALYPSOOUT_time,file=paste0(path_data,"processed/qualypso/",indc,"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
   save(lst.QUALYPSOOUT_temp_3rcp,file=paste0(path_data,"processed/qualypso/",indc,"_list_QUALYPSOOUT_3GCM_temp_3rcp_lm.RData"))
   save(lst.QUALYPSOOUT_temp_2rcp,file=paste0(path_data,"processed/qualypso/",indc,"_list_QUALYPSOOUT_3GCM_temp_2rcp_lm.RData"))
   #save(lst.QUALYPSOOUT_temp_1rcp,file=paste0(path_data,"processed/qualypso/",indc,"_list_QUALYPSOOUT_3GCM_temp_1rcp_lm.RData"))
