@@ -438,7 +438,7 @@ mat_Globaltas=tmp[[1]]
 tas_years=tmp[[3]][,1]
 
 ##Merge data frame warnings are okay
-SPAR=1.2
+SPAR=1.5
 for (i in 1:length(lst_indic)){# for each indicator
   clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
   dir.create(paste0(path_fig,lst_indic[i],"/plot_chains_temp_compare_rcp/"))
