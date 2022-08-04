@@ -89,6 +89,7 @@ for (i in 1:length(lst_indic)){
 
       plotQUALYPSO_summary_change(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
       
+      
       #plotQUALYPSOMeanChangeAndUncertainties_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
       #plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "sum")
       #plotQUALYPSOMeanChangeAndUncertainties_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "tot")
@@ -98,7 +99,7 @@ for (i in 1:length(lst_indic)){
       #plotQUALYPSOTotalVarianceByScenario_noIV_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff = "rcp",nameScenario = "rcp8.5",plain_name_Scen = "RCP 8.5",pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,iv_type = "tot")
       
       #plotQUALYPSO_chronique_accordsigne(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict[p],pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim)
-      #save.plot(plot.object =NULL,Filename = paste0("betatest_",lst_indic[i],"_",predict[p],"_",select_stations$Nom[b]),Folder = folder_out,Type = "plot",plot.function=plotQUALYPSOMeanChangeAndUncertaintiesBetatest(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]]),Format = "jpeg")
+      save.plot(plot.object =NULL,Filename = paste0("betatest_",lst_indic[i],"_",predict[p],"_",select_stations$Nom[b]),Folder = folder_out,Type = "plot",plot.function=plotQUALYPSOMeanChangeAndUncertaintiesBetatest(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]]),Format = "jpeg")
     }
   }
 }
