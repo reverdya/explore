@@ -252,7 +252,8 @@ plt_rcm_effect=plt_rcm_effect+
   labs(title=NULL)+
   scale_y_continuous("[%]")+
   theme(axis.title.x = element_blank())+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)
+  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
+  scale_color_discrete("",type=plasma(4))
 
 ####################################
 ## Effet BC, effet HM
@@ -268,7 +269,7 @@ plt_bc_effect=ggplot(data_bc)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = viridis(2),labels=c("Correction A","Correction B"))+
+  scale_color_discrete("",type = kovesi.rainbow(4)[c(1,4)],labels=c("Correction A","Correction B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)
@@ -285,7 +286,7 @@ plt_hm_effect=ggplot(data_hm)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = viridis(2),labels=c("Modèle A","Modèle B"))+
+  scale_color_discrete("",type = kovesi.rainbow(4)[c(2,3)],labels=c("Modèle A","Modèle B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(d))", vjust=1, hjust=-2,parse=T,size=10)
@@ -300,13 +301,15 @@ plt_gcm_change=plt_gcm_change+
   scale_y_continuous("[%]")+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
+  
 
 plt_rcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = lst_indic[i],ind_name_full=name_indic[i],bv_name = select_stations$Nom[b],bv_full_name = select_stations$Nom_complet[b],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp8.5")
 plt_rcm_change=plt_rcm_change+
   labs(title=NULL)+
   scale_y_continuous("[%]")+
   theme(axis.title.x = element_blank())+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)
+  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
+  scale_color_discrete("",type=plasma(4))
 
 grand_mean_rcp=lst.QUALYPSOOUT[[idx]]$CHANGEBYEFFECT$rcp$MEAN[,3]
 grand_mean_rcp=grand_mean_rcp[which(lst.QUALYPSOOUT[[idx]]$Xfut>=1990&lst.QUALYPSOOUT[[idx]]$Xfut<=last_full_year)]
@@ -321,7 +324,7 @@ plt_bc_change=ggplot(data_bc)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = viridis(2),labels=c("Correction A","Correction B"))+
+  scale_color_discrete("",type = kovesi.rainbow(4)[c(1,4)],labels=c("Correction A","Correction B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   theme(legend.key.width = unit(1.5,"cm"))+
@@ -335,7 +338,7 @@ plt_hm_change=ggplot(data_hm)+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = viridis(2),labels=c("Modèle A","Modèle B"))+
+  scale_color_discrete("",type = kovesi.rainbow(4)[c(2,3)],labels=c("Modèle A","Modèle B"))+
   scale_y_continuous(paste0("[%]"))+
   theme(axis.title.x = element_blank())+
   theme(legend.key.width = unit(1.5,"cm"))+
@@ -365,7 +368,7 @@ plt_hm_change=ggplot(data_hm)+
 ###############################################
 ## Maps
 
-map_iv=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = 2085,pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
+map_iv=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = 2085,pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = NA)
 map_iv=map_iv+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
@@ -373,8 +376,7 @@ map_iv$layers[[3]]$aes_params$size=5
 
 map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = NA)
 map_quant_horiz=map_quant_horiz+
-  labs(title=NULL)+
-  guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  labs(title=NULL)
   
 #map_quant_horiz$layers[[3]]$aes_params$size=2
 
@@ -402,4 +404,4 @@ map_gcmchang=map_gcmchang+
 #MARKDOWN#
 ##########
 
-rmarkdown::render(path_Rmd,output_format = "word_document2",output_options = list(reference_docx="C:/Users/reverdya/Documents/Docs/1_code/explore/template_word.docx") ,output_file = "fiche_exemple_COUT_v0.1.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
+rmarkdown::render(path_Rmd,output_format = "word_document2",output_options = list(reference_docx="C:/Users/reverdya/Documents/Docs/1_code/explore/template_word.docx") ,output_file = "fiche_exemple_COUT_v0.2.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)

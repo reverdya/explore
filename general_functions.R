@@ -22,6 +22,7 @@ library(dplyr) #left_join
 library(raster)# CRS management
 library(scales)#squish
 library(ggformula)#geom_spline
+library(ggnewscale)
 library(tidyr)#pivot_longer
 library(parallel) #detectCores
 library(plotly)#interactive plot
@@ -388,6 +389,11 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
 #######################################################################################
 ## Takes a QUALYPSOOUT object and reconstructs chains from mean change +effects
 ## QUALYPSOOUT a Qualypso output
+## line 1= mean+eff_rcp1+eff_gcm1+eff_rcm1...
+## line 2= mean+eff_rcp2+eff_gcm1+eff_rcm1...
+## line 3= mean+eff_rcp3+eff_gcm1+eff_rcm1...
+## line 4= mean+eff_rcp1+eff_gcm2+eff_rcm1...
+## line 5= mean+eff_rcp2+eff_gcm2+eff_rcm1...
 
 reconstruct_chains=function(QUALYPSOOUT){
   neff=length(QUALYPSOOUT$namesEff)
@@ -683,15 +689,19 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
     idx_rcp=which(scenAvail$rcp==QUALYPSOOUT$listScenarioInput$listEff[[iEff]][r])
     # phiStar
     phiStar = QUALYPSOOUT$CLIMATEESPONSE$phiStar[idx_rcp,]
-    # Ystar: change variable from the projection (Y(t)-phi(c))
-    YStar = QUALYPSOOUT$CLIMATEESPONSE$YStar[idx_rcp,]
+    #Reconstructed chains
+    chains=reconstruct_chains(QUALYPSOOUT)
+    #Replace for this rcp the reconstructed values by the true values
+    idx_phistar_rcp=which(QUALYPSOOUT$listScenarioInput$scenComp==QUALYPSOOUT$listScenarioInput$listEff[[iEff]][r]&!QUALYPSOOUT$listScenarioInput$isMissing)
+    chains[idx_phistar_rcp,]=phiStar
+    chains=chains[seq(r,nrow(chains),3),]#only this rcp
     # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
     # obtained from QUALYPSO
     sd.qua = sqrt(QUALYPSOOUT$TOTALVAR-QUALYPSOOUT$INTERNALVAR-QUALYPSOOUT$EFFECTVAR[,iEff])
-    sd.emp = apply(phiStar,2,sd)
+    sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
-    phiStar.corr = phiStar*t(replicate(nrow(phiStar),sd.corr))
+    phiStar.corr = chains*t(replicate(nrow(chains),sd.corr))
     # compute the lower bound if the distribution is gaussian
     binf = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
     bsup = apply(phiStar.corr,2,quantile,probs = 0.5+probCI/2)
@@ -939,8 +949,8 @@ base_map_outlets=function(data,val_name,alpha_name=NULL){
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     theme(axis.ticks =element_blank(),axis.text = element_blank() )+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
-    theme(strip.text = element_text(size = 12, face = "bold"))+
-    guides(fill = guide_colourbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+    theme(strip.text = element_text(size = 12, face = "bold"))#+
+    #guides(fill = guide_colourbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   if(!is.null(alpha_name)){
     plt=plt+
       geom_point(aes(x=x,y=y,fill=get(val_name),alpha=get(alpha_name)),size=3,shape=21,stroke=0.1)
@@ -1110,13 +1120,18 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
       idx_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==rcp_name)
       # phiStar
       phiStar = lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_rcp,idx_Xfut]
+      chains=reconstruct_chains(lst.QUALYPSOOUT[[i]])[,idx_Xfut]
+      #Replace for this rcp the reconstructed values by the true values
+      idx_phistar_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]][ieff_this_rcp]&!lst.QUALYPSOOUT[[i]]$listScenarioInput$isMissing)
+      chains[idx_phistar_rcp]=phiStar
+      chains=chains[seq(ieff_this_rcp,length(chains),3)]#only this rcp
       # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
       # obtained from QUALYPSO
       sd.qua = sqrt(lst.QUALYPSOOUT[[i]]$TOTALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,ieff_rcp])
-      sd.emp = sd(phiStar)
+      sd.emp = sd(chains)
       sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
       sd.corr = sd.qua/sd.emp
-      phiStar.corr = phiStar*t(replicate(length(phiStar),sd.corr))
+      phiStar.corr = chains*t(replicate(length(chains),sd.corr))
       chg_q5 = quantile(phiStar.corr,probs = (1-probCI)/2)
       chg_q95 = quantile(phiStar.corr,probs = 0.5+probCI/2)
     
@@ -1161,18 +1176,39 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   #lim_col=(lim_col%/%bin_col+1)*bin_col
   
-  plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree")
+  
+  
+  
+  
+  # plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree")
+  # plt=plt+
+  #   facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
+  #   #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
+  #   #binned_scale(aesthetics = "color",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=~ if(length(.x) == 2) {c(paste0("< -",lim_col),paste0("> ",lim_col))} else {seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5)})+#that way because stepsn deforms colors
+  #   binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
+  #   ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990)"))+
+  #   theme(panel.border = element_rect(colour = "black",fill=NA))+
+  #   #scale_alpha_manual("Accord sur le signe du changement",values = c("Faible"=0.2,"Medium"=0.6,"Forte"=1),labels=c("Faible (<60%)","Medium (60-80%)","Forte (>80%)"))+
+  #   scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
+  #   guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30",color="grey30")))
+  # plt$layers[[3]]$aes_params$size= 3
+  plt=base_map_outlets(data = exut[exut$sign_agree=="<80%",],val_name = "val",alpha_name = "sign_agree")+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pas d'accord [%]",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
+    guides(fill = guide_bins(override.aes=list(alpha=0.2,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  plt$layers[[3]]$aes_params$alpha= 0.2
+  plt=plt+
+    new_scale_fill()+
+    geom_point(data=exut[exut$sign_agree==">80%",],aes(x=x,y=y,fill=val),size=3,shape=21,stroke=0.1)+
+    binned_scale(aesthetics = "fill",scale_name = "toto2",name="Accord [%]",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
+    guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
+    theme(legend.box = "horizontal")
   plt=plt+
     facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
-    #scale_fill_stepsn("Changement relatif (%)",colours = temp_10,limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),paste0("> ",lim_col)))+
-    #binned_scale(aesthetics = "color",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=~ if(length(.x) == 2) {c(paste0("< -",lim_col),paste0("> ",lim_col))} else {seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5)})+#that way because stepsn deforms colors
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
     ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990)"))+
-    theme(panel.border = element_rect(colour = "black",fill=NA))+
-    #scale_alpha_manual("Accord sur le signe du changement",values = c("Faible"=0.2,"Medium"=0.6,"Forte"=1),labels=c("Faible (<60%)","Medium (60-80%)","Forte (>80%)"))+
-    scale_alpha_manual("Accord sur le\nsigne du changement",values = c("<80%"=0.2,">80%"=1))+
-    guides(alpha=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),override.aes = list(fill = "grey30",color="grey30")))
+    theme(panel.border = element_rect(colour = "black",fill=NA))
   plt$layers[[3]]$aes_params$size= 3
+  plt$layers[[4]]$aes_params$size= 3
+  
   if (is.na(folder_out)){
     return(plt)
   }else{
