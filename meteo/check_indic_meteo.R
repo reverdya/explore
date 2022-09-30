@@ -225,7 +225,8 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
             scale_y_continuous(paste0(ylabel,unit))+
             guides(color = guide_legend(override.aes = list(size = 1.7)))+
             facet_grid(gcm~bc)+
-            theme(panel.spacing.x = unit(0.5, "lines"))
+            theme(panel.spacing.x = unit(0.5, "lines"))+
+            theme(strip.text.y = element_text(size = 9))
           plt
           if(SPAR==1){
             save.plot(plt,Filename = paste0(v,"_",i,"_chronique_rel_",ref_cities$name[cities-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
