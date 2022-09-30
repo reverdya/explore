@@ -67,7 +67,7 @@ for(v in unique(simu_lst$var)){
       gc()
       
       vec_mask=as.logical(as.vector(refs$mask))
-      dim(res)=c(dim(res)[1]*dim(res)[2],dim(res)[3])#collapses one dimension
+      dim(res)=c(dim(res)[1]*dim(res)[2],dim(res)[3])# collapses one dimension
       res=res[vec_mask,]
       res=cbind(full_years,t(res))
       colnames(res)[1]="year"

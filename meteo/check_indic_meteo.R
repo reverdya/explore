@@ -55,7 +55,7 @@ rotate <- function(x) apply(t(x), 2, rev)
 ######
 
 
-###################################################
+####################################################
 ## Make table of available simulations
 
 simu_lst=vector(mode = "list",length=7)
