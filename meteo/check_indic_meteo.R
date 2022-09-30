@@ -227,8 +227,11 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
             facet_grid(gcm~bc)+
             theme(panel.spacing.x = unit(0.5, "lines"))
           plt
-          save.plot(plt,Filename = paste0(v,"_",i,"_chronique_rel_",ref_cities$name[cities-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
-          
+          if(SPAR==1){
+            save.plot(plt,Filename = paste0(v,"_",i,"_chronique_rel_",ref_cities$name[cities-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
+          }else{
+            save.plot(plt,Filename = paste0(v,"_",i,"_chronique_rel_",ref_cities$name[cities-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
+          }
         }
       }
     }
