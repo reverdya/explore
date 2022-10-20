@@ -38,7 +38,7 @@ Les changements décrits sont des changements relatifs du module annuel de débi
 
 ```{r rawtime, fig.cap="Projections brutes du module annuel de débit pour la Seine à Poses et le scénario RCP 8.5. Chaque graphique montre les projections obtenues avec les différents RCMs disponibles pour un même modèle GCM.  Une couleur par RCM. Modèle hydrologique : SIM2. Période : 1972-2098 (période commune des modèles)."}
 
-plt_raw_time[["rcp8.5"]]
+plt_raw_time
 # for reference \@ref(fig:rawtime)
 # no underscore in figure label
 ```
@@ -54,7 +54,7 @@ Chaque panel montre les chroniques pour un modèle GCM et un ou plusieurs modèl
 
 ```{r splinetime, fig.cap="Projections brutes (traits fins) et réponses climatiques correspondantes estimées avec une focntion spline (traits épais) pour le module annuel de la Seine à Poses et le RCP 8.5 entre 1972 et 2098. Chaque graphique montre les projections obtenues avec les différents RCMs disponibles pour un même modèle GCM."}
 
-plt_spline_time[["rcp8.5"]]
+plt_spline_time
 
 ```
 
@@ -254,6 +254,12 @@ On observe une variation spatiale assez importante du signal de changement relat
 ```{r mapiv,dpi=300, fig.cap="Carte de l'incertitude (écart-type) liée à la variabilité interne du module annuel de débit pour la France métropolitaine. Points à l'exutoire."}
 
 map_iv
+
+```
+
+```{r mappart,dpi=300, fig.cap="Carte de la partition de variance pour la France métropolitaine. Points à l'exutoire."}
+
+map_part
 
 ```
 
