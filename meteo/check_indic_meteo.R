@@ -11,7 +11,7 @@ gc()
 
 library(moments)#skewness
 library(forecast)#tsoutliers
-#tsoutliers fits trend on data (Friedman’s super smoother) and looking at values outside of Q75 + 3 * IQR (or Q25)
+#tsoutliers fits trend on data (Friedman?s super smoother) and looking at values outside of Q75 + 3 * IQR (or Q25)
 library(abind)#abind
 library(plot.matrix)
 
@@ -30,13 +30,15 @@ path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/analyse-indic/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
 
 Var=vector(mode="list")
-Var[["tasAdjust"]]=c("seasmean","seasmean","seasmean","seasmean","yearmean")
-Var[["prtotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
-seas=c("DJF","MAM","JJA","SON","")
+Var[["tasAdjust"]]=c(rep("monmean",12),"seasmean","seasmean","seasmean","seasmean","yearmean")
+Var[["prtotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
+Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
+Var[["evspsblpotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
+period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","","_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","R2D2")
 
-units=c("°C","mm")
+units=c("?C","mm")
 
 centr_ref_year=1990# central year of 1975-2005 reference period
 first_ref_year=1975
@@ -48,7 +50,7 @@ last_ref_year=2005
 #FUNCTIONS#
 ###########
 
-rotate <- function(x) apply(t(x), 2, rev)
+
 
 ######
 #MAIN#
@@ -59,22 +61,22 @@ rotate <- function(x) apply(t(x), 2, rev)
 ## Make table of available simulations
 
 simu_lst=vector(mode = "list",length=7)
-names(simu_lst)=c("var","indic","seas","rcp","gcm","rcm","bc")
+names(simu_lst)=c("var","indic","period","rcp","gcm","rcm","bc")
 for (v in names(Var)){
   for(r in rcp[-1]){# -1 for not historical
     for(b in bc){
       s=1
       for(v2 in Var[[v]]){
-        lst_f=list.files(paste0(path_data,"indic/",v,"/"),pattern=glob2rx(paste0(v,"*",r,"*",b,"*",v2,"*",seas[s],"*"))) #list all files of projections in folder
+        lst_f=list.files(paste0(path_data,"indic/",v,"/"),pattern=glob2rx(paste0(v,"*",r,"*",b,"*",v2,"*",period[s],"*"))) #list all files of projections in folder
         gcm=sapply(strsplit(lst_f,"_"),"[",4)
         rcm=sapply(strsplit(lst_f,"_"),"[",5)
         n=length(gcm)
         simu_lst$var=c(simu_lst$var,rep(v,n))
-        simu_lst$seas=c(simu_lst$seas,rep(seas[s],n))
-        if(seas[s]==""){
+        simu_lst$period=c(simu_lst$period,rep(gsub('[_]', '', period[s]),n))
+        if(period[s]==""){
           simu_lst$indic=c(simu_lst$indic,rep(paste0(v2),n))
         }else{
-          simu_lst$indic=c(simu_lst$indic,rep(paste0(v2,"_",seas[s]),n))
+          simu_lst$indic=c(simu_lst$indic,rep(paste0(v2,period[s]),n))
         }
         simu_lst$rcp=c(simu_lst$rcp,rep(r,n))
         simu_lst$gcm=c(simu_lst$gcm,gcm)
@@ -94,18 +96,27 @@ save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
 ###################################################################################
 ## Prepare mask of 0 and 1 in shape of SAFRAN zone, lon, lat matrixes and time vector
 
-pth_tmp=list.files(paste0(path_data,"indic/",simu_lst$var[1],"/"),full.names=T)[1]
+pth_tmp=list.files(paste0(path_data,"indic/",simu_lst$var[1],"/"),full.names=T)[18]#18 to get r2d2 and lambert coordinates
 nc=load_nc(pth_tmp)
 res=ncvar_get(nc,varid=simu_lst$var[1])
 lon=ncvar_get(nc,varid="lon")
 lat=ncvar_get(nc,varid="lat")
+x_l2=nc$dim$x$vals
+y_l2=nc$dim$y$vals
+X_l2=Y_l2=lon
+for(i in 1:nrow(lon)){
+  X_l2[i,]=x_l2[i]
+}
+for(i in 1:ncol(lon)){
+  Y_l2[,i]=y_l2[i]
+}
 rm(nc)
 gc()
 mask=res[,,1]
 mask[!is.na(mask)]=1
 mask[is.na(mask)]=0
-refs=list(mask,lon,lat)
-names(refs)=c("mask","lon","lat")
+refs=list(mask,lon,lat,X_l2,Y_l2)
+names(refs)=c("mask","lon","lat","x_l2","y_l2")
 save(refs,file=paste0(path_data,"refs.Rdata"))
 plot(rotate(refs$mask))
 
@@ -133,9 +144,16 @@ points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 
 
 ##Merge data frame warnings are okay
-for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
-  for(v in unique(simu_lst$var)){
+
+## Problem with too many connections opened requires running step by step (v by)
+
+for(v in unique(simu_lst$var)){
     dir.create(paste0(path_fig,v,"/"))
+    closeAllConnections()
+    gc()
+  for (SPAR in c(0.8,0.9,1.0,1.1,1.2)){
+    closeAllConnections()
+    gc()
     for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
       clim_resp=vector(length=nrow(simu_lst),mode="list")
       clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
@@ -145,7 +163,7 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
       all_chains=vector(length=nrow(scenAvail),mode="list")
       for(c in 1:nrow(scenAvail)){# for each chain
         
-        pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$seas[c],"*")))
+        pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
         nc=load_nc(pth_tmp)
         res=ncvar_get(nc,varid=v)
         full_years=nc$dim$time$vals
@@ -164,6 +182,9 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
         }
         colnames(res2)[1]="year"
         all_chains[[c]]=res2
+        rm(res)
+        rm(res2)
+        gc()
       }
 
       for(cities in 2:(nrow(ref_cities)+1)){
@@ -227,7 +248,6 @@ for (SPAR in c(0.5,0.8,0.9,1.0,1.1,1.2,1.5)){
             facet_grid(gcm~bc)+
             theme(panel.spacing.x = unit(0.5, "lines"))+
             theme(strip.text.y = element_text(size = 9))
-          plt
           if(SPAR==1){
             save.plot(plt,Filename = paste0(v,"_",i,"_chronique_rel_",ref_cities$name[cities-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
           }else{
