@@ -40,7 +40,7 @@ vecYears=seq(first_data_year,last_data_year)
 ######
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[2]){
+for(v in unique(simu_lst$var)[c(3,4)]){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
   if(v=="tasAdjust"){
     typechangeVar="abs"
@@ -49,7 +49,7 @@ for(v in unique(simu_lst$var)[2]){
     typechangeVar="rel"
     SPAR=1.1
   }
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16,17)]){
   # for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     dir.create(paste0(path_data,"Qualypso/",v,"/",i))
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
@@ -65,6 +65,7 @@ for(v in unique(simu_lst$var)[2]){
       if(scenAvail$bc[c]=="R2D2"){
         full_years=year(as.Date(full_years,origin="1850-01-01"))
       }
+      nc_close(nc)
       rm(nc)
       gc()
       
