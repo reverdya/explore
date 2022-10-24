@@ -173,6 +173,7 @@ for(v in unique(simu_lst$var)){
         if(scenAvail$bc[c]=="R2D2"){
           full_years=year(as.Date(full_years,origin="1850-01-01"))
         }
+        nc_close(nc)#for some reason stays opened otherwise
         rm(nc)
         gc()
         res2=data.frame(matrix(nrow=dim(res)[3],ncol=nrow(ref_cities)+1))
