@@ -37,6 +37,8 @@ Unit="%" #so far all changes are relative
 first_data_year=1951
 last_data_year=2099
 
+nbcores=detectCores()-2 #Number of cores for parallelization
+
 ######
 #MAIN#
 ######
@@ -112,8 +114,8 @@ for (i in 1:length(lst_indic)){
   horiz3=c(2030,2050,2085)
   freq_col=0.99
   
-  map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
-  map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out,freq_col=freq_col)
+  map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col,nbcores=nbcores)
+  map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = folder_out,freq_col=freq_col,nbcores=nbcores)
 
   map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
   map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = lst_indic[i],ind_name_full=name_indic[i],folder_out = folder_out,freq_col=freq_col)
