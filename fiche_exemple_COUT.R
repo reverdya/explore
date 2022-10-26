@@ -44,6 +44,8 @@ last_data_year=2099
 
 labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualypsoout, same for color scale. Used inside plot functions
 
+nbcores=detectCores()-2
+
 ######
 #MAIN#
 ######
@@ -215,8 +217,16 @@ idx=ref_cities$idx_masked[cities]
 
 plt_bilan=plotQUALYPSO_summary_change(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=c(1990,2100),simpler=T,var="prtotAdjust",indic="yearsum",idx_pix=idx)
 
+##################################################################################
+## Boxplot per horizon and RCP
+
+
+plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,var="prtotAdjust",indic="yearsum",horiz = c(2030,2050,2085))
+plt_bxplt=plt_bxplt+
+  labs(title=NULL)
+
 #####################################
-## Effet GCM, effet RCM
+## Effet GCM, effet RCM, effet BC
 
 plt_gcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
 plt_gcm_effect=plt_gcm_effect+
@@ -233,49 +243,19 @@ plt_rcm_effect=plt_rcm_effect+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
   scale_color_discrete("",type=plasma(4))
 
-####################################
-## Effet BC, effet HM
-
-ylims=c(min(unlist(lst.QUALYPSOOUT[[idx]]$MAINEFFECT)),max(unlist(lst.QUALYPSOOUT[[idx]]$MAINEFFECT)))*100
-
-data_bc=data.frame(year=seq(1990,2098))
-data_bc$bc1=(data_bc$year-1990)^1.5*0.01
-data_bc$bc2=-data_bc$bc1
-data_bc=pivot_longer(data=data_bc,cols=!year,names_to = "bc",values_to = "val")
-
-plt_bc_effect=ggplot(data_bc)+
-  geom_line(aes(x=year,y=val,group=bc,color=bc),size=1.2)+
-  scale_x_continuous("",limits=xlim)+
-  theme_bw(base_size = 18)+
-  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = kovesi.rainbow(4)[c(1,4)],labels=c("Correction A","Correction B"))+
-  scale_y_continuous(paste0("[%]"),limits = ylims)+
+plt_bc_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_bc_effect=plt_bc_effect+
+  labs(title=NULL)+
+  ylab("[%]")+
   theme(axis.title.x = element_blank())+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)
-
-
-data_hm=data.frame(year=seq(1990,2098))
-data_hm$hm1=(data_hm$year-1990)^0.4*2
-data_hm$hm2=-data_hm$hm1
-data_hm=pivot_longer(data=data_hm,cols=!year,names_to = "hm",values_to = "val")
-
-plt_hm_effect=ggplot(data_hm)+
-  geom_line(aes(x=year,y=val,group=hm,color=hm),size=1.2)+
-  scale_x_continuous("",limits=xlim)+
-  theme_bw(base_size = 18)+
-  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = kovesi.rainbow(4)[c(2,3)],labels=c("Modèle A","Modèle B"))+
-  scale_y_continuous(paste0("[%]"),limits = ylims)+
-  theme(axis.title.x = element_blank())+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(d))", vjust=1, hjust=-2,parse=T,size=10)
+  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)+
+  scale_color_discrete("",type=kovesi.rainbow(4)[c(1,4)])
 
 
 #######################################
 ## Changements RCM, GCM, BC, HM
 
-plt_gcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp8.5")
+plt_gcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_gcm_change=plt_gcm_change+
   labs(title=NULL)+
   ylab("[%]")+
@@ -283,7 +263,7 @@ plt_gcm_change=plt_gcm_change+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
   
 
-plt_rcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp8.5")
+plt_rcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_rcm_change=plt_rcm_change+
   labs(title=NULL)+
   ylab("[%]")+
@@ -291,82 +271,49 @@ plt_rcm_change=plt_rcm_change+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
   scale_color_discrete("",type=plasma(4))
 
-ylims=c(min(unlist(lst.QUALYPSOOUT[[idx]]$CHANGEBYEFFECT))+min(lst.QUALYPSOOUT[[idx]]$CHANGEBYEFFECT$rcp$MEAN[,3]),max(unlist(lst.QUALYPSOOUT[[idx]]$CHANGEBYEFFECT))+max(lst.QUALYPSOOUT[[idx]]$CHANGEBYEFFECT$rcp$MEAN[,3]))*100
-
-grand_mean_rcp=lst.QUALYPSOOUT[[idx]]$CHANGEBYEFFECT$rcp$MEAN[,3]
-grand_mean_rcp=grand_mean_rcp[which(lst.QUALYPSOOUT[[idx]]$Xfut>=1990&lst.QUALYPSOOUT[[idx]]$Xfut<=last_full_year)]
-data_bc$val_ch=data_bc$val+rep(grand_mean_rcp,each=2)*100
-data_hm$val_ch=data_hm$val+rep(grand_mean_rcp,each=2)*100
-
-plt_bc_change=ggplot(data_bc)+
-  geom_line(aes(x=year,y=val_ch,group=bc,color=bc),size=1.2)+
-  geom_line(data=data.frame(x=seq(1990,last_full_year),y=grand_mean_rcp*100),aes(x=x,y=y,linetype="dashed"),color="black",size=1)+
-  scale_linetype_manual("",values=c("dashed"="dashed"),labels="Moyennne\nd'ensemble\n du RCP")+
-  scale_x_continuous("",limits=xlim)+
-  theme_bw(base_size = 18)+
-  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = kovesi.rainbow(4)[c(1,4)],labels=c("Correction A","Correction B"))+
-  scale_y_continuous(paste0("[%]"),limits=ylims)+
+plt_bc_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
+plt_bc_change=plt_bc_change+
+  labs(title=NULL)+
+  ylab("[%]")+
   theme(axis.title.x = element_blank())+
-  theme(legend.key.width = unit(1.5,"cm"))+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)
-
-plt_hm_change=ggplot(data_hm)+
-  geom_line(aes(x=year,y=val_ch,group=hm,color=hm),size=1.2)+
-  geom_line(data=data.frame(x=seq(1990,last_full_year),y=grand_mean_rcp*100),aes(x=x,y=y,linetype="dashed"),color="black",size=1)+
-  scale_linetype_manual("",values=c("dashed"="dashed"),labels="Moyennne\nd'ensemble\n du RCP")+
-  scale_x_continuous("",limits=xlim)+
-  theme_bw(base_size = 18)+
-  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  scale_color_discrete("",type = kovesi.rainbow(4)[c(2,3)],labels=c("Modèle A","Modèle B"))+
-  scale_y_continuous(paste0("[%]"),limits=ylims)+
-  theme(axis.title.x = element_blank())+
-  theme(legend.key.width = unit(1.5,"cm"))+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(d))", vjust=1, hjust=-2,parse=T,size=10)
-
+  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)+
+  scale_color_discrete("",type=kovesi.rainbow(4)[c(1,4)])
 
 
 ###############################################
 ## Maps
 
-map_iv=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = 2085,pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA)
+map_iv=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = 2085,pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_iv=map_iv+
   labs(title=NULL)+
-  binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(20,70),breaks=seq(
-    20,70,length.out=6),oob=squish,show.limits = T,labels=c(paste0("< ",20),seq(30,60,10),paste0("> ",70)))+
+  binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(10,30),breaks=seq(10,30,length.out=6),oob=squish,show.limits = T,labels=c(paste0("< ",10),seq(14,26,4),paste0("> ",30)))+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
-map_iv$layers[[3]]$aes_params$size=5
 
-map_part=map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA)
+map_part=map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_part=map_part+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
 
-
-map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),rcp_name = "rcp8.5",rcp_plainname="RCP 8.5",folder_out = NA)
+map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),rcp_name = "rcp85",rcp_plainname="RCP 8.5",folder_out = NA,pix=T,nbcores=nbcores)
 map_quant_horiz=map_quant_horiz+
   labs(title=NULL)
-  
-#map_quant_horiz$layers[[3]]$aes_params$size=2
 
-map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA)
+map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_rcmeff=map_rcmeff+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold",rep("plain",9),"bold"),color=c("red",rep("black",9),"red")),title.theme=element_text(size = 14, face = "bold")))
 
-map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA)
+map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_gcmeff=map_gcmeff+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold",rep("plain",9),"bold"),color=c("red",rep("black",9),"red")),title.theme=element_text(size = 14, face = "bold")))
 
-map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp8.5",horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA)
+map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_rcmchang=map_rcmchang+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold",rep("plain",9),"bold"),color=c("red",rep("black",9),"red")),title.theme=element_text(size = 14, face = "bold")))
 
-map_gcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp8.5",horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA)
+map_gcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_gcmchang=map_gcmchang+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold",rep("plain",9),"bold"),color=c("red",rep("black",9),"red")),title.theme=element_text(size = 14, face = "bold")))

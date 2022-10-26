@@ -159,6 +159,11 @@ plt_bilan
 
 ```
 
+```{r bxplt,dpi=300, fig.cap="toto"}
+
+plt_bxplt
+
+```
 
 
 <!-- ```{r vardecomp, fig.height = 20/2.54/2, fig.cap="Pourcentage (en variance) de l’incertitude totale expliquée par chaque source d’incertitude : violet : incertitude associée à la variabilité interne du climat (y compris la variabilité interannuelle); (bleu + vert foncé + vert clair + jaune) : incertitude associée à la dispersion entre les réponses climatiques des différentes chaines de simulation. Jaune : incertitude RCP (variance des effets principaux des différents RCPs); Vert clair : incertitude GCM (variance des effets principaux des différents GCMs); Vert foncé : incertitude RCM (variance des effets principaux des différents RCMs); Bleu : incertitude liée à la variabilité résiduelle. Module annuel de la Seine à Poses."} -->
