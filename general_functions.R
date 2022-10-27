@@ -1070,7 +1070,7 @@ mask_fr=as.vector(res)
 mask_fr=mask_fr[as.vector(refs$mask)==1]
 
 
-base_map_grid=function(data,val_name,pattern_name=NULL,facet_name=NULL,threshold="<80%"){
+base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,facet_horizontal_name=NULL,threshold="<80%",exclude_horizontal=c("5%","95%")){
   n=nrow(data)
   n_rep=n/length(mask_fr)
   data$idx=data$idx*rep(mask_fr,n_rep)
@@ -1079,22 +1079,27 @@ base_map_grid=function(data,val_name,pattern_name=NULL,facet_name=NULL,threshold
     data$sign_bin=data[,val_name]
     data$sign_bin[data[,pattern_name]==threshold]=0
     data$sign_bin[data$sign_bin!=0]=1
-    for(i in unique(data[,facet_name])){
-      data_raster=rasterFromXYZ(data[data[,facet_name]==i,c("x","y","sign_bin")])
-      data_polygon=rasterToPolygons(data_raster==1,dissolve=T)
-      data_polygon$id <- row.names(data_polygon)
-      data_polygon_fort=fortify(data_polygon)
-      data_polygon_fort <- left_join(data_polygon_fort, data_polygon@data, by="id")
-      data_polygon_fort[,facet_name]=i
-      if(i!=unique(data[,facet_name])[1]){
-        mask_polygon=rbind(mask_polygon,data_polygon_fort)
-      }else{
-        mask_polygon=data_polygon_fort
+    data$sign_bin[data[,facet_horizontal_name] %in% exclude_horizontal]=1 
+    for(i in unique(data[,facet_vert_name])){
+      for(j in unique(data[,facet_horizontal_name])){
+        data_raster=rasterFromXYZ(data[data[,facet_vert_name]==i&data[,facet_horizontal_name]==j,c("x","y","sign_bin")])
+        data_polygon=rasterToPolygons(data_raster==1,dissolve=T)
+        data_polygon$id <- row.names(data_polygon)
+        data_polygon_fort=fortify(data_polygon)
+        data_polygon_fort <- left_join(data_polygon_fort, data_polygon@data, by="id")
+        data_polygon_fort[,facet_vert_name]=i
+        data_polygon_fort[,facet_horizontal_name]=j
+        if(i!=unique(data[,facet_vert_name])[1]|j!=unique(data[,facet_horizontal_name])[1]){
+          mask_polygon=rbind(mask_polygon,data_polygon_fort)
+        }else{
+          mask_polygon=data_polygon_fort
+        }
       }
     }
+    mask_polygon[,facet_horizontal_name]=factor(mask_polygon[,facet_horizontal_name],levels=levels(data[,facet_horizontal_name]))
     plt=ggplot(data=data)+
       geom_tile(aes(x=x,y=y,fill=get(val_name)))+
-      geom_polygon_pattern(data=mask_polygon,aes(x = long, y = lat,group=group,pattern_density=as.character(layer)),pattern_alpha=0.5,pattern_color="black",pattern_fill="grey90",pattern_size=0.8,color=NA,fill=NA,pattern="circle")+
+      geom_polygon_pattern(data=mask_polygon,aes(x = long, y = lat,group=group,pattern_density=as.character(layer)),pattern_alpha=0.5,pattern_color="black",pattern_fill="white",pattern_size=0.6,color=NA,fill=NA,pattern="circle")+
       scale_pattern_density_discrete(range = c(0.4,0))
   }else{
     plt=ggplot(data=data)+
@@ -1247,7 +1252,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     plt$layers[[4]]$aes_params$size= 3
   }else{
     if(var!="tasAdjust"){
-      plt=base_map_grid(data = exut,val_name = "val",pattern_name = "sign_agree",facet_name ="rcp",threshold="<80%")
+      plt=base_map_grid(data = exut,val_name = "val",pattern_name = "sign_agree",facet_vert_name ="rcp",threshold="<80%",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
       plt=plt+
         facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels= ~ if(length(.x)==2){c(paste0("<",.x[1]),paste0(">",.x[2]))}else{.x},show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -1411,20 +1416,20 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     plt$layers[[4]]$aes_params$size= 3
   }else{
     if(var!="tasAdjust"){
-      plt=base_map_grid(data = exut,val_name = "val",pattern_name="sign_agree",facet_name ="horiz",threshold="<80%")
+      plt=base_map_grid(data = exut,val_name = "val",pattern_name="sign_agree",facet_vert_name ="horiz",threshold="<80%",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
       plt=plt+
         facet_grid(horiz ~ quant,labeller = labeller(horiz = horiz.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels= ~ if(length(.x)==2){c(paste0("<",.x[1]),paste0(">",.x[2]))}else{.x},show.limits = T,oob=squish)+#that way because stepsn deforms colors
-        ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
+        ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         scale_pattern_density_discrete("Accord sur le\nsigne du changement",range = c(0.4,0),labels=c("<80%",">80%"))+
-        theme(legend.key = element_rect(fill = "grey90"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))
+        theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))
     }else{
       plt=base_map_grid(data = exut,val_name = "val")
       plt=plt+
         facet_grid(horiz ~ quant,labeller = labeller(horiz = horiz.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),oob=squish,show.limits = F)+#that way because stepsn deforms colors
-        ggtitle(paste0("Changement du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
+        ggtitle(paste0("Changement du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         guides(fill=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
     }
@@ -1542,7 +1547,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
     plt$layers[[4]]$aes_params$size= 3
   }else{
     if(var!="tasAdjust"){
-      plt=base_map_grid(data = exut,val_name = "val",pattern_name = "sign_agree",facet_name ="rcp",threshold="<80%")
+      plt=base_map_grid(data = exut,val_name = "val",pattern_name = "sign_agree",facet_vert_name ="rcp",threshold="<80%",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
       plt=plt+
         facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels= ~ if(length(.x)==2){c(paste0("<",.x[1]),paste0(">",.x[2]))}else{.x},show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -1574,7 +1579,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
 #######################################################################
 ## Map of effects GCM or RCM (température or time)
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## includeMean if true adds mean change to effect
+## includeMean if true adds mean change to effect or if include RCP is non null adds RCP
 ## name_eff "gcm" ou "rcm"...
 ## pred_name the plain language name of the predictor
 ## pred the predictor name in the file
@@ -1608,7 +1613,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   exut$effs=rep(effs,each=nrow(exut)/length(effs))
   exut$val=0
   
-  
+  ylims=c(0,0)
   for (i in 1:length(lst.QUALYPSOOUT)){
     idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
     if(var!="tasAdjust"){
@@ -1616,22 +1621,22 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
         chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
       }else{
         chg=lst.QUALYPSOOUT[[i]]$MAINEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
-      }
-      if(!is.null(includeRCP)){
-        ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
-        i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==includeRCP)
-        chg = chg+lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]*100
+        if(!is.null(includeRCP)){
+          ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
+          i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==includeRCP)
+          chg = chg+lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]*100
+        }
       }
     }else{
       if(includeMean){
         chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT[[name_eff]]$MEAN[idx_Xfut,]
       }else{
         chg=lst.QUALYPSOOUT[[i]]$MAINEFFECT[[name_eff]]$MEAN[idx_Xfut,]
-      }
-      if(!is.null(includeRCP)){
-        ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
-        i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==includeRCP)
-        chg = chg+lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]
+        if(!is.null(includeRCP)){
+          ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
+          i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==includeRCP)
+          chg = chg+lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]
+        }
       }
     }
     
@@ -1644,8 +1649,16 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   colnames(exut)=c("x","y","idx","effs","val")
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+  if(includeMean){
+    tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) lapply(x$CHANGEBYEFFECT,function(xx) xx$MEAN[idx_Xfut,])))
+  }else{
+    tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) lapply(x$MAINEFFECT,function(xx) xx$MEAN[idx_Xfut,])))
+    if(!is.null(includeRCP)){
+      tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) lapply(x$CHANGEBYEFFECT,function(xx) xx$MEAN[idx_Xfut,])+x$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]))
+    }
+  }
+  q99pos=quantile(tmp[tmp>=0],probs=freq_col)
+  q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col)))
   lim_col=max(q99pos,q99neg)
   lim_col=round(lim_col/10)*10#arrondi au 10 le plus proche
   
@@ -1658,11 +1671,13 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   if(includeMean){
     plt=plt+
       facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T)+#that way because stepsn deforms colors
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T)+#that way because stepsn deforms colors
       ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))#+
-      # guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold",rep("plain",9),"bold"),color=c("red",rep("black",9),"red")),title.theme=element_text(size = 14, face = "bold")))
-    plt$layers[[3]]$aes_params$size= 3
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+    if(!pix){
+      plt$layers[[3]]$aes_params$size= 3
+    }
     if (is.na(folder_out)){
       return(plt)
     }else{
@@ -1673,10 +1688,10 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     if(is.null(includeRCP)){
       plt=plt+
         facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish)+#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold",rep("plain",9),"bold"),color=c("red",rep("black",9),"red")),title.theme=element_text(size = 14, face = "bold")))
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
       if(!pix){
         plt$layers[[3]]$aes_params$size= 3
       }
@@ -1689,10 +1704,10 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     }else{
       plt=plt+
         facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish)+#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full," le ",includeRCP,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold",rep("plain",9),"bold"),color=c("red",rep("black",9),"red")),title.theme=element_text(size = 14, face = "bold")))
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
       if(!pix){
         plt$layers[[3]]$aes_params$size= 3
       }
@@ -1892,7 +1907,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
     plt=base_map_grid(data = exut,val_name = "val")
   }
   plt=plt+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(brewer.spectral(10))),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=11),show.limits = T)+#that way because stepsn deforms colors
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),show.limits = T)+#that way because stepsn deforms colors
     ggtitle(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name,"\n(",horiz," ",pred_unit,")"))+
     facet_wrap(vars(factor(source,levels=c("rv","rcp","gcm","rcm","bc","hm"))),labeller=labs_part_labeller )
   if(!pix){
