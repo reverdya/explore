@@ -1654,8 +1654,11 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   }else{
     tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) lapply(x$MAINEFFECT,function(xx) xx$MEAN[idx_Xfut,])))
     if(!is.null(includeRCP)){
-      tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) lapply(x$CHANGEBYEFFECT,function(xx) xx$MEAN[idx_Xfut,])+x$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]))
+      tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) unlist(lapply(x$MAINEFFECT,function(xx) xx$MEAN[idx_Xfut,]))+x$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]))
     }
+  }
+  if(var!="tasAdjust"){
+    tmp=tmp*100
   }
   q99pos=quantile(tmp[tmp>=0],probs=freq_col)
   q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col)))
