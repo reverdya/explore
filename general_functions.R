@@ -973,14 +973,14 @@ plotQUALYPSO_boxplot_horiz_rcp=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_
   }
   
   plt=ggplot(phiStar.corr)+
-    geom_boxplot(aes(x=horiz,y=val,fill=rcp))+
+    geom_boxplot(aes(x=horiz,y=val,fill=rcp),lwd=2,outlier.size=4)+
     scale_fill_discrete("",type=as.vector(col_3rcp_shade[color_select]),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
     scale_x_discrete("",labels = horiz)+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     theme(legend.text = element_text(size=12,face="bold"))+
-    theme(strip.background = element_blank(),strip.text.x = element_blank())+
+    theme(strip.background = element_blank(),strip.text.x = element_blank(),legend.key.height =unit(5, "lines"))+
     ggtitle(paste0("Distribution de l'ensemble balancé pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full,"\n(",bv_full_name,", référence 1990)"))
   if(var!="tasAdjust"){
     plt=plt+
@@ -1060,7 +1060,7 @@ base_map_outlets=function(data,val_name,alpha_name=NULL){
 
 #####################################################################################################################################
 ## Make a ggplot2 base map of France with SAFRAN grid as pixels and val_name the name of the column for the color scale, that can be customized afterwards
-## Data has at least longitude in x, latitude in y and a numeric filling value in val_name
+## Data has at least longitude in x, latitude in y and a numeric filling value in val_name and index of pixel in idx
 
 
 nc=load_nc("C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc")
@@ -1228,10 +1228,18 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-  lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  if(var!="tasAdjust"){
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    lim_col=max(q99pos,q99neg)
+    lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  }else{
+    q99=quantile(exut$val,probs=freq_col)
+    q01=quantile(exut$val,probs=(1-freq_col))
+    lim_col=as.numeric(c(q99pos,q99neg))
+    lim_col=round(lim_col)#arrondi au 1 le plus proche
+  }
+  
   
   if(!pix){
     plt=base_map_outlets(data = exut[exut$sign_agree=="<80%",],val_name = "val",alpha_name = "sign_agree")+
@@ -1259,16 +1267,18 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
         ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         scale_pattern_density_discrete("Accord sur le\nsigne du changement",range = c(0.4,0),labels=c("<80%",">80%"))+
-        theme(legend.key = element_rect(fill = "grey90"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))
+        theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
       
     }else{
       plt=base_map_grid(data = exut,val_name = "val")
       plt=plt+
         facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),oob=squish,show.limits = F)+#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(100))),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],0.5),oob=squish,show.limits = T,labels= ~ if(length(.x)==2){c(paste0("<",.x[1]),paste0(">",.x[2]))}else{.x})+#that way because stepsn deforms colors
         ggtitle(paste0("Changement du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        guides(fill=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+        guides(fill=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
     }
     
   }
@@ -1392,10 +1402,17 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   names(quant.labs) <- quant
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-  lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  if(var!="tasAdjust"){
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    lim_col=max(q99pos,q99neg)
+    lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  }else{
+    q99=quantile(exut$val,probs=freq_col)
+    q01=quantile(exut$val,probs=(1-freq_col))
+    lim_col=as.numeric(c(q99pos,q99neg))
+    lim_col=round(lim_col)#arrondi au 1 le plus proche
+  }
   
   if(!pix){
     plt=base_map_outlets(data = exut[exut$sign_agree=="<80%",],val_name = "val",alpha_name = "sign_agree")+
@@ -1423,12 +1440,13 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
         ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         scale_pattern_density_discrete("Accord sur le\nsigne du changement",range = c(0.4,0),labels=c("<80%",">80%"))+
-        theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))
+        theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
     }else{
       plt=base_map_grid(data = exut,val_name = "val")
       plt=plt+
         facet_grid(horiz ~ quant,labeller = labeller(horiz = horiz.labs, quant = quant.labs))+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),oob=squish,show.limits = F)+#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(100))),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],0.5),oob=squish,show.limits = T,labels= ~ if(length(.x)==2){c(paste0("<",.x[1]),paste0(">",.x[2]))}else{.x})+#that way because stepsn deforms colors
         ggtitle(paste0("Changement du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         guides(fill=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
@@ -1523,10 +1541,17 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   names(quant.labs) <- quant
   
   #Setting limits for color scale
-  q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-  q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-  lim_col=max(q99pos,q99neg)
-  lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  if(var!="tasAdjust"){
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    lim_col=max(q99pos,q99neg)
+    lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+  }else{
+    q99=quantile(exut$val,probs=freq_col)
+    q01=quantile(exut$val,probs=(1-freq_col))
+    lim_col=as.numeric(c(q99pos,q99neg))
+    lim_col=round(lim_col)#arrondi au 1 le plus proche
+  }
   
   if(!pix){
     plt=base_map_outlets(data = exut[exut$sign_agree=="<80%",],val_name = "val",alpha_name = "sign_agree")+
@@ -1554,12 +1579,13 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
         ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990),\n ensemble non balancé"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         scale_pattern_density_discrete("Accord sur le\nsigne du changement",range = c(0.4,0),labels=c("<80%",">80%"))+
-        theme(legend.key = element_rect(fill = "grey90"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))
+        theme(legend.key =element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
     }else{
       plt=base_map_grid(data = exut,val_name = "val")
       plt=plt+
         facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col+lim_col/5,lim_col-lim_col/5,length.out=9),oob=squish,show.limits = F)+#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(100))),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],0.5),oob=squish,show.limits = T,labels= ~ if(length(.x)==2){c(paste0("<",.x[1]),paste0(">",.x[2]))}else{.x})+#that way because stepsn deforms colors
         ggtitle(paste0("Changement du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990),\n ensemble non balancé"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         guides(fill=guide_legend(label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
