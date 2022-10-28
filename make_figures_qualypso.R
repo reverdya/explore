@@ -274,8 +274,8 @@ for (i in 1:nrow(select_stations)){
   save.plot(plt,Filename = paste0("global_tasVSmodule_",select_stations$Nom[i]),Folder = path_fig,Format = "jpeg")
 }
 
-##################################################################################
-## Plot map of reference (1990) value of indicator for continuous positive indicator (of discharge)
+###################################################################################################
+## Plot map of reference (1990) value of indicator for continuous positive indicator at outlets
 
 ref_year=1990
 lst_indic2=lst_indic[!lst_indic %in% c("VCN10_day")]
