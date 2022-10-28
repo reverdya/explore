@@ -78,7 +78,7 @@ for(v in unique(simu_lst$var)[2]){
       plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var=v)
       plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
       plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var=v)
-      if(v==evspsblpotAdjust){
+      if(v=="evspsblpotAdjust"){
         plotQUALYPSO_summary_change(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = T,idx_row = ref_cities$row[c],idx_col = ref_cities$col[c])
         plotQUALYPSO_summary_change(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = F,)
       }else{
@@ -129,25 +129,34 @@ for(v in unique(simu_lst$var)[2]){
 
 
 
-######################################################################################
-## Plot map of reference (1990) value of indicator for continuous positive indicator
+###################################################################################################
+## Plot map of reference (1990) value of indicator mean response
 
 ref_year=1990
-lst_indic2=lst_indic[!lst_indic %in% c("VCN10_day")]
-name_indic2=name_indic[!lst_indic %in% c("VCN10_day")]
-for (i in 1:length(lst_indic2)){
-    load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/qualypso/",lst_indic2[i],"_list_QUALYPSOOUT_3GCM_time_lm.RData"))
+# for(v in unique(simu_lst$var)){
+for(v in unique(simu_lst$var)[2]){
+  #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
+    folder_out=paste0(path_fig,v,"/",i,"/maps/")
+    load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_lm.RData"))
     lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
-    exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon")]
+    exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
+    exut=exut[as.logical(refs$mask),]
+    exut$idx=seq(1:nrow(exut))
     exut$val=unlist(lapply(lst.QUALYPSOOUT, function(x) mean(x$CLIMATEESPONSE$phi[,which(x$Xfut==ref_year)])))
-    colnames(exut)=c("Num_ordre_Modcou","y","x","val")
+    colnames(exut)=c("x","y","idx","val")
     
-    plt=base_map_outlets(data = exut,val_name = "val")
+    q99=quantile(exut$val,probs=0.99)
+    q01=quantile(exut$val,probs=(1-0.99))
+    lim_col=as.numeric(c(q01,q99))
+    lim_col=round(lim_col)#arrondi au 1 le plus proche
+    br=round(seq((lim_col[2]-lim_col[1])/5,(lim_col[2]-lim_col[1])/5*3,length.out=4)+lim_col[1])
+    
+    plt=base_map_grid(data = exut,val_name = "val")
     plt=plt+
-      #scale_fill_gradientn("",colours = rescale_col(brewer.blues(100),exut$val,scale_col),limits=c(0,lim_col),breaks=seq(0,lim_col,bin_col[i]),oob=squish,labels=c(seq(0,lim_col-bin_col[i],bin_col[i]),paste0("> ",lim_col)))+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",trans="log10")+#that way because stepsn deforms colors
-      ggtitle(paste0("Valeurs de référence (1990) du ",name_indic2[i],"\n(moyenne des fonctions de réponse disponibles)"))
-    plt$layers[[3]]$aes_params$size=5
-    save.plot(plt,Filename = paste0("ref1990_response_",lst_indic2[i]),Folder = path_fig,Format = "jpeg")
+      binned_scale(aesthetics = "fill",scale_name = "toto",name = "",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),limits=lim_col,oob=squish,show.limits = F,breaks=br)+#that way because stepsn deforms colors
+      ggtitle(paste0("Valeurs de référence (1990) du ",v,"_",i,"\n(moyenne des fonctions de réponse disponibles)"))
+    save.plot(plt,Filename = paste0("ref1990_mean-response_",v,"_",i),Folder = folder_out,Format = "jpeg")
+  }
 }
 
