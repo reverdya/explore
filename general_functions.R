@@ -1543,11 +1543,18 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
     lim_col=max(q99pos,q99neg)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
+<<<<<<< HEAD
     # q99=quantile(exut$val,probs=freq_col)
     # q01=quantile(exut$val,probs=(1-freq_col))
     # lim_col=as.numeric(c(q01,q99))
     # lim_col=round(lim_col)#arrondi au 1 le plus proche
     lim_col=c(1,5) #forced to allow comparison with QUALYPSO
+=======
+    q99=quantile(exut$val,probs=freq_col)
+    q01=quantile(exut$val,probs=(1-freq_col))
+    lim_col=as.numeric(c(q01,q99))
+    lim_col=round(lim_col)#arrondi au 1 le plus proche
+>>>>>>> 8085ee2d43c8be1e3f0fc13620b1985805c5e5ff
     br=seq(lim_col[1],lim_col[2],length.out=11)
   }
   
@@ -1734,6 +1741,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     
   }else{
     if(is.null(includeRCP)){
+<<<<<<< HEAD
       if(var!="tasAdjust"){
         plt=plt+
           facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
@@ -1749,6 +1757,14 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
           theme(panel.border = element_rect(colour = "black",fill=NA))+
           guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
       }
+=======
+      plt=plt+
+        facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels= c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),oob=squish,show.limits = T)+#that way because stepsn deforms colors
+        ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+        theme(panel.border = element_rect(colour = "black",fill=NA))+
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+>>>>>>> 8085ee2d43c8be1e3f0fc13620b1985805c5e5ff
       if(!pix){
         plt$layers[[3]]$aes_params$size= 3
       }

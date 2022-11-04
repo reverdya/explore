@@ -57,7 +57,11 @@ ref_cities$idx_masked=which(tmp %in% ref_cities$idx)
 ## Times series Qualypso for selected cities
 
 # for(v in unique(simu_lst$var)){
+<<<<<<< HEAD
 for(v in unique(simu_lst$var)[c(1,2]){
+=======
+for(v in unique(simu_lst$var)[1]){
+>>>>>>> 8085ee2d43c8be1e3f0fc13620b1985805c5e5ff
   dir.create(paste0(path_fig,v,"/"))
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
@@ -96,7 +100,11 @@ for(v in unique(simu_lst$var)[c(1,2]){
 ## Maps
 
 # for(v in unique(simu_lst$var)){
+<<<<<<< HEAD
 for(v in unique(simu_lst$var)[c(1,2)]){
+=======
+for(v in unique(simu_lst$var)[1]){
+>>>>>>> 8085ee2d43c8be1e3f0fc13620b1985805c5e5ff
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
@@ -141,7 +149,11 @@ for(v in unique(simu_lst$var)[c(1,2)]){
 
 
 # for(v in unique(simu_lst$var)){
+<<<<<<< HEAD
 for(v in unique(simu_lst$var)[c(1,2)]){
+=======
+for(v in unique(simu_lst$var)[1]){
+>>>>>>> 8085ee2d43c8be1e3f0fc13620b1985805c5e5ff
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
@@ -158,7 +170,10 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     lim_col=as.numeric(c(q01,q99))
     lim_col=round(lim_col)#arrondi au 1 le plus proche
     br=round(seq(lim_col[1],lim_col[2],length.out=6))
+<<<<<<< HEAD
     if(v=="tasAdjust"){br=round(seq(lim_col[1],lim_col[2],length.out=6),1)}
+=======
+>>>>>>> 8085ee2d43c8be1e3f0fc13620b1985805c5e5ff
     
     plt=base_map_grid(data = exut,val_name = "val")
     plt=plt+
