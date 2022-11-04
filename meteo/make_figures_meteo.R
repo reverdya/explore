@@ -30,6 +30,8 @@ labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualyp
 
 nbcores=detectCores()-2
 
+ref_year=1990
+
 ######
 #MAIN#
 ######
@@ -55,7 +57,7 @@ ref_cities$idx_masked=which(tmp %in% ref_cities$idx)
 ## Times series Qualypso for selected cities
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[2]){
+for(v in unique(simu_lst$var)[1]){
   dir.create(paste0(path_fig,v,"/"))
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
@@ -94,7 +96,7 @@ for(v in unique(simu_lst$var)[2]){
 ## Maps
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[2]){
+for(v in unique(simu_lst$var)[1]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
@@ -118,10 +120,15 @@ for(v in unique(simu_lst$var)[2]){
     map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
     map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
 
-    map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz=horiz,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
+    map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz=horiz,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v,ref0=ref_year)
     
-    map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out =folder_out,pix=T,var=v,freq_col=freq_col)
+    map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,pred = pred,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out =folder_out,pix=T,var=v)
     map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = 2085,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = folder_out,pix=T,var=v,freq_col=freq_col)
+    map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = 2085,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = folder_out,pix=T,var=v,freq_col=freq_col)
+    map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = 2085,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = folder_out,pix=T,var=v,freq_col=freq_col)
+    map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = 2085,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = folder_out,pix=T,var=v,freq_col=freq_col)
+    map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = 2085,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = folder_out,pix=T,var=v,freq_col=freq_col)
+    map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="rcp85",horiz = 2085,pred_name = pred_name,pred = pred,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = folder_out,pix=T,var=v,freq_col=freq_col)
     
 
   }
@@ -132,9 +139,9 @@ for(v in unique(simu_lst$var)[2]){
 ###################################################################################################
 ## Plot map of reference (1990) value of indicator mean response
 
-ref_year=1990
+
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[2]){
+for(v in unique(simu_lst$var)[1]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
@@ -150,11 +157,12 @@ for(v in unique(simu_lst$var)[2]){
     q01=quantile(exut$val,probs=(1-0.99))
     lim_col=as.numeric(c(q01,q99))
     lim_col=round(lim_col)#arrondi au 1 le plus proche
-    br=round(seq((lim_col[2]-lim_col[1])/5,(lim_col[2]-lim_col[1])/5*3,length.out=4)+lim_col[1])
+    br=round(seq(lim_col[1],lim_col[2],length.out=6))
     
     plt=base_map_grid(data = exut,val_name = "val")
     plt=plt+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name = "",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),limits=lim_col,oob=squish,show.limits = F,breaks=br)+#that way because stepsn deforms colors
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 15,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name = "",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),limits=lim_col,oob=squish,show.limits = T,breaks=br,labels= c(paste0(">",br[1]),br[2:5],paste0("<",br[6])) )+#that way because stepsn deforms colors
       ggtitle(paste0("Valeurs de référence (1990) du ",v,"_",i,"\n(moyenne des fonctions de réponse disponibles)"))
     save.plot(plt,Filename = paste0("ref1990_mean-response_",v,"_",i),Folder = folder_out,Format = "jpeg")
   }
