@@ -49,7 +49,7 @@ for(v in unique(simu_lst$var)[c(2)]){
     typechangeVar="rel"
     SPAR=1.1
   }
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[1:16]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[1:6]){
   # for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     dir.create(paste0(path_data,"Qualypso/",v,"/",i))
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
