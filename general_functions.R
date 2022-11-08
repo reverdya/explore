@@ -925,7 +925,7 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
 ## folder_out the saving folder
 
 
-plotQUALYPSO_boxplot_horiz_rcp=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,var="toto",indic="titi",horiz=c(2030,2050,2085)){
+plotQUALYPSO_boxplot_horiz_rcp=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,var="toto",indic="titi",horiz=c(2030,2050,2085),title=T){
   
   scenAvail=QUALYPSOOUT$listScenarioInput$scenAvail
   Xfut = QUALYPSOOUT$Xfut
@@ -972,24 +972,46 @@ plotQUALYPSO_boxplot_horiz_rcp=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_
     }
   }
   
-  plt=ggplot(phiStar.corr)+
-    geom_boxplot(aes(x=horiz,y=val,fill=rcp),lwd=2,outlier.size=4)+
-    scale_fill_discrete("",type=as.vector(col_3rcp_shade[color_select]),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+  custom_boxplot=function(x){
+    return(data.frame(ymin=min(x), ymax=max(x), upper=quantile(x,probs=0.75), lower=quantile(x,probs=0.25), middle=quantile(x,probs=0.5)))
+  }
+  
+  plt1=ggplot(phiStar.corr)+
+    stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=horiz,y=val,fill=rcp),lwd=2,position="dodge")+
+    geom_point(aes(x=horiz,y=val,color=rcp),alpha=0)+#just for legend
+    scale_fill_discrete("",type=as.vector(col_3rcp_shade[color_select]))+
+    scale_color_discrete("",type=as.vector(col_3rcp_shade[color_select]),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
     scale_x_discrete("",labels = horiz)+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
     theme(legend.text = element_text(size=12,face="bold"))+
     theme(strip.background = element_blank(),strip.text.x = element_blank(),legend.key.height =unit(5, "lines"))+
-    ggtitle(paste0("Distribution de l'ensemble balancé pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full,"\n(",bv_full_name,", référence 1990)"))
+    guides(fill="none",color=guide_legend(override.aes = list(alpha=1,shape=15,size=15)))
   if(var!="tasAdjust"){
-    plt=plt+
+    plt1=plt1+
       scale_y_continuous(paste0("Changement relatif (%)"),expand=c(0,0))
   }else{
-    plt=plt+
+    plt1=plt1+
       scale_y_continuous(paste0("Changement (°C)"),expand=c(0,0))
   }
   
+  plt2=ggplot(data.frame(x=rep(1,100),y=c(1:100)))+
+    stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=x,y=y),lwd=2,width=0.02)+
+    geom_text(aes(x=1.05,y=50,label="Quantile 50%"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=75,label="Quantile 75%"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=25,label="Quantile 25%"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=100,label="Maximum"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=0,label="Minimum"),fontface = "bold",size=5)+
+    scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
+    theme_void()+
+    theme(panel.background = element_rect(colour="black"))
+  
+  plt=ggarrange(plt1,plt2,widths=c(0.87,0.13),nrow=1,ncol=2,align="h")+
+    theme(plot.margin = unit(c(0,0.5,0,0), "cm"))
+  if(title==T){
+    plt=annotate_figure(plt, top = text_grob(paste0("Distribution de l'ensemble balancé pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full,"\n(",bv_full_name,", référence 1990)"), face = "bold", size = 20,hjust=0.5))
+  }
+    
   if (is.na(folder_out)){
     return(plt)
   }else{

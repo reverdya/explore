@@ -78,8 +78,8 @@ for(i in 1:length(lst_names_eff)){
 ##########################################################################
 ## Raw and spline times series
 SPAR=1.1
-v=unique(simu_lst$var)[2]
-i=unique(simu_lst[simu_lst$var==v,]$indic)[17]
+v=unique(simu_lst$var)[1]
+i=unique(simu_lst[simu_lst$var==v,]$indic)[1:6]
 cities=1
 
 
@@ -221,9 +221,7 @@ plt_bilan=plotQUALYPSO_summary_change(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred 
 ## Boxplot per horizon and RCP
 
 
-plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,var="prtotAdjust",indic="yearsum",horiz = c(2030,2050,2085))
-plt_bxplt=plt_bxplt+
-  labs(title=NULL)
+plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,var="prtotAdjust",indic="yearsum",horiz = c(2030,2050,2085),title=F)
 
 #####################################
 ## Effet GCM, effet RCM, effet BC
