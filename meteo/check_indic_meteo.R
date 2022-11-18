@@ -148,48 +148,45 @@ points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 ## Problem with too many connections opened requires running step by step (v by)
 
 for(v in unique(simu_lst$var)){
-    dir.create(paste0(path_fig,v,"/"))
+  dir.create(paste0(path_fig,v,"/"))
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     closeAllConnections()
     gc()
-  for (SPAR in c(0.8,0.9,1.0,1.1,1.2)){
-    closeAllConnections()
-    gc()
-    for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-      clim_resp=vector(length=nrow(simu_lst),mode="list")
-      clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
-      dir.create(paste0(path_fig,v,"/",i))
-      dir.create(paste0(path_fig,v,"/",i,"/plot_chains/"))
-      scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
-      all_chains=vector(length=nrow(scenAvail),mode="list")
-      for(c in 1:nrow(scenAvail)){# for each chain
-        
-        pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
-        nc=load_nc(pth_tmp)
-        res=ncvar_get(nc,varid=v)
-        full_years=nc$dim$time$vals
-        if(scenAvail$bc[c]=="ADAMONT"){
-          full_years=year(as.Date(full_years,origin="1950-01-01"))
-        }
-        if(scenAvail$bc[c]=="R2D2"){
-          full_years=year(as.Date(full_years,origin="1850-01-01"))
-        }
-        nc_close(nc)#for some reason stays opened otherwise
-        rm(nc)
-        gc()
-        res2=data.frame(matrix(nrow=dim(res)[3],ncol=nrow(ref_cities)+1))
-        res2[,1]=full_years
-        for (j in 1 :nrow(ref_cities)){
-          res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
-        }
-        colnames(res2)[1]="year"
-        all_chains[[c]]=res2
-        rm(res)
-        rm(res2)
-        gc()
+    clim_resp=vector(length=nrow(simu_lst),mode="list")
+    clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
+    dir.create(paste0(path_fig,v,"/",i))
+    dir.create(paste0(path_fig,v,"/",i,"/plot_chains/"))
+    scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
+    all_chains=vector(length=nrow(scenAvail),mode="list")
+    for(c in 1:nrow(scenAvail)){# for each chain
+      
+      pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+      nc=load_nc(pth_tmp)
+      res=ncvar_get(nc,varid=v)
+      full_years=nc$dim$time$vals
+      if(scenAvail$bc[c]=="ADAMONT"){
+        full_years=year(as.Date(full_years,origin="1950-01-01"))
       }
+      if(scenAvail$bc[c]=="R2D2"){
+        full_years=year(as.Date(full_years,origin="1850-01-01"))
+      }
+      nc_close(nc)#for some reason stays opened otherwise
+      rm(nc)
+      gc()
+      res2=data.frame(matrix(nrow=dim(res)[3],ncol=nrow(ref_cities)+1))
+      res2[,1]=full_years
+      for (j in 1 :nrow(ref_cities)){
+        res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
+      }
+      colnames(res2)[1]="year"
+      all_chains[[c]]=res2
+      rm(res)
+      rm(res2)
+      gc()
+    }
 
-      for(cities in 2:(nrow(ref_cities)+1)){
-        
+    for(cities in 2:(nrow(ref_cities)+1)){
+      for (SPAR in c(0.8,0.9,1.0,1.1,1.2)){
         ClimateProjections=lapply(all_chains, function(x) x[,c(1,cities)])
         Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections))
         Y=Y[,Y[1,]<=2100]
@@ -244,7 +241,7 @@ for(v in unique(simu_lst$var)){
             theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
             theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
             scale_x_continuous("")+
-            scale_y_continuous(paste0(ylabel,unit))+
+            scale_y_continuous(paste0(ylabel,unit),limits = c(min(data[data$rcp==r,]$val,na.rm=T),max(data[data$rcp==r,]$val,na.rm=T)),expand = c(0,0))+
             guides(color = guide_legend(override.aes = list(size = 1.7)))+
             facet_grid(gcm~bc)+
             theme(panel.spacing.x = unit(0.5, "lines"))+
