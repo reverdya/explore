@@ -30,6 +30,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/"
 path_Rmd="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_exemple_COUT.Rmd"
+path_Rmd_faster="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_exemple_COUT_faster.Rmd"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
@@ -287,7 +288,7 @@ map_iv=map_iv+
   binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(10,30),breaks=seq(10,30,length.out=6),oob=squish,show.limits = T,labels=c(paste0("< ",10),seq(14,26,4),paste0("> ",30)))+
   guides(fill=guide_colorbar(title="[%]",barwidth = 1, barheight = 10,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
 
-map_part=map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
+map_part=map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T,title = F)
 map_part=map_part+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
@@ -320,4 +321,4 @@ map_gcmchang=map_gcmchang+
 #MARKDOWN#
 ##########
 
-rmarkdown::render(path_Rmd,output_format = "word_document2",output_options = list(reference_docx="C:/Users/reverdya/Documents/Docs/1_code/explore/template_word.docx") ,output_file = "fiche_exemple_COUT_v0.2.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
+rmarkdown::render(path_Rmd_faster,output_format = "word_document2",output_options = list(reference_docx="C:/Users/reverdya/Documents/Docs/1_code/explore/template_word.docx") ,output_file = "fiche_exemple_COUT_faster.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
