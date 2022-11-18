@@ -30,6 +30,7 @@ library(ggnewscale) #new_scale
 library(tidyr)#pivot_longer
 library(plotly)#interactive plot
 library(htmlwidgets)#save interactive plot
+library(plotwidgets)#hsl colors (would be better to use hsluv model but not available on my R version)
 
 
 #############################################################
@@ -108,6 +109,7 @@ cmyk <- function(C,M,Y,K) {
 
 #For continuous variable requiring good distinction
 ipcc_yelblue_5=c(rgb(255,255,204,maxColorValue=255),rgb(161,218,180,maxColorValue=255),rgb(65,182,196,maxColorValue=255),rgb(44,127,184,maxColorValue=255),rgb(37,52,148,maxColorValue=255))
+ipcc_yelred_5=c(rgb(255,255,178,maxColorValue=255),rgb(254,204,92,maxColorValue=255),rgb(253,141,60,maxColorValue=255),rgb(240,59,32,maxColorValue=255),rgb(189,0,38,maxColorValue=255))
 
 #For Precipitation
 precip_11=c(rgb(84,48,5,maxColorValue=255),rgb(140,81,10,maxColorValue=255),rgb(191,129,45,maxColorValue=255),rgb(223,194,125,maxColorValue=255),rgb(246,232,195,maxColorValue=255),rgb(245,245,245,maxColorValue=255),rgb(199,234,229,maxColorValue=255),rgb(128,205,193,maxColorValue=255),rgb(53,151,143,maxColorValue=255),rgb(1,102,94,maxColorValue=255),rgb(0,60,48,maxColorValue=255))
@@ -139,7 +141,18 @@ ipcc_6col=c(rgb(0,0,0,maxColorValue=255),rgb(112,160,205,maxColorValue=255),rgb(
 
 
 # for variance partition
-col_7var=rev(viridis(7))
+
+tmp=col2hsl(c(plasma(6),"grey90"))
+tmp["S",1:6]=1
+tmp["L",1]=0.15
+tmp["L",2]=0.35
+tmp["L",4]=0.7
+tmp["L",6]=0.425
+# pal.safe(hsl2col(tmp))
+
+# col=rev(c("orange","yellow","cadetblue1","blue1","darkgreen","darkgoldenrod4","darkorchid1"))
+# col_7var=rev(viridis(7))
+col_7var=hsl2col(tmp)
 names(col_7var)=c("rcp","gcm","rcm","bc","hm","res","int")
 legend_7var=c("RCP","GCM","RCM","BC","HM","Variabilité Résiduelle","Variabilité Interne")
 
@@ -790,11 +803,11 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
     chain_band$min=aggregate(chains$val,by=list(chains$pred,chains$eff),min)[,3]
     a_label=data.frame(lab="a",eff="rcp26")
     plt1=ggplot(data)+
-      geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.3)+#raw chain band
-      scale_fill_discrete("Dispersion des chaînes\nde modélisation",type= as.vector(col_3rcp_shade[color_select]),labels=NULL)+
+      geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
+      scale_fill_discrete("Dispersion des expériences\nclimatiques",type= as.vector(col_3rcp_shade[color_select]),labels=NULL)+
       guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
       new_scale_fill()+
-      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.5)+#uncertainty band
+      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.4)+#uncertainty band
       scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
       guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
       geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.5,lty="21")+#RCP mean
@@ -885,10 +898,9 @@ plotQUALYPSO_summary_change=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_nam
   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   plt3=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var,alpha=var))+
-    geom_line(aes(x=Xfut,y=val,group=var),color="white",linetype="dashed",size=0.3)+
+    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var))+
+    geom_line(data=data[data$var!="int",],aes(x=Xfut,y=val,group=var),color="black",linetype="dashed",size=0.5)+
     scale_fill_discrete("",type = vec_color,labels=labels_var)+
-    scale_alpha_manual("",values=c(0.2,0.4,1,1,1,1),labels=labels_var)+
     scale_x_continuous("",limits = xlim2,expand=c(0,0))+
     scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
     theme_bw(base_size = 16)+
@@ -1006,7 +1018,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_
     theme_void()+
     theme(panel.background = element_rect(colour="black"))
   
-  plt=ggarrange(plt1,plt2,widths=c(0.87,0.13),nrow=1,ncol=2,align="h")+
+  plt=ggarrange(plt1,plt2,widths=c(0.8,0.2),nrow=1,ncol=2,align="h")+
     theme(plot.margin = unit(c(0,0.5,0,0), "cm"))
   if(title==T){
     plt=annotate_figure(plt, top = text_grob(paste0("Distribution de l'ensemble balancé pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full,"\n(",bv_full_name,", référence 1990)"), face = "bold", size = 20,hjust=0.5))
@@ -1130,6 +1142,7 @@ base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,face
   }
   plt=plt+
     geom_polygon(data=fr_L2,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)+
+    coord_equal()+
     scale_x_continuous("")+
     scale_y_continuous("")+
     theme_bw(base_size = 10)+
@@ -2033,7 +2046,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
 ## folder_out the saving folder
 ## horiz he horizon of predictor wanted
 
-map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,pix=F,var="toto"){
+map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,pix=F,var="toto",title=T){
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
@@ -2064,6 +2077,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
       exut$hm[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"hm"]*100
     }
     exut$rv[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"ResidualVar"]*100
+    exut$iv[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"InternalVar"]*100
   }
   
   exut=pivot_longer(exut,cols=-c(x,y,idx),names_to="source",values_to = "val")
@@ -2072,19 +2086,41 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   labs_part_labeller <- function(variable,value){
     return(labs_part[value])
   }
-  lim_col=as.numeric(round(quantile((exut$val),probs=0.99),-1))
+  
+  lim_col1=as.numeric(round(quantile((exut[exut$source!="iv",]$val),probs=0.99),-1))
+  lim_col2=as.numeric(round(quantile((exut[exut$source=="iv",]$val),probs=c(0.01,0.99)),-1))
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val")
+    plt1=base_map_outlets(data = exut[exut$source!="iv",],val_name = "val")
   }else{
-    plt=base_map_grid(data = exut,val_name = "val")
+    plt1=base_map_grid(data = exut[exut$source!="iv",],val_name = "val")
   }
-  plt=plt+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col),breaks=seq(0,lim_col,length.out=6),show.limits = T,labels= c(0,round(seq(0+(lim_col-0)/6,0+(lim_col-0)/6*4,length.out=4),1),paste0("> ",lim_col)),oob=squish)+#that way because stepsn deforms colors
-    ggtitle(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name,"\n(",horiz," ",pred_unit,")"))+
+  plt1=plt1+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col1),breaks=seq(0,lim_col1,length.out=6),show.limits = T,labels= c(0,round(seq(0+(lim_col1-0)/6,0+(lim_col1-0)/6*4,length.out=4),1),paste0("> ",lim_col1)),oob=squish)+#that way because stepsn deforms colors
     facet_wrap(vars(factor(source,levels=c("rv","rcp","gcm","rcm","bc","hm"))),labeller=labs_part_labeller )
   if(!pix){
-    plt$layers[[3]]$aes_params$size=3
+    plt1$layers[[3]]$aes_params$size=3
+  }
+  
+  exut$title="Variabilité interne"
+  if(!pix){
+    plt2=base_map_outlets(data = exut[exut$source=="iv",],val_name = "val")
+  }else{
+    plt2=base_map_grid(data = exut[exut$source=="iv",],val_name = "val")
+  }
+  plt2=plt2+
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
+    facet_grid(. ~ title)
+  if(!pix){
+    plt2$layers[[3]]$aes_params$size=3
+  }
+  
+  
+  # plt=ggarrange(plt1,ggarrange(ggplot()+theme_void(),plt2,ggplot()+theme_void(),heights=c(0.25,0.5,0.25),nrow=3),widths=c(0.6,0.4),ncol=2)
+  # plt=ggarrange(plt1,plt2,ncol=2,widths=c(0.68,0.32))
+  plt=ggarrange(plt1,plt2,nrow=2,heights=c(0.6,0.4))
+  if(title==T){
+    plt=annotate_figure(plt, top = text_grob(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name,"\n(",horiz,pred_unit,")"), face = "bold", size = 20,hjust=0.5))
   }
   
   
