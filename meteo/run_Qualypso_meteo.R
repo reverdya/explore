@@ -40,7 +40,7 @@ vecYears=seq(first_data_year,last_data_year)
 ######
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(2)]){
+for(v in unique(simu_lst$var)[c(1)]){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
   if(v=="tasAdjust"){
     typechangeVar="abs"
@@ -49,7 +49,7 @@ for(v in unique(simu_lst$var)[c(2)]){
     typechangeVar="rel"
     SPAR=1.1
   }
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[1:6]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[7:12]){
   # for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     dir.create(paste0(path_data,"Qualypso/",v,"/",i))
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
@@ -100,5 +100,8 @@ for(v in unique(simu_lst$var)[c(2)]){
     save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_lm.RData"))
     toc() 
   }
+  rm(ClimateProjections,Y,X,lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
+  closeAllConnections()
+  gc()
 }
 
