@@ -9,10 +9,6 @@ gc()
 #LIBRARY#
 #########
 
-library(moments)#skewness
-library(forecast)#tsoutliers
-#tsoutliers fits trend on data (Friedman?s super smoother) and looking at values outside of Q75 + 3 * IQR (or Q25)
-library(abind)#abind
 library(plot.matrix)
 
 ########
@@ -38,7 +34,7 @@ period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12"
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","R2D2")
 
-units=c("?C","mm")
+units=c("°C","mm")
 
 centr_ref_year=1990# central year of 1975-2005 reference period
 first_ref_year=1975
@@ -145,7 +141,7 @@ points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 
 ##Merge data frame warnings are okay
 
-## Problem with too many connections opened requires running step by step (v by)
+## Problem with too many connections opened requires running step by step (v by v)
 
 for(v in unique(simu_lst$var)){
   dir.create(paste0(path_fig,v,"/"))
@@ -241,7 +237,7 @@ for(v in unique(simu_lst$var)){
             theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
             theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
             scale_x_continuous("")+
-            scale_y_continuous(paste0(ylabel,unit),limits = c(min(data[data$rcp==r,]$val,na.rm=T),max(data[data$rcp==r,]$val,na.rm=T)),expand = c(0,0))+
+            scale_y_continuous(paste0(ylabel,unit),limits = c(min(data[data$rcp==r,]$val,na.rm=T),max(data[data$rcp==r,]$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
             guides(color = guide_legend(override.aes = list(size = 1.7)))+
             facet_grid(gcm~bc)+
             theme(panel.spacing.x = unit(0.5, "lines"))+
