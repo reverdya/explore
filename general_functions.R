@@ -31,6 +31,7 @@ library(tidyr)#pivot_longer
 library(plotly)#interactive plot
 library(htmlwidgets)#save interactive plot
 library(plotwidgets)#hsl colors (would be better to use hsluv model but not available on my R version)
+library(abind)#abind
 
 
 #############################################################
@@ -296,7 +297,7 @@ rle2 <- function (x)  {
 
 ## etaStar is by definition of X dimensions's and not Xfut and can contain NA (logical when thinking of tempreature predictor)
 
-prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
+prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type,nbcores=6){
   
   # dimensions
   d = dim(Y)
@@ -305,10 +306,12 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
     nG = d[1]
     nS = d[2]
     nY = d[3]
+    paralType = 'Grid'
   }else{
     # Y is a matrix: Scenario x Time
     nS = nrow(Y)
     nY = ncol(Y)
+    paralType = 'Time'
   }
   if(is.vector(X)){
     if(nY!=length(X)){
@@ -337,64 +340,100 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type){
   # number of future time/global.tas
   nFut = length(Xfut)
   
+  if(paralType=="Time"){
+    # prepare outputs
+    phiStar = phi = matrix(nrow=nS,ncol=nFut)
+    etaStar = YStar = matrix(nrow=nS,ncol=nY)
+    climateResponse = list()
+    for(iS in 1:nS){
+      # projection for this simulation chain
+      Ys = Y[iS,]
+      Xs = Xmat[iS,]
+      Xrefs = Xref[iS]
+      # fit a smooth signal
+      zz = !is.na(Ys)
+      
+      if(type=="spline"){
+        smooth.spline.out<-stats::smooth.spline(Xs[zz],Ys[zz],spar=spar[iS])
+        # store spline object
+        climateResponse[[iS]] = smooth.spline.out
+        # fitted responses at the points of the fit (for etaStar)
+        phiY = predict(smooth.spline.out, Xs)$y
+        # fitted responses at unknown points ("Xfut")
+        phiS = predict(smooth.spline.out, Xfut)$y
+        # climate response of the reference/control time/global tas
+        phiC = predict(smooth.spline.out, Xrefs)$y
+      }
+      if(type=="log_spline"){
+        Yslog10=log10(Ys)
+        smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
+        # store spline object
+        climateResponse[[iS]] = smooth.spline.out
+        # fitted responses at the points of the fit (for etaStar)
+        phiY = 10^predict(smooth.spline.out, Xs)$y
+        # fitted responses at unknown points ("Xfut")
+        phiS = 10^predict(smooth.spline.out, Xfut)$y
+        # climate response of the reference/control time/global tas
+        phiC = 10^predict(smooth.spline.out, Xrefs)$y
+      }
+      
+      # store climate response for this simulation chain
+      phi[iS,] = phiS
+      # Climate change response: phiStar, and internal variability expressed as a change: etaStar
+      if(typeChangeVariable=='abs'){
+        # Eq. 5
+        phiStar[iS,] = phiS-phiC
+        etaStar[iS,] = Ys-phiY
+        YStar[iS,] = Ys-phiC
+      }else if(typeChangeVariable=='rel'){
+        # Eq. 6
+        phiStar[iS,] = phiS/phiC-1
+        etaStar[iS,] = (Ys-phiY)/phiC
+        YStar[iS,] = (Ys-phiC)/phiC
+      }else{
+        stop("fit.climate.response: argument type.change.var must be equal to 'abs' (absolute changes) or 'rel' (relative changes)")
+      }
+    }
+    # Variance related to the internal variability: considered constant over the time period
+    # (see Eq. 22 and 23 in Hingray and Said, 2014). We use a direct empirical estimate
+    # of the variance of eta for each simulation chain and take the mean, see Eq. 19
+    varInterVariability = mean(apply(etaStar,2,function(x) var(x)),na.rm=T)
+  }
   
-  # prepare outputs
-  phiStar = phi = matrix(nrow=nS,ncol=nFut)
-  etaStar = YStar = matrix(nrow=nS,ncol=nY)
-  climateResponse = list()
-  for(iS in 1:nS){
-    # projection for this simulation chain
-    Ys = Y[iS,]
-    Xs = Xmat[iS,]
-    Xrefs = Xref[iS]
-    # fit a smooth signal
-    zz = !is.na(Ys)
+  if(paralType=="Grid"){
+    # initialise outputs
+    phiStar = phi = array(dim=c(nG,nS,length(Xfut)))
+    etaStar = YStar = array(dim=d)
+    varInterVariability = vector(length=nG)
     
-    if(type=="spline"){
-      smooth.spline.out<-stats::smooth.spline(Xs[zz],Ys[zz],spar=spar[iS])
-      # store spline object
-      climateResponse[[iS]] = smooth.spline.out
-      # fitted responses at the points of the fit (for etaStar)
-      phiY = predict(smooth.spline.out, Xs)$y
-      # fitted responses at unknown points ("Xfut")
-      phiS = predict(smooth.spline.out, Xfut)$y
-      # climate response of the reference/control time/global tas
-      phiC = predict(smooth.spline.out, Xrefs)$y
+    g = NULL # avoid warning during check
+    cl <- makeCluster(nbcores) # create a cluster with n cores
+    registerDoParallel(cl) # register the cluster
+    climResponse <- foreach(g=1:nG,.export=c("fit.climate.response")) %dopar% {
+      # check is some simulation chains are entirely missing
+      hasAllNa = apply(Y[g,,],1,function(x) all(is.na(x)))
+      if(any(hasAllNa)){
+        climResponse.g = list(phiStar = NA, etaStar = NA, phi = NA,
+                              varInterVariability = NA)
+      }else{
+        climResponse.g = fit.climate.response(Y[g,,],
+                                              spar=spar,
+                                              Xmat=Xmat, Xref=Xref, Xfut=Xfut,
+                                              typeChangeVariable=typeChangeVariable)
+      }
+      return(climResponse.g)
     }
-    if(type=="log_spline"){
-      Yslog10=log10(Ys)
-      smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
-      # store spline object
-      climateResponse[[iS]] = smooth.spline.out
-      # fitted responses at the points of the fit (for etaStar)
-      phiY = 10^predict(smooth.spline.out, Xs)$y
-      # fitted responses at unknown points ("Xfut")
-      phiS = 10^predict(smooth.spline.out, Xfut)$y
-      # climate response of the reference/control time/global tas
-      phiC = 10^predict(smooth.spline.out, Xrefs)$y
-    }
+    stopCluster(cl) # shut down the cluster
     
-    # store climate response for this simulation chain
-    phi[iS,] = phiS
-    # Climate change response: phiStar, and internal variability expressed as a change: etaStar
-    if(typeChangeVariable=='abs'){
-      # Eq. 5
-      phiStar[iS,] = phiS-phiC
-      etaStar[iS,] = Ys-phiY
-      YStar[iS,] = Ys-phiC
-    }else if(typeChangeVariable=='rel'){
-      # Eq. 6
-      phiStar[iS,] = phiS/phiC-1
-      etaStar[iS,] = (Ys-phiY)/phiC
-      YStar[iS,] = (Ys-phiC)/phiC
-    }else{
-      stop("fit.climate.response: argument type.change.var must be equal to 'abs' (absolute changes) or 'rel' (relative changes)")
+    # fill the matrices
+    for(g in 1:nG){
+      phiStar[g,,] = climResponse[[g]]$phiStar
+      etaStar[g,,] = climResponse[[g]]$etaStar
+      phi[g,,] = climResponse[[g]]$phi
+      varInterVariability[g] = climResponse[[g]]$varInterVariability
     }
   }
-  # Variance related to the internal variability: considered constant over the time period
-  # (see Eq. 22 and 23 in Hingray and Said, 2014). We use a direct empirical estimate
-  # of the variance of eta for each simulation chain and take the mean, see Eq. 19
-  varInterVariability = mean(apply(etaStar,2,function(x) var(x)),na.rm=T)
+  
   # return objects
   return(list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability))
   
@@ -2093,7 +2132,8 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   if(!pix){
     plt1=base_map_outlets(data = exut[exut$source!="iv",],val_name = "val")
   }else{
-    plt1=base_map_grid(data = exut[exut$source!="iv",],val_name = "val")
+    plt1=base_map_grid(data = exut[exut$source!="iv",],val_name = "val")+
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   plt1=plt1+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col1),breaks=seq(0,lim_col1,length.out=6),show.limits = T,labels= c(0,round(seq(0+(lim_col1-0)/6,0+(lim_col1-0)/6*4,length.out=4),1),paste0("> ",lim_col1)),oob=squish)+#that way because stepsn deforms colors
@@ -2106,11 +2146,12 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   if(!pix){
     plt2=base_map_outlets(data = exut[exut$source=="iv",],val_name = "val")
   }else{
-    plt2=base_map_grid(data = exut[exut$source=="iv",],val_name = "val")
+    plt2=base_map_grid(data = exut[exut$source=="iv",],val_name = "val")+
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   plt2=plt2+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
-    facet_grid(. ~ title)
+    facet_grid(. ~ title)+
   if(!pix){
     plt2$layers[[3]]$aes_params$size=3
   }
@@ -2120,7 +2161,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   # plt=ggarrange(plt1,plt2,ncol=2,widths=c(0.68,0.32))
   plt=ggarrange(plt1,plt2,nrow=2,heights=c(0.6,0.4))
   if(title==T){
-    plt=annotate_figure(plt, top = text_grob(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name,"\n(",horiz,pred_unit,")"), face = "bold", size = 20,hjust=0.5))
+    plt=annotate_figure(plt, top = text_grob(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz,pred_unit,")"), face = "bold", size = 18,hjust=0.5))
   }
   
   
