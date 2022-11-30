@@ -27,10 +27,12 @@ path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
 
 Var=vector(mode="list")
 Var[["tasAdjust"]]=c(rep("monmean",12),"seasmean","seasmean","seasmean","seasmean","yearmean")
-Var[["prtotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
-Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
+# Var[["prtotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
+Var[["prtotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
+# Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
+Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
 Var[["evspsblpotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
-period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","","_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
+period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","R2D2")
 

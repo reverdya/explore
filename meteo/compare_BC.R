@@ -97,7 +97,8 @@ points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 for(v in unique(simu_lst$var)[1:2]){
   dir.create(paste0(path_fig,v,"/"))
   if (v!="tasAdjust"){
-    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16,30,31,32,33)]
+    # stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16,30,31,32,33)]#outdated because not doing ocurences anymore
+    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]
   }else{
     stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]
   }
