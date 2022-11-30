@@ -79,6 +79,48 @@ n_pix=ncol(all_chains[[1]])-1
 
 
 
+## Qualypso parallelised over space fit climate response outside
+start <- Sys.time ()
+
+ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
+X=unique(ClimateProjections$year)
+Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
+lst.QUALYPSOOUT_space_parallel2=vector(mode="list",length=length(X))
+rm(ClimateProjections)
+gc()
+Y=aperm(Y,c(1,3,2))
+tmp=prepare_clim_resp(Y=Y,X=X,Xref = ref_year,Xfut = X,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
+listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
+rm(tmp)
+gc()
+for(x in X){
+  lst.QUALYPSOOUT_space_parallel2[[x+1-X[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
+                                                         scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                                         X=X,
+                                                         Xref = ref_year,
+                                                         iFut=x+1-X[1],
+                                                         listOption=listOption)
+  if(x!=X[1]){
+    lst.QUALYPSOOUT_space_parallel2[[x+1-X[1]]]$CLIMATEESPONSE=NA #to not store 9892 times the same information
+  }
+  if(((x+1-X[1]) %% 10)==0){print(x+1-X[1])}
+}
+
+rm(Y,X,listOption)
+closeAllConnections()
+gc()
+save(lst.QUALYPSOOUT_space_parallel2,file=paste0(path_data,"Qualypso/parallel_test/",v,"_",i,"_list_QUALYPSOOUT_space_parallel2.RData"))
+rm(lst.QUALYPSOOUT_space_parallel2) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
+closeAllConnections()
+gc()
+
+times_store=Sys.time () - start
+save(times_store,file=paste0(path_data,"Qualypso/parallel_test/times_run_parallel.RData"))
+
+
+
+
+
 ## Qualypso parallelised over time
 start <- Sys.time ()
 lst.QUALYPSOOUT_time_parallel=vector(mode="list",length=n_pix)
@@ -102,49 +144,12 @@ save(lst.QUALYPSOOUT_time_parallel,file=paste0(path_data,"Qualypso/parallel_test
 rm(lst.QUALYPSOOUT_time_parallel) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
 closeAllConnections()
 gc()
-times_store=Sys.time () - start
-save(times_store,file=paste0(path_data,"Qualypso/parallel_test/times_run_parallel.RData"))
-
-
-
-
-
-
-## Qualypso parallelised over space fit climate response outside
-start <- Sys.time ()
-
-
-ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
-X=unique(ClimateProjections$year)
-Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
-lst.QUALYPSOOUT_space_parallel2=vector(mode="list",length=length(X))
-rm(ClimateProjections)
-gc()
-Y=aperm(Y,c(1,3,2))
-tmp=prepare_clim_resp(Y=Y,X=X,Xref = ref_year,Xfut = X,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
-listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
-rm(tmp)
-gc()
-for(x in X){
-  lst.QUALYPSOOUT_space_parallel2[[x+1-X[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                                        scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
-                                                        X=X,
-                                                        Xref = ref_year,
-                                                        iFut=x+1-X[1],
-                                                        listOption=listOption)
-  if(x!=X[1]){
-    lst.QUALYPSOOUT_space_parallel2[[x+1-X[1]]]$CLIMATEESPONSE=NA #to not store 9892 times the same information
-  }
-  if(((x+1-X[1]) %% 10)==0){print(x+1-X[1])}
-}
-
-rm(Y,X,listOption)
-closeAllConnections()
-gc()
-save(lst.QUALYPSOOUT_space_parallel2,file=paste0(path_data,"Qualypso/parallel_test/",v,"_",i,"_list_QUALYPSOOUT_space_parallel2.RData"))
-rm(lst.QUALYPSOOUT_space_parallel2) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
-closeAllConnections()
-gc()
-
 times_store=c(times_store,Sys.time () - start)
 save(times_store,file=paste0(path_data,"Qualypso/parallel_test/times_run_parallel.RData"))
+
+
+
+
+
+
+
