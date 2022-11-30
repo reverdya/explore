@@ -87,7 +87,7 @@ for(v in unique(simu_lst$var)[c(2)]){
       #Warnings okay
       
       ##Time predictor
-      listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
+      listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5)#no need for quantile posterior with lm
       
       lst.QUALYPSOOUT_time[[p-1]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
                                              scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
