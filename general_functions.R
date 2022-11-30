@@ -405,6 +405,7 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type,nbcor
     phiStar = phi = array(dim=c(nG,nS,length(Xfut)))
     etaStar = YStar = array(dim=d)
     varInterVariability = vector(length=nG)
+    climateResponse=vector(mode="list",length=nG)
     
     g = NULL # avoid warning during check
     cl <- makeCluster(nbcores) # create a cluster with n cores
@@ -431,6 +432,8 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type,nbcor
       etaStar[g,,] = climResponse[[g]]$etaStar
       phi[g,,] = climResponse[[g]]$phi
       varInterVariability[g] = climResponse[[g]]$varInterVariability
+      YStar[g,,] = climResponse[[g]]$YStar
+      climateResponse[[g]]=climResponse[[g]]$climateResponse
     }
   }
   
