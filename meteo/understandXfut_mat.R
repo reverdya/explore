@@ -116,7 +116,7 @@ spline1=smooth.spline(x=df$x1[df$time>=1970],y=df$y1[df$time>=1970],spar = 1)
 spline2=smooth.spline(x=df$x2[df$time>=1970],y=df$y2[df$time>=1970],spar = 1)
 df$y1_spline[df$time>=1970]=spline1$y
 df$y2_spline[df$time>=1970]=spline2$y
-Yref=c(predict(spline1,xref[1])$y,predict(spline2,xref[2])$y)
+Yref=c(predict(spline1,Xref[1])$y,predict(spline2,Xref[2])$y)
 
 plt4=ggplot(df)+
   geom_line(aes(x=x1,y=y1),color="red",size=0.8)+
@@ -156,7 +156,7 @@ plt5=ggplot(df)+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Différence d'indicateur en fonction de\nla température planétaire avec spline")+
+  ggtitle("Différence d'indicateur en fonction de\nla température planétaire")+
   annotate("text", x = Xref[1], y = 0.85, label = "Xref1",fontface = "bold",size=3,color="red")+
   annotate("text", x = Xref[2], y = 0.9, label = "Xref2",fontface = "bold",size=3,color="blue")
 plt5
@@ -174,7 +174,7 @@ plt6=ggplot(df)+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Différence d'indicateur en fonction de\nla différence de température planétaire avec spline")
+  ggtitle("Différence d'indicateur en fonction de\nla différence de température planétaire")
 plt6
 
 X_1990_obs=0.6
@@ -191,7 +191,7 @@ plt7=ggplot(df)+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Différence d'indicateur en fonction du\nniveau de réchauffement planétaire avec spline")
+  ggtitle("Différence d'indicateur en fonction du\nniveau de réchauffement planétaire")
 plt7
 
 plt=ggarrange(plt1,plt2,plt3,plt4,plt5,plt6,plt7,ncol=3,nrow=3,align="v")
