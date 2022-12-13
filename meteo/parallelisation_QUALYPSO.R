@@ -85,7 +85,7 @@ start <- Sys.time ()
 ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
 X=unique(ClimateProjections$year)
 Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
-lst.QUALYPSOOUT_space_parallel2=vector(mode="list",length=length(X))
+lst.QUALYPSOOUT_space_parallel=vector(mode="list",length=length(X))
 rm(ClimateProjections)
 gc()
 Y=aperm(Y,c(1,3,2))
@@ -94,14 +94,20 @@ listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nB
 rm(tmp)
 gc()
 for(x in X){
-  lst.QUALYPSOOUT_space_parallel2[[x+1-X[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
+  lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
                                                          scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
                                                          X=X,
                                                          Xref = ref_year,
                                                          iFut=x+1-X[1],
                                                          listOption=listOption)
+  lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]]$listOption$climResponse=NA #to not store twice the same information
+  lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]]$RESERR=NA
+  lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]]$CHANGEBYEFFECT=NA
   if(x!=X[1]){
-    lst.QUALYPSOOUT_space_parallel2[[x+1-X[1]]]$CLIMATEESPONSE=NA #to not store 9892 times the same information
+    lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
+    lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]]$Y=NA #to not store 9892 times the same information, stored only the first time
+  }else{
+    lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]]$CLIMATEESPONSE$YStar=NA
   }
   if(((x+1-X[1]) %% 10)==0){print(x+1-X[1])}
 }
@@ -109,8 +115,8 @@ for(x in X){
 rm(Y,X,listOption)
 closeAllConnections()
 gc()
-save(lst.QUALYPSOOUT_space_parallel2,file=paste0(path_data,"Qualypso/parallel_test/",v,"_",i,"_list_QUALYPSOOUT_space_parallel2.RData"))
-rm(lst.QUALYPSOOUT_space_parallel2) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
+save(lst.QUALYPSOOUT_space_parallel,file=paste0(path_data,"Qualypso/parallel_test/",v,"_",i,"_list_QUALYPSOOUT_space_parallel.RData"))
+rm(lst.QUALYPSOOUT_space_parallel) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
 closeAllConnections()
 gc()
 
