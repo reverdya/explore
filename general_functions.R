@@ -12,7 +12,7 @@ library(ncdf4) #netcdf
 library(tictoc) #runtime
 library(lubridate) #date management
 # git submodule update --remote --merge # in terminal
-# install.packages(paste0(getwd(),"/QUALYPSO/"), repos = NULL, type="source")
+# install.packages(paste0(getwd(),"/QUALYPSO/"), repos = NULL, type="source") # and close R so that git does not freak out
 library(QUALYPSO) #Qualypso
 library(parallel) #detectCores
 library(foreach) #parallelization
