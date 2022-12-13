@@ -183,7 +183,7 @@ for(v in unique(simu_lst$var)[1:2]){
           facet_wrap(vars(mod),nrow=7)+
           theme(panel.spacing.x = unit(0.1, "lines"))+
           theme(strip.text.y = element_text(size = 9))
-        save.plot(plt,Filename = paste0(v,"_",i,"_chronique",ref_cities$name[cities-1],"_",r),Folder = paste0(path_fig,v,"/"),Format = "jpeg")
+        save.plot(plt,Filename = paste0(v,"_",i,"_chronique_",ref_cities$name[cities-1],"_",r),Folder = paste0(path_fig,v,"/"),Format = "jpeg")
       }
     }
   }
