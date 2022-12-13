@@ -1016,6 +1016,8 @@ plotQUALYPSO_boxplot_horiz_rcp=function(QUALYPSOOUT,pred,pred_name,ind_name,ind_
   phiStar.corr=bind_rows(phiStar.corr)
   if(var!="tasAdjust"){
     phiStar.corr[,c(1:3)]=phiStar.corr[,c(1:3)]*100
+    if(any(phiStar.corr[,c(1:3)]<(-1))){warning("Lower bound forced to -100%")}
+    phiStar.corr[phiStar.corr[,c(1:3)]<-1,c(1:3)]=(-1)
   }
   phiStar.corr=pivot_longer(phiStar.corr,cols=-c(rcp),names_to = "horiz",values_to = "val")
   
@@ -1146,11 +1148,13 @@ mask_fr=as.vector(res)
 mask_fr=mask_fr[as.vector(refs$mask)==1]
 
 
-base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,facet_horizontal_name=NULL,threshold="<80%",exclude_horizontal=c("5%","95%")){
+base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,facet_horizontal_name=NULL,threshold="<80%",exclude_horizontal=c("5%","95%"),afterscale=F){
   n=nrow(data)
   n_rep=n/length(mask_fr)
   data$idx=data$idx*rep(mask_fr,n_rep)
-  data=data[data$idx!=0,]
+  if(!afterscale){
+    data=data[data$idx!=0,]
+  }
   if(!is.null(pattern_name)){
     data$sign_bin=data[,val_name]
     data$sign_bin[data[,pattern_name]==threshold]=0
@@ -1176,14 +1180,22 @@ base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,face
     plt=ggplot(data=data)+
       geom_tile(aes(x=x,y=y,fill=get(val_name)))+
       geom_polygon_pattern(data=mask_polygon,aes(x = long, y = lat,group=group,pattern_density=as.character(layer)),pattern_alpha=0.5,pattern_color="black",pattern_fill="white",pattern_size=0.6,color=NA,fill=NA,pattern="circle")+
-      scale_pattern_density_discrete(range = c(0.4,0))
+      scale_pattern_density_discrete(range = c(0.4,0))+
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 15,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))+
+      geom_polygon(data=fr_L2,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)
   }else{
-    plt=ggplot(data=data)+
-      geom_tile(aes(x=x,y=y,fill=get(val_name)))+
-      geom_path(data=river_L2,aes(x=long,y=lat,group=group),colour="gray80",size=0.1,alpha=0.5)
+    if(afterscale){
+      plt=ggplot(data=data,aes(x=x,y=y,color=get(val_name)))+
+        geom_tile(aes(fill=after_scale(colour)),key_glyph = draw_key_rect)
+    }else{
+      plt=ggplot(data=data)+
+        geom_tile(aes(x=x,y=y,fill=get(val_name)))+
+        geom_path(data=river_L2,aes(x=long,y=lat,group=group),colour="gray80",size=0.1,alpha=0.5)+
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 15,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))+
+        geom_polygon(data=fr_L2,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)
+    }
   }
   plt=plt+
-    geom_polygon(data=fr_L2,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)+
     coord_equal()+
     scale_x_continuous("")+
     scale_y_continuous("")+
@@ -1191,8 +1203,7 @@ base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,face
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.2))+
     theme(axis.ticks =element_blank(),axis.text = element_blank() )+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
-    theme(strip.text = element_text(size = 12, face = "bold"))+
-    guides(fill=guide_colorbar(barwidth = 2, barheight = 15,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+    theme(strip.text = element_text(size = 12, face = "bold"))
   return(plt)
 }
 
