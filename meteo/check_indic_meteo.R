@@ -191,22 +191,14 @@ for(v in unique(simu_lst$var)){
         X=Y[1,]
         Y=Y[-1,]
         nS=nrow(scenAvail)
-        if(scenAvail$indic[1]=="VNC10"){#for use of logarithm
-          clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "rel",spar = rep(SPAR,nrow(scenAvail)),type = "log_spline")
-        }else{
-          if(scenAvail$var[1]=="tasAdjust"){
-            clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "abs",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
-          }else{
-            clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "rel",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
-          }
-        }
-        raw=data.frame(t(clim_resp$phiStar+clim_resp$etaStar))
+        clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "abs",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
+        raw=data.frame(t(Y))
         colnames(raw)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
         raw[is.na(t(Y))]=NA
         raw$year=X
         raw=pivot_longer(data=raw,cols=!year,names_to = "model",values_to = "val")
         raw$type="raw"
-        spline=data.frame(t(clim_resp$phiStar))
+        spline=data.frame(t(clim_resp$phi))
         colnames(spline)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
         spline[is.na(t(Y))]=NA
         spline$year=X
@@ -221,9 +213,8 @@ for(v in unique(simu_lst$var)){
         
         
         if(v!="tasAdjust"){
-          data$val=data$val*100
-          ylabel="Réponse au\nchangement climatique"
-          unit=" (%)"
+          ylabel="Réponse climatique"
+          unit=" (mm)"
         }else{
           ylabel="Réponse climatique"
           unit=" (°C)"
@@ -245,9 +236,9 @@ for(v in unique(simu_lst$var)){
             theme(panel.spacing.x = unit(0.5, "lines"))+
             theme(strip.text.y = element_text(size = 9))
           if(SPAR==1){
-            save.plot(plt,Filename = paste0(v,"_",i,"_chronique_rel_",ref_cities$name[cities-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
+            save.plot(plt,Filename = paste0(v,"_",i,"_chronique_",ref_cities$name[cities-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
           }else{
-            save.plot(plt,Filename = paste0(v,"_",i,"_chronique_rel_",ref_cities$name[cities-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
+            save.plot(plt,Filename = paste0(v,"_",i,"_chronique_",ref_cities$name[cities-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
           }
         }
       }
