@@ -318,7 +318,7 @@ names(season.labs) <- unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]
 plt=base_map_grid(data = exut,val_name = "val")
 plt=plt+
   facet_grid(thresh ~ season,labeller = labeller(thresh = thresh.labs, season = season.labs))+
-  binned_scale(aesthetics = "fill",scale_name = "toto",name="Part des chaînes (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,100),breaks=seq(0,100,20),show.limits = T,oob=squish)+#that way because stepsn deforms colors
+  binned_scale(aesthetics = "fill",scale_name = "toto",name="Part des\nchaînes (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,100),breaks=seq(0,100,20),show.limits = T,oob=squish)+#that way because stepsn deforms colors
   ggtitle(paste0("Part des chaînes avec au moins 20%, 40% ou 60% de cumuls de\nprécipitation neigeuse saisonniers non nuls entre 1970 et 2100"))+
   theme(panel.border = element_rect(colour = "black",fill=NA))+
   theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
