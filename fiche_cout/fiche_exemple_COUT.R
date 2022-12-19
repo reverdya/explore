@@ -30,7 +30,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/"
 path_Rmd="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_exemple_COUT.Rmd"
-path_Rmd_faster="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_exemple_COUT_faster.Rmd"
+path_Rmd_faster="C:/Users/reverdya/Documents/Docs/1_code/explorefiche_cout/fiche_exemple_COUT_faster.Rmd"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
@@ -321,4 +321,4 @@ map_gcmchang=map_gcmchang+
 #MARKDOWN#
 ##########
 
-rmarkdown::render(path_Rmd_faster,output_format = "word_document2",output_options = list(reference_docx="C:/Users/reverdya/Documents/Docs/1_code/explore/template_word.docx") ,output_file = "fiche_exemple_COUT_faster.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
+rmarkdown::render(path_Rmd_faster,output_format = "word_document2",output_options = list(reference_docx="C:/Users/reverdya/Documents/Docs/1_code/explore/éfiche_cout/template_word.docx") ,output_file = "fiche_exemple_COUT_faster.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
