@@ -290,14 +290,13 @@ rle2 <- function (x)  {
 ## Prepare specific climate response for QUALYPSO
 ## Y the nS x nY or nG x nS x nY indicator, can take in NA
 ## X the predictor (vector or same size as Y)
-## Xref the reference value (or vector)
 ## typeChangeVariable "rel" or "abs"
 ## spar the spline smoothing in case of spline (vector of  size nS)
 ## type the type of smoothing applied: spline (classic but can pick each spar, log_spline (log transform, spline , then unlog)
 
 ## etaStar is by definition of X dimensions's and not Xfut and can contain NA (logical when thinking of tempreature predictor)
 
-prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type,nbcores=6){
+prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6){
   
   # dimensions
   d = dim(Y)
@@ -329,6 +328,7 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type,nbcor
   }else{
     stop('X must be a vector or a matrix')
   }
+  Xref=Xfut[1]
   # if Xref is provided, we check that is a single value within the values of X
   if(!any(length(Xref)==c(1,nS))|!is.numeric(Xref)){
     stop('Xref must be a single numeric value or a vector of length nS')
@@ -419,7 +419,7 @@ prepare_clim_resp=function(Y, X, Xref, Xfut, typeChangeVariable, spar,type,nbcor
       }else{
         climResponse.g = fit.climate.response(Y[g,,],
                                               spar=spar,
-                                              Xmat=Xmat, Xref=Xref, Xfut=Xfut,
+                                              Xmat=Xmat, Xfut=Xfut,
                                               typeChangeVariable=typeChangeVariable)
       }
       return(climResponse.g)

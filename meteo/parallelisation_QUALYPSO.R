@@ -89,15 +89,14 @@ lst.QUALYPSOOUT_space_parallel=vector(mode="list",length=length(X))
 rm(ClimateProjections)
 gc()
 Y=aperm(Y,c(1,3,2))
-tmp=prepare_clim_resp(Y=Y,X=X,Xref = ref_year,Xfut = X,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
+tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
 listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
 rm(tmp)
 gc()
-for(x in X){
+for(x in seq(ref_year,X[length(X)])){
   lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
                                                          scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
                                                          X=X,
-                                                         Xref = ref_year,
                                                          iFut=x+1-X[1],
                                                          listOption=listOption)
   lst.QUALYPSOOUT_space_parallel[[x+1-X[1]]]$listOption$climResponse=NA #to not store twice the same information
@@ -139,8 +138,7 @@ for(p in 2:(n_pix+1)){
   lst.QUALYPSOOUT_time_parallel[[p-1]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
                                          scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
                                          X=X,
-                                         Xref = ref_year,
-                                         Xfut = X,
+                                         Xfut = seq(ref_year,X[length(X)]),
                                          listOption=listOption)# no Xfut or iFut because we want all values
   if(((p-1) %% 500)==0){print(p-1)}
 }

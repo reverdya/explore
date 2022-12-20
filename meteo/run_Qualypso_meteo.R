@@ -29,11 +29,6 @@ load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
 
 ref_year=1990# central year of 1975-2005 reference period
-first_ref_year=1975
-last_ref_year=2005
-first_data_year=1950
-last_data_year=2100
-vecYears=seq(first_data_year,last_data_year)
 
 ######
 #MAIN#
@@ -49,7 +44,7 @@ for(v in unique(simu_lst$var)[c(2)]){
     typechangeVar="rel"
     SPAR=1.1
   }
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[14]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[17]){
   # for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     dir.create(paste0(path_data,"Qualypso/",v,"/",i))
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
@@ -76,32 +71,51 @@ for(v in unique(simu_lst$var)[c(2)]){
       colnames(res)[1]="year"
       all_chains[[c]]=res
     }
-    n_pix=ncol(all_chains[[1]])-1
-    lst.QUALYPSOOUT_time=vector(mode="list",length=n_pix)
     
     tic()
-    for(p in 2:(n_pix+1)){
-      ClimateProjections=lapply(all_chains, function(x) x[,c(1,p)])
-      Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections)[,-1])#allows for NA
-      X=Reduce(function(...) merge(...,by="year", all=T), ClimateProjections)[,1]
-      #Warnings okay
-      
-      ##Time predictor
-      listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5)#no need for quantile posterior with lm
-      
-      lst.QUALYPSOOUT_time[[p-1]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                             scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
-                                             X=X,
-                                             Xref = ref_year,
-                                             Xfut = X,
-                                             listOption=listOption)# no Xfut or iFut because we want all values
-      if(((p-1) %% 500)==0){print(p-1)}
+    n_pix=ncol(all_chains[[1]])-1
+    ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
+    X=unique(ClimateProjections$year)
+    Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
+    lst.QUALYPSOOUT_time=vector(mode="list",length=length(X))
+    rm(ClimateProjections)
+    gc()
+    Y=aperm(Y,c(1,3,2))
+    Xfut=seq(ref_year,X[length(X)])
+    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
+    listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
+    rm(tmp)
+    gc()
+ 
+    
+    lst.QUALYPSOOUT_time=vector(mode="list",length=length((Xfut)))
+    for(x in Xfut){
+    # for(x in c(2030,2050,2085)){
+      lst.QUALYPSOOUT_time[[x+1-X[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
+                                                            scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                                            X=X,
+                                                            Xfut=Xfut,
+                                                            iFut=x+1-X[1],
+                                                            listOption=listOption)
+      lst.QUALYPSOOUT_time[[x+1-X[1]]]$listOption$climResponse=NA #to not store twice the same information
+      lst.QUALYPSOOUT_time[[x+1-X[1]]]$RESERR=NA
+      lst.QUALYPSOOUT_time[[x+1-X[1]]]$CHANGEBYEFFECT=NA
+      lst.QUALYPSOOUT_time[[x+1-X[1]]]$CLIMATEESPONSE$YStar=NA
+      if(x!=X[1]){
+        lst.QUALYPSOOUT_time[[x+1-X[1]]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
+        lst.QUALYPSOOUT_time[[x+1-X[1]]]$Y=NA #to not store 9892 times the same information, stored only the first time
+      }
+      if(((x+1-X[1]) %% 10)==0){print(x+1-X[1])}
     }
-    save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_lm.RData"))
-    toc() 
+    
+    rm(Y,X,listOption)
+    closeAllConnections()
+    gc()
+    save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
+    rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
+    closeAllConnections()
+    gc()
+    toc()
   }
-  rm(ClimateProjections,Y,X,lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
-  closeAllConnections()
-  gc()
 }
 
