@@ -79,6 +79,7 @@ mat_Globaltas_local= mat_Globaltas_local * 1.3 # local French warming 30% greate
 ## Linear method
 
 Y=t(mat_Globaltas_local)
+Xfut=seq(1990,years[length(years)])
 
 ##Time predictor
 listOption = list(spar=1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
@@ -86,7 +87,7 @@ listOption = list(spar=1,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn
 QUALYPSOOUT_time = QUALYPSO(Y=Y, #one Y and run per basin because otherwise we cannot have several future times
                                        scenAvail=scenAvail,
                                        X = years,
-                                       Xref = ref_year,
+                                       Xfut=Xfut,
                                        listOption=listOption)# no Xfut or iFut because we want all values
 ##Temperature predictor
 listOption = list(spar=2,typeChangeVariable=typeChangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
@@ -96,8 +97,7 @@ QUALYPSOOUT_temp_3rcp = QUALYPSO(Y=Y, #one Y and run per basin because otherwise
                                             scenAvail=scenAvail,
                                             X = t(mat_Globaltas_gcm),
                                             #Xref = ref_Globaltas_gcm,
-                                            Xref=0.7,
-                                            Xfut=seq(0.5,1.5,0.01),
+                                            Xfut=seq(0.7,1.5,0.01),
                                             listOption=listOption)# no iFut because we want all values
 
 idx_2rcp=which(scenAvail$rcp=="rcp45"|scenAvail$rcp=="rcp85")
@@ -105,8 +105,7 @@ QUALYPSOOUT_temp_2rcp = QUALYPSO(Y=Y[idx_2rcp,], #one Y and run per basin becaus
                                             scenAvail=scenAvail[idx_2rcp,],
                                             X = t(mat_Globaltas_gcm[,idx_2rcp]),
                                             #Xref = ref_Globaltas_gcm[idx_2rcp],
-                                            Xref=0.7,
-                                            Xfut=seq(0.5,2.5,0.01),
+                                            Xfut=seq(0.7,2.5,0.01),
                                             listOption=listOption)# no iFut because we want all values
 
 save(QUALYPSOOUT_time,file=paste0(path_data,"processed/qualypso/QUALYPSOOUT_fictive_localT_time_lm.RData"))

@@ -191,7 +191,8 @@ for(v in unique(simu_lst$var)){
         X=Y[1,]
         Y=Y[-1,]
         nS=nrow(scenAvail)
-        clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "abs",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
+        Xfut=seq(ref_year,X[length(X)])
+        clim_resp=prepare_clim_resp(Y=Y,X=X,Xfut=Xfut,typeChangeVariable = "abs",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
         raw=data.frame(t(Y))
         colnames(raw)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
         raw[is.na(t(Y))]=NA
