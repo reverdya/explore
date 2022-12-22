@@ -101,12 +101,12 @@ for(v in unique(simu_lst$var)[c(2)]){
 ## Maps
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(1,2)]){
+for(v in unique(simu_lst$var)[c(2)]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
     dir.create(folder_out)
-    load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_lm.RData"))
+    load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
     lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
     pred_name="temps"
     pred="time"
@@ -143,19 +143,21 @@ for(v in unique(simu_lst$var)[c(1,2)]){
 
 ###################################################################################################
 ## Plot map of reference (1990) value of indicator mean response
+## Does not work for temperature predictor
 
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(1,2)]){
+for(v in unique(simu_lst$var)[c(2)]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
-    load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_lm.RData"))
+    load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
     lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
     exut$idx=seq(1:nrow(exut))
-    exut$val=unlist(lapply(lst.QUALYPSOOUT, function(x) mean(x$CLIMATEESPONSE$phi[,which(x$Xfut==ref_year)])))
+    idx_ref0=which(lst.QUALYPSOOUT[[1]]$Xmat[1,]==ref_year)
+    exut$val=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phi[,,idx_ref0],1,mean)
     colnames(exut)=c("x","y","idx","val")
     
     q99=quantile(exut$val,probs=0.99)

@@ -29,8 +29,8 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/"
-path_Rmd="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_exemple_COUT.Rmd"
-path_Rmd_faster="C:/Users/reverdya/Documents/Docs/1_code/explorefiche_cout/fiche_exemple_COUT_faster.Rmd"
+path_Rmd="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_cout/fiche_exemple_COUT.Rmd"
+path_Rmd_faster="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_cout/fiche_exemple_COUT_faster.Rmd"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
@@ -79,8 +79,8 @@ for(i in 1:length(lst_names_eff)){
 ##########################################################################
 ## Raw and spline times series
 SPAR=1.1
-v=unique(simu_lst$var)[1]
-i=unique(simu_lst[simu_lst$var==v,]$indic)[1:6]
+v=unique(simu_lst$var)[2]
+i=unique(simu_lst[simu_lst$var==v,]$indic)[17]
 cities=1
 
 
@@ -109,42 +109,40 @@ for(c in 1:nrow(scenAvail)){# for each chain
   all_chains[[c]]=res2
 }
 
-  
+
 ClimateProjections=lapply(all_chains, function(x) x[,c(1,cities+1)])
 Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections))
 Y=Y[,Y[1,]<=2100]
 X=Y[1,]
 Y=Y[-1,]
 nS=nrow(scenAvail)
-if(scenAvail$var[1]=="tasAdjust"){
-  clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "abs",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
-}else{
-  clim_resp=prepare_clim_resp(Y=Y,X=X,Xref=1990,Xfut=X,typeChangeVariable = "rel",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
-}
-raw_rel=data.frame(t(clim_resp$phiStar+clim_resp$etaStar))
+Xfut=seq(centr_ref_year,X[length(X)])
+idx_ref0=which(X==centr_ref_year)
+clim_resp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = "rel",spar = rep(SPAR,nrow(scenAvail)),type="spline",nbcores = nbcore)
+raw_rel=data.frame(t(clim_resp$phiStar+clim_resp$etaStar[,idx_ref0:length(X)]))
 colnames(raw_rel)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-raw_rel[is.na(t(Y))]=NA
-raw_rel$year=X
+raw_rel[is.na(t(Y[,idx_ref0:length(X)]))]=NA
+raw_rel$year=Xfut
 raw_rel=pivot_longer(data=raw_rel,cols=!year,names_to = "model",values_to = "val")
 raw_rel$type="raw_rel"
 raw_rel$val=raw_rel$val*100
 spline_rel=data.frame(t(clim_resp$phiStar))
 colnames(spline_rel)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-spline_rel[is.na(t(Y))]=NA
-spline_rel$year=X
+spline_rel[is.na(t(Y[,idx_ref0:length(X)]))]=NA
+spline_rel$year=Xfut
 spline_rel=pivot_longer(data=spline_rel,cols=!year,names_to = "model",values_to = "val")
 spline_rel$type="spline_rel"
 spline_rel$val=spline_rel$val*100
-raw=data.frame(t(Y))
+raw=data.frame(t(Y[,idx_ref0:length(X)]))
 colnames(raw)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-raw[is.na(t(Y))]=NA
-raw$year=X
+raw[is.na(t(Y[,idx_ref0:length(X)]))]=NA
+raw$year=Xfut
 raw=pivot_longer(data=raw,cols=!year,names_to = "model",values_to = "val")
 raw$type="raw"
 spline=data.frame(t(clim_resp$phi))
 colnames(spline)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-spline[is.na(t(Y))]=NA
-spline$year=X
+spline[is.na(t(Y[,idx_ref0:length(X)]))]=NA
+spline$year=Xfut
 spline=pivot_longer(data=spline,cols=!year,names_to = "model",values_to = "val")
 spline$type="spline"
 
@@ -208,7 +206,7 @@ plt_spline_time_rel=ggplot(data[data$rcp==r&(data$type=="raw_rel"|data$type=="sp
 
 v="prtotAdjust"
 i="yearsum"
-load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_lm.RData"))
+load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
 lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
 pred_name="temps"
 pred_unit=""
@@ -216,25 +214,25 @@ xlim=c(1990,2100)
 b=1
 idx=ref_cities$idx_masked[cities]
 
-plt_bilan=plotQUALYPSO_summary_change(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=c(1990,2100),simpler=T,var="prtotAdjust",indic="yearsum",idx_pix=idx)
+plt_bilan=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=c(1990,2100),simpler=T,var="prtotAdjust",indic="yearsum",idx_pix=idx)
 
 ##################################################################################
 ## Boxplot per horizon and RCP
 
 
-plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,var="prtotAdjust",indic="yearsum",horiz = c(2030,2050,2085),title=F)
+plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,var="prtotAdjust",indic="yearsum",horiz = c(2030,2050,2085),title=F)
 
 #####################################
 ## Effet GCM, effet RCM, effet BC
 
-plt_gcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_gcm_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
 plt_gcm_effect=plt_gcm_effect+
   labs(title=NULL)+
   ylab("[%]")+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
 
-plt_rcm_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_rcm_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
 plt_rcm_effect=plt_rcm_effect+
   labs(title=NULL)+
   ylab("[%]")+
@@ -242,7 +240,7 @@ plt_rcm_effect=plt_rcm_effect+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
   scale_color_discrete("",type=plasma(4))
 
-plt_bc_effect=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+plt_bc_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
 plt_bc_effect=plt_bc_effect+
   labs(title=NULL)+
   ylab("[%]")+
@@ -254,7 +252,7 @@ plt_bc_effect=plt_bc_effect+
 #######################################
 ## Changements RCM, GCM, BC, HM
 
-plt_gcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
+plt_gcm_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_gcm_change=plt_gcm_change+
   labs(title=NULL)+
   ylab("[%]")+
@@ -262,7 +260,7 @@ plt_gcm_change=plt_gcm_change+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
   
 
-plt_rcm_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
+plt_rcm_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_rcm_change=plt_rcm_change+
   labs(title=NULL)+
   ylab("[%]")+
@@ -270,7 +268,7 @@ plt_rcm_change=plt_rcm_change+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
   scale_color_discrete("",type=plasma(4))
 
-plt_bc_change=plotQUALYPSOeffect_ggplot(QUALYPSOOUT = lst.QUALYPSOOUT[[idx]],nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
+plt_bc_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_bc_change=plt_bc_change+
   labs(title=NULL)+
   ylab("[%]")+
@@ -293,7 +291,7 @@ map_part=map_part+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
 
-map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),rcp_name = "rcp85",rcp_plainname="RCP 8.5",folder_out = NA,pix=T,nbcores=nbcores)
+map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),rcp_name = "rcp85",rcp_plainname="RCP 8.5",folder_out = folder_out,freq_col=0.99,pix=T,var=v,nbcores=nbcores)
 map_quant_horiz=map_quant_horiz+
   labs(title=NULL)
 
@@ -321,4 +319,4 @@ map_gcmchang=map_gcmchang+
 #MARKDOWN#
 ##########
 
-rmarkdown::render(path_Rmd_faster,output_format = "word_document2",output_options = list(reference_docx="C:/Users/reverdya/Documents/Docs/1_code/explore/éfiche_cout/template_word.docx") ,output_file = "fiche_exemple_COUT_faster.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
+rmarkdown::render(path_Rmd,output_format = "word_document2",output_options = list(reference_docx="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_cout/template_word.docx") ,output_file = "fiche_exemple_COUT.docx",output_dir =paste0(path_fig,"COUT/"),quiet = TRUE)
