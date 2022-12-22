@@ -453,19 +453,35 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6){
 ## line 4= mean+eff_rcp1+eff_gcm2+eff_rcm1...
 ## line 5= mean+eff_rcp2+eff_gcm2+eff_rcm1...
 
-reconstruct_chains=function(lst.QUALYPSOOUT,idx){
+reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
   neff=length(lst.QUALYPSOOUT[[1]]$namesEff)
   n_eachEff=vector()
   for(i in 1:neff){
     n_eachEff[i]=ncol(lst.QUALYPSOOUT[[1]]$MAINEFFECT[[i]]$MEAN)
   }
-  chains=data.frame(do.call("rbind", replicate(prod(n_eachEff),lapply(lst.QUALYPSOOUT,function(x) x$GRANDMEAN$MEAN[idx]), simplify = FALSE)))
+  if(!is.null(idx_pred)){
+    chains=data.frame(do.call("rbind", replicate(prod(n_eachEff),lapply(lst.QUALYPSOOUT,function(x) x$GRANDMEAN$MEAN[idx_pred]), simplify = FALSE)))
+  }
+  if(!is.null(idx_space)){
+    chains=data.frame(do.call("rbind", replicate(prod(n_eachEff),lst.QUALYPSOOUT[[idx_space]]$GRANDMEAN$MEAN, simplify = FALSE)))
+  }
   lst_eff=vector(mode = "list",length=neff)
-  for (j in 1:length(lst.QUALYPSOOUT[[1]]$Xfut)){
-    for(i in 1:neff){
-      lst_eff[[i]]=lapply(lst.QUALYPSOOUT,function(x) x$MAINEFFECT[[i]]$MEAN[idx,])[[j]]
+  
+  if(!is.null(idx_pred)){
+    for (j in 1:length(lst.QUALYPSOOUT[[1]]$Xfut)){
+      for(i in 1:neff){
+        lst_eff[[i]]=lapply(lst.QUALYPSOOUT,function(x) x$MAINEFFECT[[i]]$MEAN[idx,])[[j]]
+      }
+      chains[,j]=unlist(chains[,j])+rowSums(expand.grid(lst_eff))
     }
-    chains[,j]=unlist(chains[,j])+rowSums(expand.grid(lst_eff))
+  }
+  if(!is.null(idx_space)){
+    for (j in 1:length(lst.QUALYPSOOUT[[idx_space]]$GRANDMEAN$MEAN)){
+      for(i in 1:neff){
+        lst_eff[[i]]=lst.QUALYPSOOUT[[idx_space]]$MAINEFFECT[[i]]$MEAN[j,]
+      }
+      chains[,j]=chains[,j]+rowSums(expand.grid(lst_eff))
+    }
   }
   return(chains)
 }
@@ -701,7 +717,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     # phiStar
     phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_rcp,]
     #Reconstructed chains
-    chains=reconstruct_chains(lst.QUALYPSOOUT,idx)
+    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_pred = idx)
     #Replace for this rcp the reconstructed values by the true values
     idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
     chains[idx_phistar_rcp,]=phiStar
@@ -999,7 +1015,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     # phiStar
     phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_rcp,h]
     #Reconstructed chains
-    chains=reconstruct_chains(lst.QUALYPSOOUT,idx)[h]
+    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_pred = idx)[h]
     #Replace for this rcp the reconstructed values by the true values
     idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
     chains[idx_phistar_rcp,]=phiStar
@@ -1230,6 +1246,9 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
+  Xfut=lst.QUALYPSOOUT[[1]]$Xfut
+  idx_Xfut=which(Xfut==horiz)
+  probCI = lst.QUALYPSOOUT[[1]]$listOption$probCI
   quant=c("5%","mean","95%")
   
   if(pix){
@@ -1249,66 +1268,45 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   exut$val=0
   exut$sign=0
   exut$sign_agree="<80%"
-  
-  
-  cl <- makeCluster(nbcores) # create a cluster with n cores
-  registerDoParallel(cl) # register the cluster
-  
-  chg.list = foreach(i =1:length(lst.QUALYPSOOUT), .export='reconstruct_chains') %dopar% { ## no .combine by default result is a list (and no need for .packages)
+
+  for(r in rcp_names){
+    ieff_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]==r)
+    chg_mean=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,ieff_this_rcp]+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN[ieff_this_rcp]
     
-    #for (i in 1:length(lst.QUALYPSOOUT)){
-    tmp=list()
-    for(r in rcp_names){
-      idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-      ieff_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]]==r)
-      chg_mean=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,ieff_this_rcp]
-      probCI = lst.QUALYPSOOUT[[i]]$listOption$probCI
-      
-      idx_this_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==r)
-      # phiStar
-      phiStar = lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_this_rcp,idx_Xfut]
-      chains=reconstruct_chains(lst.QUALYPSOOUT[[i]])[,idx_Xfut]
-      #Replace for this rcp the reconstructed values by the true values
-      idx_phistar_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]][ieff_this_rcp]&!lst.QUALYPSOOUT[[i]]$listScenarioInput$isMissing)
-      chains[idx_phistar_rcp]=phiStar
-      chains=chains[seq(ieff_this_rcp,length(chains),3)]#only this rcp
-      # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
-      # obtained from QUALYPSO
-      sd.qua = sqrt(lst.QUALYPSOOUT[[i]]$TOTALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,ieff_rcp])
-      sd.emp = sd(chains)
-      sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
-      sd.corr = sd.qua/sd.emp
-      phiStar.corr = phiStar*t(replicate(length(phiStar),sd.corr))
-      chg_q5 = quantile(phiStar.corr,probs = (1-probCI)/2)
-      chg_q95 = quantile(phiStar.corr,probs = 0.5+probCI/2)
-      
-      # exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
-      # exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[1]]=chg_q5*100
-      # exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[3]]=chg_q95*100
-      # 
-      resp=lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==r),idx_Xfut]*100
-      # exut$sign[exut$idx==i & exut$rcp==r]=sum(resp>0)/length(resp)*100
-      if(var!="tasAdjust"){
-        if(any(chg_q5<(-1))){
-          warning("Lower bound forced to -100%")
-          chg_q5[chg_q5<(-1)]=-1
-        }
-        tmp[[as.character(r)]]=c(chg_mean*100,chg_q5*100,chg_q95*100,sum(resp>0)/length(resp)*100)
-      }else{
-        tmp[[as.character(r)]]=c(chg_mean,chg_q5,chg_q95,sum(resp>0)/length(resp)*100)
+    idx_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r)
+    # phiStar
+    phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,idx_this_rcp,idx_Xfut]
+    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_space = idx_Xfut)
+    #Replace for this rcp the reconstructed values by the true values
+    idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]][ieff_this_rcp]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
+    chains[idx_phistar_rcp,]=t(phiStar)
+    chains=chains[seq(ieff_this_rcp,dim(chains)[1],3),]#only this rcp
+    # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
+    # obtained from QUALYPSO
+    sd.qua = sqrt(lst.QUALYPSOOUT[[idx_Xfut]]$TOTALVAR-lst.QUALYPSOOUT[[idx_Xfut]]$INTERNALVAR-lst.QUALYPSOOUT[[idx_Xfut]]$EFFECTVAR[,ieff_rcp])
+    sd.emp = apply(chains,2,sd)
+    sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
+    sd.corr = sd.qua/sd.emp
+    phiStar.corr = phiStar*replicate(dim(phiStar)[2],sd.corr)
+    chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2)
+    chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2)
+    
+
+    resp=lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r),idx_Xfut]*100
+    if(var!="tasAdjust"){
+      if(any(chg_q5<(-1))){
+        warning("Lower bound forced to -100%")
+        chg_q5[chg_q5<(-1)]=-1
       }
+      exut$val[exut$rcp==r & exut$quant==quant[2]]=chg_mean*100
+      exut$val[exut$rcp==r & exut$quant==quant[1]]=chg_q5*100
+      exut$val[exut$rcp==r & exut$quant==quant[3]]=chg_q95*100
+    }else{
+      exut$val[exut$rcp==r & exut$quant==quant[2]]=chg_mean
+      exut$val[exut$rcp==r & exut$quant==quant[1]]=chg_q5
+      exut$val[exut$rcp==r & exut$quant==quant[3]]=chg_q95
     }
-    tmp
-  }
-  stopCluster(cl) # shut down the cluster
-  
-  for(i in 1:length(lst.QUALYPSOOUT)){
-    for(r in rcp_names){
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[2]]=chg.list[[i]][[as.character(r)]][1]
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[1]]=chg.list[[i]][[as.character(r)]][2]
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[3]]=chg.list[[i]][[as.character(r)]][3]
-      exut$sign[exut$idx==i & exut$rcp==r ]=chg.list[[i]][[as.character(r)]][4]
-    }
+    exut$sign[exut$rcp==r ]=apply(resp,1,function(x) sum(x>0))/ncol(resp)*100
   }
   
   for(i in 1:nrow(exut)){
@@ -1429,64 +1427,43 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   exut$sign_agree="<80%"
   
-  
-  cl <- makeCluster(nbcores) # create a cluster with n cores
-  registerDoParallel(cl) # register the cluster
-  
-  chg.list = foreach(i =1:length(lst.QUALYPSOOUT), .export='reconstruct_chains') %dopar% { ## no .combine by default result is a list (and no need for .packages)
+  for(h in horiz){
+    idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==h)
+    chg_mean=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,ieff_this_rcp]+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN
     
-    # for (i in 1:length(lst.QUALYPSOOUT)){
-    tmp=list()
-    for(h in horiz){
-      idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==h)
-      chg_mean=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,ieff_this_rcp]
-      
-      idx_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==rcp_name)
-      # phiStar
-      phiStar = lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[idx_rcp,idx_Xfut]
-      chains=reconstruct_chains(lst.QUALYPSOOUT[[i]])[,idx_Xfut]
-      #Replace for this rcp the reconstructed values by the true values
-      idx_phistar_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ieff_rcp]][ieff_this_rcp]&!lst.QUALYPSOOUT[[i]]$listScenarioInput$isMissing)
-      chains[idx_phistar_rcp]=phiStar
-      chains=chains[seq(ieff_this_rcp,length(chains),3)]#only this rcp
-      # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
-      # obtained from QUALYPSO
-      sd.qua = sqrt(lst.QUALYPSOOUT[[i]]$TOTALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]-lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,ieff_rcp])
-      sd.emp = sd(chains)
-      sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
-      sd.corr = sd.qua/sd.emp
-      phiStar.corr = chains*t(replicate(length(chains),sd.corr))
-      chg_q5 = quantile(phiStar.corr,probs = (1-probCI)/2)
-      chg_q95 = quantile(phiStar.corr,probs = 0.5+probCI/2)
-      
-      # exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[2]]=chg_mean*100#*100 for percentages
-      # exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[1]]=chg_q5*100
-      # exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[3]]=chg_q95*100
-      
-      resp=lst.QUALYPSOOUT[[i]]$CLIMATEESPONSE$phiStar[which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==rcp_name),idx_Xfut]*100
-      # exut$sign[exut$idx==i & exut$horiz==h]=sum(resp>0)/length(resp)*100
-      if(var!="tasAdjust"){
-        if(any(chg_q5<(-1))){
-          warning("Lower bound forced to -100%")
-          chg_q5[chg_q5<(-1)]=-1
-        }
-
-        tmp[[as.character(h)]]=c(chg_mean*100,chg_q5*100,chg_q95*100,sum(resp>0)/length(resp)*100)
-      }else{
-        tmp[[as.character(h)]]=c(chg_mean,chg_q5,chg_q95,sum(resp>0)/length(resp)*100)
+    idx_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==rcp_name)
+    # phiStar
+    phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,idx_rcp,idx_Xfut]
+    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_space = idx_Xfut)
+    #Replace for this rcp the reconstructed values by the true values
+    idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]][ieff_this_rcp]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
+    chains[idx_phistar_rcp,]=phiStar
+    chains=chains[seq(ieff_this_rcp,nrow(chains),3),]#only this rcp
+    # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
+    # obtained from QUALYPSO
+    sd.qua = sqrt(lst.QUALYPSOOUT[[idx_Xfut]]$TOTALVAR-lst.QUALYPSOOUT[[idx_Xfut]]$INTERNALVAR-lst.QUALYPSOOUT[[idx_Xfut]]$EFFECTVAR[,ieff_rcp])
+    sd.emp = apply(chains,2,sd)
+    sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
+    sd.corr = sd.qua/sd.emp
+    phiStar.corr = phiStar*replicate(dim(phiStar)[2],sd.corr)
+    chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2)
+    chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2)
+    
+    resp=lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==rcp_name),idx_Xfut]*100
+    if(var!="tasAdjust"){
+      if(any(chg_q5<(-1))){
+        warning("Lower bound forced to -100%")
+        chg_q5[chg_q5<(-1)]=-1
       }
+      exut$val[exut$horiz==h & exut$quant==quant[2]]=chg_mean*100
+      exut$val[exut$horiz==h & exut$quant==quant[1]]=chg_q5*100
+      exut$val[exut$horiz==h & exut$quant==quant[3]]=chg_q95*100
+    }else{
+      exut$val[exut$horiz==h & exut$quant==quant[2]]=chg_mean
+      exut$val[exut$horiz==h & exut$quant==quant[1]]=chg_q5
+      exut$val[exut$horiz==h & exut$quant==quant[3]]=chg_q95
     }
-    tmp
-  }
-  stopCluster(cl) # shut down the cluster
-  
-  for(i in 1:length(lst.QUALYPSOOUT)){
-    for(h in horiz){
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[2]]=chg.list[[i]][[as.character(h)]][1]
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[1]]=chg.list[[i]][[as.character(h)]][2]
-      exut$val[exut$idx==i & exut$horiz==h & exut$quant==quant[3]]=chg.list[[i]][[as.character(h)]][3]
-      exut$sign[exut$idx==i & exut$horiz==h ]=chg.list[[i]][[as.character(h)]][4]
-    }
+    exut$sign[exut$horiz==h ]=apply(resp,1,function(x) sum(x>0))/ncol(resp)*100
   }
   
   for(i in 1:nrow(exut)){
@@ -1577,14 +1554,16 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 ## ind_name_full the plain language name of the indicator
 ## folder_out the saving folder
 
+## Will not work for predictor temperature (cannot do average +- 30 years)
+
 
 map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",ref0=1990){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
   quant=c("5%","mean","95%")
-  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
-  idx_ref0=which(lst.QUALYPSOOUT[[1]]$Xfut==ref0)
+  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xmat[1,]==horiz)
+  idx_ref0=which(lst.QUALYPSOOUT[[1]]$Xmat[1,]==ref0)
   
   
   if(pix){
@@ -1605,24 +1584,23 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   exut$sign=0
   exut$sign_agree="<80%"
   
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    for(r in rcp_names){
-      
-      idx_rcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$scenAvail$rcp==r)
-      ref0=apply(lst.QUALYPSOOUT[[i]]$Y[idx_rcp,(idx_ref0-15):(idx_ref0+15)],MARGIN=1,mean)
-      
-      if(var!="tasAdjust"){
-        rel_chg=(apply(lst.QUALYPSOOUT[[i]]$Y[idx_rcp,(idx_Xfut-15):(idx_Xfut+15)],MARGIN=1,mean,na.rm=T)-ref0)/ref0*100
-      }else{
-        rel_chg=apply(lst.QUALYPSOOUT[[i]]$Y[idx_rcp,(idx_Xfut-15):(idx_Xfut+15)],MARGIN=1,mean,na.rm=T)-ref0
-      }
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[2]]=mean(rel_chg)
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[1]]=quantile(rel_chg,probs=0.05)
-      exut$val[exut$idx==i & exut$rcp==r & exut$quant==quant[3]]=quantile(rel_chg,probs=0.95)
-      
-      exut$sign[exut$idx==i & exut$rcp==r]=sum(rel_chg>0)/length(rel_chg)*100
+  for(r in rcp_names){
+    
+    idx_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r)
+    ref0=apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_ref0-15):(idx_ref0+15)],MARGIN=1,mean)
+    
+    if(var!="tasAdjust"){
+      rel_chg=(apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_Xfut-15):(idx_Xfut+15)],MARGIN=c(1,2),mean,na.rm=T)-ref0)/ref0*100
+    }else{
+      rel_chg=apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_Xfut-15):(idx_Xfut+15)],MARGIN=c(1,2),mean,na.rm=T)-ref0
     }
+    exut$val[exut$rcp==r & exut$quant==quant[2]]=apply(rel_chg,1,mean)
+    exut$val[exut$rcp==r & exut$quant==quant[1]]=apply(rel_chg,1,quantile,probs=0.05)
+    exut$val[exut$rcp==r & exut$quant==quant[3]]=apply(rel_chg,1,quantile,probs=0.95)
+    
+    exut$sign[exut$rcp==r]=apply(rel_chg,1,function(x) sum(x>0)/length(x)*100)
   }
+  
   
   for(i in 1:nrow(exut)){
     if(exut$sign[i]>80|exut$sign[i]<20){
@@ -1740,47 +1718,47 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   exut$val=0
   
 
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-    if(var!="tasAdjust"){
-      if(includeMean){
-        chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
-      }else{
-        chg=lst.QUALYPSOOUT[[i]]$MAINEFFECT[[name_eff]]$MEAN[idx_Xfut,]*100 #*100 for percentages
-        if(!is.null(includeRCP)){
-          ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
-          i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==includeRCP)
-          chg = chg+lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]*100
-        }
-      }
+  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  if(var!="tasAdjust"){
+    if(includeMean){
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT[[name_eff]]$MEAN*100 + lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN*100 #*100 for percentages
     }else{
-      if(includeMean){
-        chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT[[name_eff]]$MEAN[idx_Xfut,]
-      }else{
-        chg=lst.QUALYPSOOUT[[i]]$MAINEFFECT[[name_eff]]$MEAN[idx_Xfut,]
-        if(!is.null(includeRCP)){
-          ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
-          i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==includeRCP)
-          chg = chg+lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]
-        }
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT[[name_eff]]$MEAN*100 #*100 for percentages
+      if(!is.null(includeRCP)){
+        ircp=which(lst.QUALYPSOOUT[[1]]$namesEff == "rcp")
+        i_thisrcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ircp]]==includeRCP)
+        chg = chg+lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,i_thisrcp]*100 + lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN*100
       }
     }
-    
-    
-    for(j in 1:length(chg)){
-      exut$val[exut$idx==i & exut$effs==j]=chg[j]
+  }else{
+    if(includeMean){
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT[[name_eff]]$MEAN + lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN #*100 for percentages
+    }else{
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT[[name_eff]]$MEAN #*100 for percentages
+      if(!is.null(includeRCP)){
+        ircp=which(lst.QUALYPSOOUT[[1]]$namesEff == "rcp")
+        i_thisrcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ircp]]==includeRCP)
+        chg = chg+lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,i_thisrcp] + lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN
+      }
     }
   }
+  
+  
+  for(j in 1:ncol(chg)){
+    exut$val[exut$effs==j]=chg[,j]
+  }
+
   
   colnames(exut)=c("x","y","idx","effs","val")
   
   #Setting limits for color scale
   if(includeMean){
-    tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) lapply(x$CHANGEBYEFFECT,function(xx) xx$MEAN[idx_Xfut,])))
+    ##all pixels, all effects, one time step
+    tmp=unlist(lapply(lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT,function(x) x$MEAN+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN))
   }else{
-    tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) lapply(x$MAINEFFECT,function(xx) xx$MEAN[idx_Xfut,])))
+    tmp=unlist(lapply(lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT,function(x) x$MEAN))
     if(!is.null(includeRCP)){
-      tmp=unlist(lapply(lst.QUALYPSOOUT,function(x) unlist(lapply(x$MAINEFFECT,function(xx) xx$MEAN[idx_Xfut,]))+x$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]))
+      tmp=unlist(lapply(lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT,function(x) x$MEAN+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN+lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,i_thisrcp]))
     }
   }
   if(var!="tasAdjust"){
@@ -1916,61 +1894,59 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   exut$idx=seq(1:nrow(exut))
   exut$val=0
   
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-    
-    if(vartype=="mean"){
-      if(var!="tasAdjust"){
-        chg=lst.QUALYPSOOUT[[i]]$GRANDMEAN$MEAN[idx_Xfut]*100
-      }else{
-        chg=lst.QUALYPSOOUT[[i]]$GRANDMEAN$MEAN[idx_Xfut]
-      }
+  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  
+  if(vartype=="mean"){
+    if(var!="tasAdjust"){
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN*100
+    }else{
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN
     }
-    if(vartype=="varint"){
-      if(var!="tasAdjust"){
-        chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]*100^2#because variance is square of standard deviation unit
-      }else{
-        chg=lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut]
-      }
-      chg=sqrt(chg)
-    }
-    if(vartype=="varres"){
-      if(var!="tasAdjust"){
-        chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]*100^2
-      }else{
-        chg=lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut]
-      }
-      chg=sqrt(chg)
-    }
-    if(vartype=="vartot"){
-      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
-      if(var!="tasAdjust"){
-        chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])*100^2
-      }else{
-        chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut],lst.QUALYPSOOUT[[i]]$INTERNALVAR[idx_Xfut])
-      }
-      chg=sqrt(chg)
-    }
-    if(vartype=="incert"){# sans IV
-      Veff = lst.QUALYPSOOUT[[i]]$EFFECTVAR[idx_Xfut,]
-      if(var!="tasAdjust"){
-        chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])*100^2
-      }else{
-        chg = sum(Veff, lst.QUALYPSOOUT[[i]]$RESIDUALVAR$MEAN[idx_Xfut])
-      }
-      chg=sqrt(chg)
-    }
-    if(vartype=="rcp8.5"|vartype=="rcp85"){
-      ircp=which(lst.QUALYPSOOUT[[i]]$namesEff == "rcp")
-      i_thisrcp=which(lst.QUALYPSOOUT[[i]]$listScenarioInput$listEff[[ircp]]==vartype)
-      if(var!="tasAdjust"){
-        chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]*100
-      }else{
-        chg=lst.QUALYPSOOUT[[i]]$CHANGEBYEFFECT$rcp$MEAN[idx_Xfut,i_thisrcp]
-      }
-    }
-    exut$val[exut$idx==i]=chg
   }
+  if(vartype=="varint"){
+    if(var!="tasAdjust"){
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$INTERNALVAR*100^2#because variance is square of standard deviation unit
+    }else{
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$INTERNALVAR
+    }
+    chg=sqrt(chg)
+  }
+  if(vartype=="varres"){
+    if(var!="tasAdjust"){
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$RESIDUALVAR$MEAN*100^2
+    }else{
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$RESIDUALVAR$MEAN
+    }
+    chg=sqrt(chg)
+  }
+  if(vartype=="vartot"){
+    Veff = lst.QUALYPSOOUT[[idx_Xfut]]$EFFECTVAR
+    if(var!="tasAdjust"){
+      chg = apply(cbind(Veff, lst.QUALYPSOOUT[[idx_Xfut]]$RESIDUALVAR$MEAN,lst.QUALYPSOOUT[[idx_Xfut]]$INTERNALVAR),1,sum)*100^2
+    }else{
+      chg = apply(cbind(Veff, lst.QUALYPSOOUT[[idx_Xfut]]$RESIDUALVAR$MEAN,lst.QUALYPSOOUT[[idx_Xfut]]$INTERNALVAR),1,sum)
+    }
+    chg=sqrt(chg)
+  }
+  if(vartype=="incert"){# sans IV
+    Veff = lst.QUALYPSOOUT[[idx_Xfut]]$EFFECTVAR
+    if(var!="tasAdjust"){
+      chg = apply(cbind(Veff, lst.QUALYPSOOUT[[idx_Xfut]]$RESIDUALVAR$MEAN),1,sum)*100^2
+    }else{
+      chg = apply(cbind(Veff, lst.QUALYPSOOUT[[idx_Xfut]]$RESIDUALVAR$MEAN),1,sum)
+    }
+    chg=sqrt(chg)
+  }
+  if(vartype=="rcp8.5"|vartype=="rcp85"){
+    ircp=which(lst.QUALYPSOOUT[[1]]$namesEff == "rcp")
+    i_thisrcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ircp]]==vartype)
+    if(var!="tasAdjust"){
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,i_thisrcp]*100+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN*100
+    }else{
+      chg=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,i_thisrcp]+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN
+    }
+  }
+  exut$val=chg
   
   colnames(exut)=c("x","y","idx","val")
   
@@ -2124,7 +2100,6 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   colnames(exut)=c("x","y")
   exut$idx=seq(1:nrow(exut))
   exut$rcp=exut$gcm=exut$rcm=exut$rv=0
-  
   if(!is.null(lst.QUALYPSOOUT[[1]]$CONTRIB_EACH_EFFECT$hm)){
     exut$hm=0
   }
@@ -2132,20 +2107,19 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
     exut$bc=0
   }
   
-  for (i in 1:length(lst.QUALYPSOOUT)){
-    idx_Xfut=which(lst.QUALYPSOOUT[[i]]$Xfut==horiz)
-    exut$rcp[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"rcp"]*100
-    exut$gcm[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"gcm"]*100
-    exut$rcm[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"rcm"]*100
-    if(!is.null(lst.QUALYPSOOUT[[i]]$CONTRIB_EACH_EFFECT$bc)){
-      exut$bc[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"bc"]*100
-    }
-    if(!is.null(lst.QUALYPSOOUT[[i]]$CONTRIB_EACH_EFFECT$hm)){
-      exut$hm[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"hm"]*100
-    }
-    exut$rv[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"ResidualVar"]*100
-    exut$iv[exut$idx==i]=lst.QUALYPSOOUT[[i]]$DECOMPVAR[idx_Xfut,"InternalVar"]*100
+
+  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  exut$rcp=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"rcp"]*100
+  exut$gcm=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"gcm"]*100
+  exut$rcm=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"rcm"]*100
+  if(!is.null(lst.QUALYPSOOUT[[1]]$CONTRIB_EACH_EFFECT$bc)){
+    exut$bc=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"bc"]*100
   }
+  if(!is.null(lst.QUALYPSOOUT[[1]]$CONTRIB_EACH_EFFECT$hm)){
+    exut$hm=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"hm"]*100
+  }
+  exut$rv=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"ResidualVar"]*100
+  exut$iv=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"InternalVar"]*100
   
   exut=pivot_longer(exut,cols=-c(x,y,idx),names_to="source",values_to = "val")
   exut=exut[order(exut$source),]
