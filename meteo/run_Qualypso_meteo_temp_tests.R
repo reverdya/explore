@@ -35,8 +35,6 @@ ref_year=1990# central year of 1975-2005 reference period
 #MAIN#
 ######
 
-# global_tas=prep_global_tas(path_temp,ref_year=ref_year)
-
 
 for(v in unique(simu_lst$var)[c(1,2)]){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
@@ -48,8 +46,11 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     SPAR=1.1
   }
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[17]){
-    dir.create(paste0(path_data,"Qualypso/",v,"/",i))
+    
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
+    global_tas=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=scenAvail)
+    
+    dir.create(paste0(path_data,"Qualypso/",v,"/",i))
     all_chains=vector(length=nrow(scenAvail),mode="list")
     for(c in 1:nrow(scenAvail)){# for each chain
       pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
@@ -79,13 +80,9 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
     Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
     Y=aperm(Y,c(1,3,2))
-    
-    
-    
-    
-    
-    X=unique(ClimateProjections$year)
-    Xfut=seq(ref_year,X[length(X)])
+    vec_years=unique(ClimateProjections$year)
+    X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
+    Xfut=c(global_tas[["warming_1990"]],1,1.25,1.5)
     rm(ClimateProjections)
     gc()
     
@@ -93,26 +90,26 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
     gc()
-
     
     lst.QUALYPSOOUT_temp_3rcp=vector(mode="list",length=length((Xfut)))
+    cpt=1
     for(x in Xfut){
-    # for(x in c(2030,2050,2085)){
-      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
+      lst.QUALYPSOOUT_temp_3rcp[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
                                                             scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
                                                             X=X,
                                                             Xfut=Xfut,
-                                                            iFut=x+1-Xfut[1],
+                                                            iFut=cpt,
                                                             listOption=listOption)
-      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$listOption$climResponse=NA #to not store twice the same information
-      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$RESERR=NA
-      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$CHANGEBYEFFECT=NA
-      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$CLIMATEESPONSE$YStar=NA
+      lst.QUALYPSOOUT_temp_3rcp[[cpt]]$listOption$climResponse=NA #to not store twice the same information
+      lst.QUALYPSOOUT_temp_3rcp[[cpt]]$RESERR=NA
+      lst.QUALYPSOOUT_temp_3rcp[[cpt]]$CHANGEBYEFFECT=NA
+      lst.QUALYPSOOUT_temp_3rcp[[cpt]]$CLIMATEESPONSE$YStar=NA
       if(x!=Xfut[1]){
-        lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
-        lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$Y=NA #to not store 9892 times the same information, stored only the first time
+        lst.QUALYPSOOUT_temp_3rcp[[cpt]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
+        lst.QUALYPSOOUT_temp_3rcp[[cpt]]$Y=NA #to not store 9892 times the same information, stored only the first time
       }
-      if(((x+1-Xfut[1]) %% 10)==0){print(x+1-Xfut[1])}
+      print(cpt)
+      cpt=cpt+1
     }
     
     rm(Y,X,listOption)
