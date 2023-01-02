@@ -312,7 +312,9 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6){
     nY = ncol(Y)
     paralType = 'Time'
   }
-  if(is.vector(X)){
+  if(is.null(X)){
+    Xmat = matrix(rep(1:nY,nS),byrow=T,nrow=nS,ncol=nY)
+  }else if(is.vector(X)){
     if(nY!=length(X)){
       stop('if X is provided as a vector, its length must equal the number of columns of Y')
     }else{
@@ -320,14 +322,22 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6){
       Xmat = matrix(rep(X,nS),byrow=T,nrow=nS,ncol=nY)
     }
   }else if(is.matrix(X)){
-    if(any(dim(X)!=dim(Y))){
-      stop('if X is provided as a matrix, its size must match the size of Y')
-    }else{
-      Xmat = X
+    Xmat = X
+    if(length(dim(Y))==2){
+      if(any(dim(X)!=dim(Y))){
+        stop('if X is provided as a matrix and Y as a grid, its size must match the size of Y')
+      }
+    }else if(length(dim(Y))==3){
+      if(any(dim(X)!=dim(Y)[c(2,3)])){
+        stop('if X is provided as a matrix, its first dimension must match the second
+             dimension of Y (number of scenarios) and and its second dimension must match
+             the third dimension of Y (number of future predictions)')
+      }
     }
   }else{
-    stop('X must be a vector or a matrix')
+    stop('X must be NULL, a vector or a matrix')
   }
+  
   Xref=Xfut[1]
   # if Xref is provided, we check that is a single value within the values of X
   if(!any(length(Xref)==c(1,nS))|!is.numeric(Xref)){
@@ -494,7 +504,7 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
 ##simu_lst the list of simulations
 #first_data_year and last_data_year the first an last years with data for simu all year round
 
-prep_global_tas=function(path_temp,ref_year=1990){
+prep_global_tas=function(path_temp,ref_year=1990,simu_lst){
   ## Prepare temperatures RCP/GCM
   paths=list.files(path_temp,pattern=glob2rx("global_tas*"),full.names = T)
   for ( i in 1:length(paths)){
@@ -514,7 +524,9 @@ prep_global_tas=function(path_temp,ref_year=1990){
   mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) smooth.spline(mat_Globaltas_gcm[,1],x,spar=1)$y)
   mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) x-x[mat_Globaltas_gcm[,1]==ref_year])
   
-  ## Format global température for Qualypso
+  gcm_years=mat_Globaltas_gcm$year
+  
+  ## Format global temperature for Qualypso
   mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
   vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
   vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
@@ -523,7 +535,21 @@ prep_global_tas=function(path_temp,ref_year=1990){
   }
   mat_Globaltas=t(do.call(cbind,mat_Globaltas))
   
-  return(list(mat_Globaltas,mat_Globaltas_gcm))
+  ## Calculate 1860-1990 warming from HADCRUT5 with spline
+  nc=load_nc(paste0(path_temp,"HadCRUT.5.0.1.0.analysis.summary_series.global.annual.nc"))
+  res=ncvar_get(nc,varid="tas_mean")
+  full_years=nc$dim$time$vals
+  full_years=year(as.Date(full_years,origin="1850-01-01"))
+  nc_close(nc)#for some reason stays opened otherwise
+  rm(nc)
+  gc()
+  
+  tas_obs=smooth.spline(x=full_years,y=res,spar=1)$y
+  warming_1990=tas_obs[full_years==1990]-tas_obs[full_years==1875]
+  mat_Globaltas=mat_Globaltas+warming_1990
+  mat_Globaltas_gcm=mat_Globaltas_gcm+warming_1990
+  
+  return(list(mat_Globaltas=mat_Globaltas,mat_Globaltas_gcm=mat_Globaltas_gcm,gcm_years=gcm_years,warming_1990=warming_1990))
 }
 
 
