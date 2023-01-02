@@ -119,6 +119,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     rm(lst.QUALYPSOOUT_temp_3rcp) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
     closeAllConnections()
     gc()
+    
     toc()
   }
 }
