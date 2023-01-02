@@ -1437,7 +1437,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     chains=reconstruct_chains(lst.QUALYPSOOUT,idx_space = idx_Xfut)
     #Replace for this rcp the reconstructed values by the true values
     idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]][ieff_this_rcp]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
-    chains[idx_phistar_rcp,]=phiStar
+    chains[idx_phistar_rcp,]=t(phiStar)
     chains=chains[seq(ieff_this_rcp,nrow(chains),3),]#only this rcp
     # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
     # obtained from QUALYPSO
