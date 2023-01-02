@@ -45,6 +45,7 @@ for(v in unique(simu_lst$var)[c(1)]){
     SPAR=1.1
   }
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[17]){
+    tic()
   # for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     dir.create(paste0(path_data,"Qualypso/",v,"/",i))
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
@@ -71,8 +72,7 @@ for(v in unique(simu_lst$var)[c(1)]){
       colnames(res)[1]="year"
       all_chains[[c]]=res
     }
-    
-    tic()
+
     n_pix=ncol(all_chains[[1]])-1
     ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
     Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
