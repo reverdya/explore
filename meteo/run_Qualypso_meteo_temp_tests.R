@@ -22,6 +22,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 ####################
 
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 nbcore=detectCores()-2 #Number of cores for parallelization
 
 
@@ -34,8 +35,10 @@ ref_year=1990# central year of 1975-2005 reference period
 #MAIN#
 ######
 
-# for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(1)]){
+# global_tas=prep_global_tas(path_temp,ref_year=ref_year)
+
+
+for(v in unique(simu_lst$var)[c(1,2)]){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
   if(v=="tasAdjust"){
     typechangeVar="abs"
@@ -45,7 +48,6 @@ for(v in unique(simu_lst$var)[c(1)]){
     SPAR=1.1
   }
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[17]){
-  # for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     dir.create(paste0(path_data,"Qualypso/",v,"/",i))
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
     all_chains=vector(length=nrow(scenAvail),mode="list")
@@ -75,35 +77,40 @@ for(v in unique(simu_lst$var)[c(1)]){
     tic()
     n_pix=ncol(all_chains[[1]])-1
     ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
-    X=unique(ClimateProjections$year)
     Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
-    lst.QUALYPSOOUT_time=vector(mode="list",length=length(X))
+    Y=aperm(Y,c(1,3,2))
+    
+    
+    
+    
+    
+    X=unique(ClimateProjections$year)
+    Xfut=seq(ref_year,X[length(X)])
     rm(ClimateProjections)
     gc()
-    Y=aperm(Y,c(1,3,2))
-    Xfut=seq(ref_year,X[length(X)])
+    
     tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
     listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
     gc()
- 
+
     
-    lst.QUALYPSOOUT_time=vector(mode="list",length=length((Xfut)))
+    lst.QUALYPSOOUT_temp_3rcp=vector(mode="list",length=length((Xfut)))
     for(x in Xfut){
     # for(x in c(2030,2050,2085)){
-      lst.QUALYPSOOUT_time[[x+1-Xfut[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
+      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
                                                             scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
                                                             X=X,
                                                             Xfut=Xfut,
                                                             iFut=x+1-Xfut[1],
                                                             listOption=listOption)
-      lst.QUALYPSOOUT_time[[x+1-Xfut[1]]]$listOption$climResponse=NA #to not store twice the same information
-      lst.QUALYPSOOUT_time[[x+1-Xfut[1]]]$RESERR=NA
-      lst.QUALYPSOOUT_time[[x+1-Xfut[1]]]$CHANGEBYEFFECT=NA
-      lst.QUALYPSOOUT_time[[x+1-Xfut[1]]]$CLIMATEESPONSE$YStar=NA
+      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$listOption$climResponse=NA #to not store twice the same information
+      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$RESERR=NA
+      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$CHANGEBYEFFECT=NA
+      lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$CLIMATEESPONSE$YStar=NA
       if(x!=Xfut[1]){
-        lst.QUALYPSOOUT_time[[x+1-Xfut[1]]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
-        lst.QUALYPSOOUT_time[[x+1-Xfut[1]]]$Y=NA #to not store 9892 times the same information, stored only the first time
+        lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
+        lst.QUALYPSOOUT_temp_3rcp[[x+1-Xfut[1]]]$Y=NA #to not store 9892 times the same information, stored only the first time
       }
       if(((x+1-Xfut[1]) %% 10)==0){print(x+1-Xfut[1])}
     }
@@ -111,8 +118,8 @@ for(v in unique(simu_lst$var)[c(1)]){
     rm(Y,X,listOption)
     closeAllConnections()
     gc()
-    save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
-    rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
+    save(lst.QUALYPSOOUT_temp_3rcp,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
+    rm(lst.QUALYPSOOUT_temp_3rcp) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
     closeAllConnections()
     gc()
     toc()
