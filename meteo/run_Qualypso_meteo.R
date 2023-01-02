@@ -75,18 +75,17 @@ for(v in unique(simu_lst$var)[c(1)]){
     tic()
     n_pix=ncol(all_chains[[1]])-1
     ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
-    X=unique(ClimateProjections$year)
     Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
-    lst.QUALYPSOOUT_time=vector(mode="list",length=length(X))
+    Y=aperm(Y,c(1,3,2))
+    X=unique(ClimateProjections$year)
+    Xfut=seq(ref_year,X[length(X)])
     rm(ClimateProjections)
     gc()
-    Y=aperm(Y,c(1,3,2))
-    Xfut=seq(ref_year,X[length(X)])
+    
     tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
     listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
     gc()
- 
     
     lst.QUALYPSOOUT_time=vector(mode="list",length=length((Xfut)))
     for(x in Xfut){
