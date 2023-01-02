@@ -59,7 +59,7 @@ ref_cities$idx_masked=which(tmp %in% ref_cities$idx)
 
 # for(v in unique(simu_lst$var)){
 
-for(v in unique(simu_lst$var)[c(2)]){
+for(v in unique(simu_lst$var)[c(1,2)]){
 
   dir.create(paste0(path_fig,v,"/"))
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
@@ -101,7 +101,7 @@ for(v in unique(simu_lst$var)[c(2)]){
 ## Maps
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(2)]){
+for(v in unique(simu_lst$var)[c(1,2)]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
@@ -147,7 +147,7 @@ for(v in unique(simu_lst$var)[c(2)]){
 
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(2)]){
+for(v in unique(simu_lst$var)[c(1,2)]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")

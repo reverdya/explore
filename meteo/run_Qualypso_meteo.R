@@ -35,7 +35,7 @@ ref_year=1990# central year of 1975-2005 reference period
 ######
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(2)]){
+for(v in unique(simu_lst$var)[c(1)]){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
   if(v=="tasAdjust"){
     typechangeVar="abs"
