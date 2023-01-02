@@ -494,22 +494,16 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
 ##simu_lst the list of simulations
 #first_data_year and last_data_year the first an last years with data for simu all year round
 
-format_global_tas=function(path_data,first_data_year,last_data_year,simu_lst,first_ref_year,last_ref_year){
-  
-  vecYears=seq(1860,last_data_year,1)#1860 first year for HadGEM (1861 for GFDL but not used in QUALYPSO and before first_data_year so does not matter)
-  ## Format global température: difference to 1860-1900 
-  paths=list.files(paste0(path_data,"raw/Global_temp/"),pattern=glob2rx("global_tas*"),full.names = T)
-  tas_glob_full=vector(length=length(paths),mode="list")
+prep_global_tas=function(path_temp,ref_year=1990){
+  ## Prepare temperatures RCP/GCM
+  paths=list.files(path_temp,pattern=glob2rx("global_tas*"),full.names = T)
   for ( i in 1:length(paths)){
     tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
     if(grepl("HadGEM2-ES",paths[i],fixed=T)){# -999 values in 1859
       tas_glob=tas_glob[-1,]
     }
     tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-    pre_indus_tas=mean(tas_glob$tas[tas_glob$year>=1860 & tas_glob$year<=1900])#because before no data for HadGEM
-    tas_glob$tas=tas_glob$tas-pre_indus_tas
     colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
-    tas_glob_full[[i]]=tas_glob[tas_glob$year<=2100,]
     tas_glob=tas_glob[tas_glob$year>=1860&tas_glob$year<=2100,]
     if(i==1){
       mat_Globaltas_gcm=tas_glob
@@ -517,23 +511,23 @@ format_global_tas=function(path_data,first_data_year,last_data_year,simu_lst,fir
       mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
     }
   }
+  mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) smooth.spline(mat_Globaltas_gcm[,1],x,spar=1)$y)
+  mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) x-x[mat_Globaltas_gcm[,1]==ref_year])
   
   ## Format global température for Qualypso
   mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
   vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
   vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
   for (i in 1:nrow(simu_lst)){
-    mat_Globaltas[[i]]=tas_glob_full[[which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]]
+    mat_Globaltas[[i]]= mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]
   }
-  mat_Globaltas=lapply(mat_Globaltas,function(x) cbind(x[,1],smooth.spline(x=x[,1],y=x[,2],spar = 1)$y))
-  mat_Globaltas=lapply(mat_Globaltas,function(x) x[x[,1]>=1860&x[,1]<=2100,2])
   mat_Globaltas=t(do.call(cbind,mat_Globaltas))
-  ref_Globaltas=apply(mat_Globaltas,MARGIN = 1,function(x) mean(x[which(vecYears==first_ref_year):which(vecYears==last_ref_year)]))
-  idx=which(mat_Globaltas_gcm$year %in% seq(first_data_year,last_data_year))#often 1951-2099
-  mat_Globaltas=mat_Globaltas[,idx]
-  mat_Globaltas_gcm=mat_Globaltas_gcm[idx,]
-  return(list(mat_Globaltas,ref_Globaltas,mat_Globaltas_gcm))
+  
+  return(list(mat_Globaltas,mat_Globaltas_gcm))
 }
+
+
+
 
 
 ##############################################################################
