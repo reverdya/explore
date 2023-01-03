@@ -82,7 +82,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     Y=aperm(Y,c(1,3,2))
     vec_years=unique(ClimateProjections$year)
     X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
-    Xfut=c(global_tas[["warming_1990"]],1,1.25,1.5)
+    Xfut=c(global_tas[["warming_1990"]],seq(0.7,1.5,0.1))
     rm(ClimateProjections)
     gc()
     
