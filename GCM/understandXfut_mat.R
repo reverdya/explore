@@ -80,7 +80,7 @@ plt1
 df$Dx1=df$x1-Xref[1]
 df$Dx2=df$x2-Xref[2]
 
-plt1_bis=ggplot(df)+
+plt2=ggplot(df)+
   geom_line(aes(x=time,y=Dx1),color="red",size=1.2)+
   geom_line(aes(x=time,y=Dx2),color="blue",size=1.2)+
   geom_vline(xintercept=1990,color="black",lty="dotted",size=1.2)+
@@ -93,9 +93,28 @@ plt1_bis=ggplot(df)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   ggtitle("Différence de température planétaire\nen fonction du temps")+
   annotate("text", x = 1990, y = 4.5, label = "1990",fontface = "bold",size=3)
-plt1_bis
+plt2
 
-plt2=ggplot(df)+
+X_1990_obs=0.6
+df$Dx1_PI=df$Dx1+X_1990_obs
+df$Dx2_PI=df$Dx2+X_1990_obs
+
+plt3=ggplot(df)+
+  geom_line(aes(x=time,y=Dx1_PI),color="red",size=1.2)+
+  geom_line(aes(x=time,y=Dx2_PI),color="blue",size=1.2)+
+  geom_vline(xintercept=1990,color="black",lty="dotted",size=1.2)+
+  scale_x_continuous(limits=c(1861,2105),expand=c(0,0))+
+  scale_y_continuous(limits=c(-0.5,6),expand=c(0,0))+
+  xlab("time")+
+  ylab("DX_PI")+
+  theme_bw(base_size = 12)+
+  theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  ggtitle("Réchauffement planétaire\nen fonction du temps")+
+  annotate("text", x = 1990, y = 4.5, label = "1990",fontface = "bold",size=3)
+plt3
+
+plt4=ggplot(df)+
   geom_line(aes(x=time,y=y1),color="red",size=1.2)+
   geom_line(aes(x=time,y=y2),color="blue",size=1.2)+
   geom_vline(xintercept=1990,color="black",lty="dotted",size=1.2)+
@@ -108,84 +127,68 @@ plt2=ggplot(df)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   ggtitle("Indicateur en fonction\ndu temps")+
   annotate("text", x = 1990, y = 3.4, label = "1990",fontface = "bold",size=3)
-plt2
+plt4
 
-plt3=ggplot(df)+
-  geom_line(aes(x=Dx1,y=y1),color="red",size=1.2)+
-  geom_line(aes(x=Dx2,y=y2),color="blue",size=1.2)+
+plt5=ggplot(df)+
+  geom_line(aes(x=Dx1_PI,y=y1),color="red",size=1.2)+
+  geom_line(aes(x=Dx2_PI,y=y2),color="blue",size=1.2)+
   scale_y_continuous(limits=c(1.9,3.5),expand=c(0,0))+
   scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("DX")+
+  xlab("DX_PI")+
   ylab("Y")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Indicateur en fonction de\nla différence de température planétaire")
-plt3
+  ggtitle("Indicateur en fonction du\nréchauffement planétaire")
+plt5
 
 
 df$y1_spline=df$y1
 df$y2_spline=df$y2
-spline1=smooth.spline(x=df$Dx1[df$time>=1970],y=df$y1[df$time>=1970],spar = 1)
-spline2=smooth.spline(x=df$Dx2[df$time>=1970],y=df$y2[df$time>=1970],spar = 1)
+spline1=smooth.spline(x=df$Dx1_PI[df$time>=1970],y=df$y1[df$time>=1970],spar = 1)
+spline2=smooth.spline(x=df$Dx2_PI[df$time>=1970],y=df$y2[df$time>=1970],spar = 1)
 df$y1_spline[df$time>=1970]=spline1$y
 df$y2_spline[df$time>=1970]=spline2$y
-Yref=c(predict(spline1,0)$y,predict(spline2,0)$y)
+Yref=c(predict(spline1,X_1990_obs)$y,predict(spline2,X_1990_obs)$y)
 
-plt4=ggplot(df)+
-  geom_line(aes(x=Dx1,y=y1),color="red",size=0.8)+
-  geom_line(aes(x=Dx2,y=y2),color="blue",size=0.8)+
-  geom_line(aes(x=Dx1,y=y1_spline),color="red",size=1.2)+
-  geom_line(aes(x=Dx2,y=y2_spline),color="blue",size=1.2)+
-  geom_vline(xintercept=0,color="black",lty="dotted",size=1.2)+
+plt6=ggplot(df)+
+  geom_line(aes(x=Dx1_PI,y=y1),color="red",size=0.8)+
+  geom_line(aes(x=Dx2_PI,y=y2),color="blue",size=0.8)+
+  geom_line(aes(x=Dx1_PI,y=y1_spline),color="red",size=1.2)+
+  geom_line(aes(x=Dx2_PI,y=y2_spline),color="blue",size=1.2)+
+  geom_vline(xintercept=X_1990_obs,color="black",lty="dotted",size=1.2)+
   geom_hline(yintercept=Yref[1],color="red",lty="dotted",size=1.2)+
   geom_hline(yintercept=Yref[2],color="blue",lty="dotted",size=1.2)+
   scale_y_continuous(limits=c(1.9,3.5),expand=c(0,0))+
   scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("DX")+
+  xlab("DX_PI")+
   ylab("Y")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Indicateur en fonction de\nla différence de température planétaire\navec spline")+
-  annotate("text", x = -0.75, y = Yref[1], label = "Yref1",fontface = "bold",size=3,color="red")+
-  annotate("text", x = -0.75, y = Yref[2], label = "Yref2",fontface = "bold",size=3,color="blue")
-plt4
+  ggtitle("Indicateur en fonction du\nréchauffement planétaire\navec spline")+
+  annotate("text", x = -0.5, y = Yref[1], label = "Yref1",fontface = "bold",size=3,color="red")+
+  annotate("text", x = -0.5, y = Yref[2], label = "Yref2",fontface = "bold",size=3,color="blue")+
+  annotate("text", x = X_1990_obs, y = 3.25, label = "1990",fontface = "bold",size=3)
+plt6
 
 df$Dy1_spline=df$y1_spline-Yref[1]
 df$Dy2_spline=df$y2_spline-Yref[2]
-
-plt5=ggplot(df)+
-  geom_line(aes(x=Dx1,y=Dy1_spline),color="red",size=1.2)+
-  geom_line(aes(x=Dx2,y=Dy2_spline),color="blue",size=1.2)+
-  scale_y_continuous(limits=c(-0.125,0.95),expand=c(0,0))+
-  scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("DX")+
-  ylab("DY")+
-  theme_bw(base_size = 12)+
-  theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
-  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Différence d'indicateur en fonction de\nla différence de température planétaire")
-plt5
-
-X_1990_obs=0.6
-df$Dx1_PI=df$Dx1+X_1990_obs
-df$Dx2_PI=df$Dx2+X_1990_obs
 
 plt7=ggplot(df)+
   geom_line(aes(x=Dx1_PI,y=Dy1_spline),color="red",size=1.2)+
   geom_line(aes(x=Dx2_PI,y=Dy2_spline),color="blue",size=1.2)+
   scale_y_continuous(limits=c(-0.125,0.95),expand=c(0,0))+
-  scale_x_continuous(limits=c(0,6),expand=c(0,0))+
+  scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
   xlab("DX_PI")+
   ylab("DY")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Différence d'indicateur en fonction du\nniveau de réchauffement planétaire")
+  ggtitle("Différence d'indicateur en fonction du\n réchauffement planétaire")
 plt7
 
-plt=ggarrange(plt1,plt1_bis,plt2,plt3,plt4,plt5,plt7,ncol=3,nrow=3,align="v")
+plt=ggarrange(plt1,plt2,plt3,plt4,plt5,plt6,plt7,ncol=3,nrow=3,align="v")
 plt
 save.plot(plt,Filename = "schema_predictor_T",Folder = path_fig,Format = "jpeg")
 # plt=ggarrange(plt1+theme_bw(base_size = 6),
