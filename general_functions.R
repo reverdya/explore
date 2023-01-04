@@ -1187,9 +1187,9 @@ base_map_outlets=function(data,val_name,alpha_name=NULL){
 
 
 nc=load_nc("C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc")
-load(file=paste0("C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/refs.Rdata"))
 res=ncvar_get(nc,varid="mask")
 mask_fr=as.vector(res)
+load(file=paste0("C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/refs.Rdata"))
 mask_fr=mask_fr[as.vector(refs$mask)==1]
 
 

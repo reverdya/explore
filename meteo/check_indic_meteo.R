@@ -258,7 +258,7 @@ dir.create(paste0(path_fig,"count_0/"))
 for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]){
   closeAllConnections()
   gc()
-  scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
+  scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i & simu_lst$rcp=="rcp85",]
   all_chains=vector(length=nrow(scenAvail),mode="list")
   for(c in 1:nrow(scenAvail)){# for each chain
     
@@ -311,7 +311,7 @@ exut$thresh=count_0$thresh
 exut$season=factor(count_0$season,levels=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)])
 exut$val=count_0$freq
 
-thresh.labs <- c("20% de 1970-2100","40% de 1970-2100","60% de 1970-2100")
+thresh.labs <- c("20% de 2070-2100","40% de 2070-2100","60% de 2070-2100")
 names(thresh.labs) <- paste0("thresh_",thresh)
 season.labs <- c("DJF","MAM","JJA","SON")
 names(season.labs) <- unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]
@@ -320,7 +320,7 @@ plt=base_map_grid(data = exut,val_name = "val")
 plt=plt+
   facet_grid(thresh ~ season,labeller = labeller(thresh = thresh.labs, season = season.labs))+
   binned_scale(aesthetics = "fill",scale_name = "toto",name="Part des\nchaînes (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,100),breaks=seq(0,100,20),show.limits = T,oob=squish)+#that way because stepsn deforms colors
-  ggtitle(paste0("Part des chaînes avec au moins 20%, 40% ou 60% de cumuls de\nprécipitation neigeuse saisonniers non nuls entre 1970 et 2100"))+
+  ggtitle(paste0("Part des chaînes avec au moins 20%, 40% ou 60% de cumuls de\nprécipitation neigeuse saisonniers nuls entre 2070 et 2100 (RCP 8.5)"))+
   theme(panel.border = element_rect(colour = "black",fill=NA))+
   theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
   guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
