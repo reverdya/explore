@@ -85,7 +85,6 @@ ncvar_put(nc,varid='Departments',vals = fr_8km_dep)
 nc_close(nc)
 
 ## Make reference files
-
 ref_dep=data.frame(code=deptmt$CODE_DEPT,name=deptmt$NOM_DEPT)
 write.csv(ref_dep,file = paste0(path_sig,"processed/SAFRAN_ref_deptmt.csv"))
 ref_reg_hyd=data.frame(name=reg_hyd$LbRegionHy)
