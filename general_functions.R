@@ -531,7 +531,7 @@ prep_global_tas=function(path_temp,ref_year=1990,simu_lst){
   vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
   vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
   for (i in 1:nrow(simu_lst)){
-    mat_Globaltas[[i]]= mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))]
+    mat_Globaltas[[i]]= mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))+1]
   }
   mat_Globaltas=t(do.call(cbind,mat_Globaltas))
   
