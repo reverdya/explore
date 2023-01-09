@@ -51,6 +51,7 @@ lines(deptmt)
 
 fr_8km_dep=lapply(fr_8km_dep,function(x) t(drop(as.array(x)))[,ncol(t(drop(as.array(x)))):1])
 fr_8km_dep=abind(fr_8km_dep,along = 3)
+fr_8km_dep[!is.na(fr_8km_dep)]=1
 
 reg_hyd=readOGR(paste0(path_sig,"raw/IGN/RegionHydro_FXX-shp/RegionHydro_FXX.shp"), use_iconv = TRUE, encoding = "UTF-8")
 reg_hyd=spTransform(reg_hyd,crs(fr_8km))
@@ -64,10 +65,11 @@ for(i in 1:length(reg_hyd$LbRegionHy)){
   par(new=T)
 }
 lines(reg_hyd)
-##offset is probaly due to "reprojection à la volée"
+##offset when zooming is probaly due to "reprojection à la volée"
 
 fr_8km_reg_hyd=lapply(fr_8km_reg_hyd,function(x) t(drop(as.array(x)))[,ncol(t(drop(as.array(x)))):1])#reorder because axis not same order and increasing order in ncvar_get and netcdf
 fr_8km_reg_hyd=abind(fr_8km_reg_hyd,along = 3)
+fr_8km_reg_hyd[!is.na(fr_8km_reg_hyd)]=1
 
 # if ran several times need to manually delete the new netcdf
 file.copy(paste0(path_sig,"raw/SAFRAN_mask_France.nc"),paste0(path_sig,"processed/SAFRAN_mask_reg-hydro_deptmt.nc"),overwrite=T)
