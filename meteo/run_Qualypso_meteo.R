@@ -88,8 +88,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     gc()
     
     lst.QUALYPSOOUT_time=vector(mode="list",length=length((Xfut)))
-    cpt=1
-    for(x in Xfut){
+    for(cpt in 1:length(Xfut)){
     # for(x in c(2030,2050,2085)){
       lst.QUALYPSOOUT_time[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
                                                             scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
@@ -101,12 +100,11 @@ for(v in unique(simu_lst$var)[c(1,2)]){
       lst.QUALYPSOOUT_time[[cpt]]$RESERR=NA
       lst.QUALYPSOOUT_time[[cpt]]$CHANGEBYEFFECT=NA
       lst.QUALYPSOOUT_time[[cpt]]$CLIMATEESPONSE$YStar=NA
-      if(x!=Xfut[1]){
+      if(cpt!=1){
         lst.QUALYPSOOUT_time[[cpt]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
         lst.QUALYPSOOUT_time[[cpt]]$Y=NA #to not store 9892 times the same information, stored only the first time
       }
       if(((cpt) %% 10)==0){print(cpt)}
-      cpt=cpt+1
     }
     
     rm(Y,X,listOption)
