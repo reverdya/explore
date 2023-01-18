@@ -21,6 +21,10 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_data/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/fictiveT/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
+
+load(file=paste0(path_data,"simu_lst.Rdata"))
+ref_year=1990
 
 
 ######
@@ -66,12 +70,12 @@ plt1=ggplot(df)+
   geom_hline(yintercept=Xref[2],color="blue",lty="dotted",size=1.2)+
   scale_x_continuous(limits=c(1861,2105),expand=c(0,0))+
   scale_y_continuous(limits=c(286,292),expand=c(0,0))+
-  xlab("time")+
-  ylab("X")+
+  xlab("Temps")+
+  ylab("Température (K)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Température planétaire en fonction\ndu temps")+
+  ggtitle("Température planétaire\nen fonction du temps")+
   annotate("text", x = 1990, y = 291.5, label = "1990",fontface = "bold",size=3)+
   annotate("text", x = 1880, y = Xref[1], label = "Xref1",fontface = "bold",size=3,color="red")+
   annotate("text", x = 1880, y = Xref[2], label = "Xref2",fontface = "bold",size=3,color="blue")
@@ -86,12 +90,12 @@ plt2=ggplot(df)+
   geom_vline(xintercept=1990,color="black",lty="dotted",size=1.2)+
   scale_x_continuous(limits=c(1861,2105),expand=c(0,0))+
   scale_y_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("time")+
-  ylab("DX")+
+  xlab("Temps")+
+  ylab("DTempérature (°C)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Différence de température planétaire\nen fonction du temps")+
+  ggtitle("Anomalie de température planétaire en\nfonction du temps (par rapport à 1990)")+
   annotate("text", x = 1990, y = 4.5, label = "1990",fontface = "bold",size=3)
 plt2
 
@@ -105,12 +109,12 @@ plt3=ggplot(df)+
   geom_vline(xintercept=1990,color="black",lty="dotted",size=1.2)+
   scale_x_continuous(limits=c(1861,2105),expand=c(0,0))+
   scale_y_continuous(limits=c(-0.5,6),expand=c(0,0))+
-  xlab("time")+
-  ylab("DX_PI")+
+  xlab("Temps")+
+  ylab("Niveau de réchauffement (°C)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Réchauffement planétaire\nen fonction du temps")+
+  ggtitle("Réchauffement planétaire en fonction\ndu temps (référence 1875)")+
   annotate("text", x = 1990, y = 4.5, label = "1990",fontface = "bold",size=3)
 plt3
 
@@ -120,12 +124,12 @@ plt4=ggplot(df)+
   geom_vline(xintercept=1990,color="black",lty="dotted",size=1.2)+
   scale_x_continuous(limits=c(1861,2105),expand=c(0,0))+
   scale_y_continuous(limits=c(1.9,3.5),expand=c(0,0))+
-  xlab("time")+
-  ylab("Y")+
+  xlab("Temps")+
+  ylab("Qan (m3/s)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Indicateur en fonction\ndu temps")+
+  ggtitle("Débit moyen annuel en fonction\ndu temps")+
   annotate("text", x = 1990, y = 3.4, label = "1990",fontface = "bold",size=3)
 plt4
 
@@ -134,12 +138,12 @@ plt5=ggplot(df)+
   geom_line(aes(x=Dx2_PI,y=y2),color="blue",size=1.2)+
   scale_y_continuous(limits=c(1.9,3.5),expand=c(0,0))+
   scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("DX_PI")+
-  ylab("Y")+
+  xlab("Niveau de réchauffement (°C)")+
+  ylab("Qan (m3/s)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Indicateur en fonction du\nréchauffement planétaire")
+  ggtitle("Débit moyen annuel en fonction\ndu réchauffement planétaire")
 plt5
 
 
@@ -161,12 +165,12 @@ plt6=ggplot(df)+
   geom_hline(yintercept=Yref[2],color="blue",lty="dotted",size=1.2)+
   scale_y_continuous(limits=c(1.9,3.5),expand=c(0,0))+
   scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("DX_PI")+
-  ylab("Y")+
+  xlab("Niveau de réchauffement (°C)")+
+  ylab("Qan (m3/s)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Indicateur en fonction du\nréchauffement planétaire\navec spline")+
+  ggtitle("Débit moyen annuel en fonction\ndu réchauffement planétaire,\navec spline")+
   annotate("text", x = -0.5, y = Yref[1], label = "Yref1",fontface = "bold",size=3,color="red")+
   annotate("text", x = -0.5, y = Yref[2], label = "Yref2",fontface = "bold",size=3,color="blue")+
   annotate("text", x = X_1990_obs, y = 3.25, label = "1990",fontface = "bold",size=3)
@@ -180,15 +184,67 @@ plt7=ggplot(df)+
   geom_line(aes(x=Dx2_PI,y=Dy2_spline),color="blue",size=1.2)+
   scale_y_continuous(limits=c(-0.125,0.95),expand=c(0,0))+
   scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("DX_PI")+
-  ylab("DY")+
+  xlab("Niveau de réchauffement (°C)")+
+  ylab("DQan (m3/s)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Différence d'indicateur en fonction du\n réchauffement planétaire")
+  ggtitle("Différence de débit moyen annuel\nen fonction du réchauffement planétaire")
 plt7
 
-plt=ggarrange(plt1,plt2,plt3,plt4,plt5,plt6,plt7,ncol=3,nrow=3,align="v")
+
+
+
+
+df$y1_splinetime=df$y1
+df$y2_splinetime=df$y2
+spline1time=smooth.spline(x=df$time[df$time>=1970],y=df$y1[df$time>=1970],spar = 1)
+spline2time=smooth.spline(x=df$time[df$time>=1970],y=df$y2[df$time>=1970],spar = 1)
+df$y1_splinetime[df$time>=1970]=spline1time$y
+df$y2_splinetime[df$time>=1970]=spline2time$y
+Yreftime=c(predict(spline1time,1990)$y,predict(spline2time,1990)$y)
+
+plt8=ggplot(df)+
+  geom_line(aes(x=time,y=y1),color="red",size=0.8)+
+  geom_line(aes(x=time,y=y2),color="blue",size=0.8)+
+  geom_line(aes(x=time,y=y1_splinetime),color="red",size=1.2)+
+  geom_line(aes(x=time,y=y2_splinetime),color="blue",size=1.2)+
+  geom_vline(xintercept=1990,color="black",lty="dotted",size=1.2)+
+  geom_hline(yintercept=Yreftime[1],color="red",lty="dotted",size=1.2)+
+  geom_hline(yintercept=Yreftime[2],color="blue",lty="dotted",size=1.2)+
+  scale_y_continuous(limits=c(1.9,3.5),expand=c(0,0))+
+  scale_x_continuous(limits=c(1861,2105),expand=c(0,0))+
+  xlab("Temps")+
+  ylab("Qan (m3/s)")+
+  theme_bw(base_size = 12)+
+  theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  ggtitle("Débit moyen annuel en fonction\ndu temps, avec spline")+
+  annotate("text", x = 1900, y = Yreftime[1], label = "Yref1",fontface = "bold",size=3,color="red")+
+  annotate("text", x = 1900, y = Yreftime[2], label = "Yref2",fontface = "bold",size=3,color="blue")+
+  annotate("text", x = 1990, y = 3.25, label = "1990",fontface = "bold",size=3)
+plt8
+
+df$Dy1_splinetime=df$y1_splinetime-Yreftime[1]
+df$Dy2_splinetime=df$y2_splinetime-Yreftime[2]
+
+plt9=ggplot(df)+
+  geom_line(aes(x=time,y=Dy1_splinetime),color="red",size=1.2)+
+  geom_line(aes(x=time,y=Dy2_splinetime),color="blue",size=1.2)+
+  scale_y_continuous(limits=c(-0.15,0.95),expand=c(0,0))+
+  scale_x_continuous(limits=c(1861,2105),expand=c(0,0))+
+  xlab("Temps")+
+  ylab("DQan (m3/s)")+
+  theme_bw(base_size = 12)+
+  theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  ggtitle("Différence de débit moyen annuel\nen fonction du temps")
+plt9
+
+
+
+
+plt=ggarrange(plt1,plt2,plt3,plt4,plt5,plt6,plt7,plt8,plt9,ncol=3,nrow=3,align="v")
 plt
 save.plot(plt,Filename = "schema_predictor_T",Folder = path_fig,Format = "jpeg")
 # plt=ggarrange(plt1+theme_bw(base_size = 6),
@@ -203,5 +259,23 @@ save.plot(plt,Filename = "schema_predictor_T",Folder = path_fig,Format = "jpeg")
 
 ## Easier to cut and rearrange from jpeg
 
+#########################
+## Plot GCM Temperatures
 
+data=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=simu_lst)[["mat_Globaltas_gcm"]]
+data=pivot_longer(data=data,cols=!year,names_to = "chain",values_to = "val")
+data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
+data$gcm=unlist(lapply(strsplit(data$chain,"_"),function(x) x[2]))
+
+plt=ggplot(data)+
+  geom_line(aes(x=year,y=val,col=rcp,lty=gcm),size=1.2)+
+  xlab("")+
+  ylab("Changement de température planétaire (°C)")+
+  theme_bw(base_size = 18)+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+  scale_color_discrete("",type = as.vector(col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+  scale_linetype_discrete("GCM")+
+  ggtitle("Changement de température planétaire pour les différents RCP/GCM\npar rapport à la référence 1850-1900")
+save.plot(plt,Filename = "global_tas",Folder = path_fig,Format = "jpeg")
 
