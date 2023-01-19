@@ -40,10 +40,10 @@ for(v in unique(simu_lst$var)[c(1,2)]){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
   if(v=="tasAdjust"){
     typechangeVar="abs"
-    SPAR=1
+    SPAR=1.2
   }else{
     typechangeVar="rel"
-    SPAR=1.1
+    SPAR=1.2
   }
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[17]){
     tic()
@@ -116,7 +116,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     gc()
     
     ## 2 RCP
-    Xfut=c(global_tas[["warming_1990"]],seq(0.7,3,0.1))
+    Xfut=c(global_tas[["warming_1990"]],seq(0.7,2.5,0.1))
     idx_rcp=which(scenAvail$rcp=="rcp85"|scenAvail$rcp=="rcp45")
     scenAvail=scenAvail[idx_rcp,]
     X=X[idx_rcp,]
@@ -151,7 +151,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     gc()
     
     ## 1 RCP
-    Xfut=c(global_tas[["warming_1990"]],seq(0.7,5,0.1))
+    Xfut=c(global_tas[["warming_1990"]],seq(0.7,4,0.1))
     idx_rcp=which(scenAvail$rcp=="rcp85")
     scenAvail=scenAvail[idx_rcp,]
     X=X[idx_rcp,]
