@@ -180,8 +180,8 @@ rescale_divergent_col=function(pal=warmcool(100),values,param){
 
 ################################################
 ## Reformat a color scale
-## Takes a color palette (pal) and a vector of values (values) that should be represented with this color palette centered on 0 
-# param is between 0 and 1, the closest it is to 0 the more colors are attributed to the central values, for 1 the palette is unchanged
+## Takes a color palette (pal) and a vector of values (values) that should be represented with this color palette
+# param is between 0 and 1, the closest it is to 0 the more colors are attributed to the lower values, for 1 the palette is unchanged
 
 # ref=seq(0,1,0.01)
 # plot(x=ref,y=ref,type = "l",col="black")
@@ -1158,20 +1158,38 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   Xfut = lst.QUALYPSOOUT[[1]]$Xfut
   if (predict=="time"){
     iEff = which(lst.QUALYPSOOUT[[1]]$namesEff == "rcp")
+    nrcp=length(unique(scenAvail$rcp))
+  }
+  if (predict=="temp"){
+    nrcp=1
   }
   h=which(Xfut %in% horiz)
   
+  
   phiStar.corr=list()
-  for (r in 1:length(unique(scenAvail$rcp))){
-    idx_rcp=which(scenAvail$rcp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r])
-    # phiStar
-    phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_rcp,h]
+  for (r in 1:nrcp){
+    if (predict=="time"){
+      idx_rcp=which(scenAvail$rcp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r])
+      # phiStar
+      phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_rcp,h]
+    }
+    if (predict=="temp"){
+      # phiStar
+      phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,,h]
+    }
     #Reconstructed chains
     chains=reconstruct_chains(lst.QUALYPSOOUT,idx_pred = idx)[h]
     #Replace for this rcp the reconstructed values by the true values
-    idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
+    if (predict=="time"){
+      idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
+    }
+    if (predict=="temp"){
+      idx_phistar_rcp=which(!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
+    }
     chains[idx_phistar_rcp,]=phiStar
-    chains=chains[seq(r,nrow(chains),3),]#only this rcp
+    if(predict=="time"){
+      chains=chains[seq(r,nrow(chains),3),]#only this rcp
+    }
     # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
     # obtained from QUALYPSO
     sd.emp = apply(chains,2,sd)
@@ -1179,13 +1197,24 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     sd.qua=sd.emp
     i0=1
     for (i in h){
-      sd.qua[i0] = sqrt(unlist(lapply(lst.QUALYPSOOUT[i],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx]-x$EFFECTVAR[idx,iEff])))
+      if(predict=="time"){
+        sd.qua[i0] = sqrt(unlist(lapply(lst.QUALYPSOOUT[i],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx]-x$EFFECTVAR[idx,iEff])))
+      }
+      if(predict=="temp"){
+        sd.qua[i0] = sqrt(unlist(lapply(lst.QUALYPSOOUT[i],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx])))
+      }
       i0=i0+1
     }
     sd.corr = sd.qua/sd.emp
     phiStar.corr[[r]] = data.frame(chains*t(replicate(nrow(chains),sd.corr)))
     colnames(phiStar.corr[[r]])=paste0("h_",horiz)
-    phiStar.corr[[r]]$rcp=unique(scenAvail$rcp)[r]
+    if(predict=="time"){
+      phiStar.corr[[r]]$rcp=unique(scenAvail$rcp)[r]
+    }
+    if(predict=="temp"){
+      phiStar.corr[[r]]$rcp="rp8.5"
+    }
+    
   }
   
   phiStar.corr=bind_rows(phiStar.corr)
@@ -1198,11 +1227,18 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   }
   phiStar.corr=pivot_longer(phiStar.corr,cols=-c(rcp),names_to = "horiz",values_to = "val")
   
-  color_select=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]
-  if(substr(color_select[1],5,5)!="."){
-    for (cs in 1:length(color_select)){
-      color_select[cs]=paste(c(substr(color_select[cs], 1, 4), substr(color_select[cs], 5,nchar(color_select[cs]))), collapse=".")#rcp26 to rcp2.6
+  if(pred=="time"){
+    color_select=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]
+    if(substr(color_select[1],5,5)!="."){
+      for (cs in 1:length(color_select)){
+        color_select[cs]=paste(c(substr(color_select[cs], 1, 4), substr(color_select[cs], 5,nchar(color_select[cs]))), collapse=".")#rcp26 to rcp2.6
+      }
     }
+    label_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")
+  }
+  if(pred=="temp"){
+    color_select="rcp8.5"
+    label_rcp=c("RCP 8.5")
   }
   
   custom_boxplot=function(x){
@@ -1213,7 +1249,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=horiz,y=val,fill=rcp),lwd=2,position="dodge")+
     geom_point(aes(x=horiz,y=val,color=rcp),alpha=0)+#just for legend
     scale_fill_discrete("",type=as.vector(col_3rcp_shade[color_select]))+
-    scale_color_discrete("",type=as.vector(col_3rcp_shade[color_select]),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+    scale_color_discrete("",type=as.vector(col_3rcp_shade[color_select]),labels=label_rcp)+
     scale_x_discrete("",labels = horiz)+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -1226,6 +1262,10 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   }else{
     plt1=plt1+
       scale_y_continuous(paste0("Changement (°C)"),expand=c(0,0))
+  }
+  if(pred=="temp"){
+    plt1=plt1+
+      scale_x_discrete("Niveau de réchauffement (°C)",labels = horiz)
   }
   
   plt2=ggplot(data.frame(x=rep(1,100),y=c(1:100)))+
@@ -1952,7 +1992,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     q01=quantile(exut$val,probs=(1-freq_col))
     lim_col=as.numeric(c(q01,q99))
     lim_col=round(lim_col)#arrondi au 1 le plus proche
-    br=seq(lim_col[1],lim_col[2],0.5)
+    br=seq(lim_col[1],lim_col[2],0.25)
   }
   
   if(!pix){
@@ -1972,7 +2012,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     }else{
       plt=plt+
         facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C))",ggplot2:::binned_pal(scales::brewer.ylorrd(length(br)-1)),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C))",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
         ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
@@ -2179,7 +2219,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     }else{
       q99=quantile(exut$val,probs=freq_col)
       q01=quantile(exut$val,probs=1-freq_col)
-      lim_col=c(round(q01/0.5)*0.5,round(q99/0.5)*0.5)
+      lim_col=c(round(q01/0.25)*0.25,round(q99/0.25)*0.25)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (°C)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Incertitude\nliée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
@@ -2196,7 +2236,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     }else{
       q99=quantile(exut$val,probs=freq_col)
       q01=quantile(exut$val,probs=1-freq_col)
-      lim_col=c(round(q01/0.5)*0.5,round(q99/0.5)*0.5)
+      lim_col=c(round(q01/0.25)*0.25,round(q99/0.25)*0.25)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (°C)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Incertitude\nliée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
@@ -2273,7 +2313,10 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   colnames(exut)=c("x","y")
   exut$idx=seq(1:nrow(exut))
-  exut$rcp=exut$gcm=exut$rcm=exut$rv=0
+  exut$gcm=exut$rcm=exut$rv=0
+  if(pred=="time"){
+    exut$rcp=0
+  }
   if(!is.null(lst.QUALYPSOOUT[[1]]$CONTRIB_EACH_EFFECT$hm)){
     exut$hm=0
   }
@@ -2283,7 +2326,9 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   
 
   idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
-  exut$rcp=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"rcp"]*100
+  if(pred=="time"){
+    exut$rcp=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"rcp"]*100
+  }
   exut$gcm=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"gcm"]*100
   exut$rcm=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"rcm"]*100
   if(!is.null(lst.QUALYPSOOUT[[1]]$CONTRIB_EACH_EFFECT$bc)){
