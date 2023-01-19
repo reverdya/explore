@@ -296,7 +296,99 @@ rle2 <- function (x)  {
 
 ## etaStar is by definition of X dimensions's and not Xfut and can contain NA (logical when thinking of tempreature predictor)
 
-prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6){
+prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type,nS,nFut,scenAvail){
+  # prepare outputs
+  phiStar = phi = matrix(nrow=nS,ncol=nFut)
+  etaStar = YStar = matrix(nrow=nS,ncol=nY)
+  climateResponse = list()
+  for(iS in 1:nS){
+    # projection for this simulation chain
+    Ys = Y[iS,]
+    Xs = Xmat[iS,]
+    Xrefs = Xref[iS]
+    # fit a smooth signal
+    zz = !is.na(Ys)
+
+    
+    if(type=="spline"){
+      smooth.spline.out<-stats::smooth.spline(Xs[zz],Ys[zz],spar=spar[iS])
+      # store spline object
+      climateResponse[[iS]] = smooth.spline.out
+      # fitted responses at the points of the fit (for etaStar)
+      phiY = predict(smooth.spline.out, Xs)$y
+      # fitted responses at unknown points ("Xfut")
+      phiS = predict(smooth.spline.out, Xfut)$y
+      # climate response of the reference/control time/global tas
+      phiC = predict(smooth.spline.out, Xrefs)$y
+    }
+    if(type=="log_spline"){
+      Yslog10=log10(Ys)
+      smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
+      # store spline object
+      climateResponse[[iS]] = smooth.spline.out
+      # fitted responses at the points of the fit (for etaStar)
+      phiY = 10^predict(smooth.spline.out, Xs)$y
+      # fitted responses at unknown points ("Xfut")
+      phiS = 10^predict(smooth.spline.out, Xfut)$y
+      # climate response of the reference/control time/global tas
+      phiC = 10^predict(smooth.spline.out, Xrefs)$y
+    }
+    if(type=="linear_rcp26"){
+      name_rcp=scenAvail$rcp[iS]
+      if(name_rcp!="rcp26"){
+        smooth.spline.out<-stats::smooth.spline(Xs[zz],Ys[zz],spar=spar[iS])
+        # store spline object
+        climateResponse[[iS]] = smooth.spline.out
+        # fitted responses at the points of the fit (for etaStar)
+        phiY = predict(smooth.spline.out, Xs)$y
+        # fitted responses at unknown points ("Xfut")
+        phiS = predict(smooth.spline.out, Xfut)$y
+        # climate response of the reference/control time/global tas
+        phiC = predict(smooth.spline.out, Xrefs)$y
+      }else{
+        y=Ys[zz]
+        x=Xs[zz]
+        smooth.spline.out=lm(y~x)
+        # store spline object
+        climateResponse[[iS]] = smooth.spline.out
+        # fitted responses at the points of the fit (for etaStar)
+        phiY = as.vector(predict(smooth.spline.out, data.frame(x=Xs)))
+        # fitted responses at unknown points ("Xfut")
+        phiS = as.vector(predict(smooth.spline.out, data.frame(x=Xfut)))
+        # climate response of the reference/control time/global tas
+        phiC = as.vector(predict(smooth.spline.out, data.frame(x=Xrefs)))
+      }
+    }
+    
+    # store climate response for this simulation chain
+    phi[iS,] = phiS
+    # Climate change response: phiStar, and internal variability expressed as a change: etaStar
+    if(typeChangeVariable=='abs'){
+      # Eq. 5
+      phiStar[iS,] = phiS-phiC
+      etaStar[iS,] = Ys-phiY
+      YStar[iS,] = Ys-phiC
+    }else if(typeChangeVariable=='rel'){
+      # Eq. 6
+      phiStar[iS,] = phiS/phiC-1
+      etaStar[iS,] = (Ys-phiY)/phiC
+      YStar[iS,] = (Ys-phiC)/phiC
+    }else{
+      stop("fit.climate.response: argument type.change.var must be equal to 'abs' (absolute changes) or 'rel' (relative changes)")
+    }
+  }
+  # Variance related to the internal variability: considered constant over the time period
+  # (see Eq. 22 and 23 in Hingray and Said, 2014). We use a direct empirical estimate
+  # of the variance of eta for each simulation chain and take the mean, see Eq. 19
+  varInterVariability = mean(apply(etaStar,2,function(x) var(x)),na.rm=T)
+  
+  # return objects
+  return(list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability))
+  
+}
+
+
+prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,scenAvail){
   
   # dimensions
   d = dim(Y)
@@ -350,64 +442,10 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6){
   # number of future time/global.tas
   nFut = length(Xfut)
   
+  
+  
   if(paralType=="Time"){
-    # prepare outputs
-    phiStar = phi = matrix(nrow=nS,ncol=nFut)
-    etaStar = YStar = matrix(nrow=nS,ncol=nY)
-    climateResponse = list()
-    for(iS in 1:nS){
-      # projection for this simulation chain
-      Ys = Y[iS,]
-      Xs = Xmat[iS,]
-      Xrefs = Xref[iS]
-      # fit a smooth signal
-      zz = !is.na(Ys)
-      
-      if(type=="spline"){
-        smooth.spline.out<-stats::smooth.spline(Xs[zz],Ys[zz],spar=spar[iS])
-        # store spline object
-        climateResponse[[iS]] = smooth.spline.out
-        # fitted responses at the points of the fit (for etaStar)
-        phiY = predict(smooth.spline.out, Xs)$y
-        # fitted responses at unknown points ("Xfut")
-        phiS = predict(smooth.spline.out, Xfut)$y
-        # climate response of the reference/control time/global tas
-        phiC = predict(smooth.spline.out, Xrefs)$y
-      }
-      if(type=="log_spline"){
-        Yslog10=log10(Ys)
-        smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
-        # store spline object
-        climateResponse[[iS]] = smooth.spline.out
-        # fitted responses at the points of the fit (for etaStar)
-        phiY = 10^predict(smooth.spline.out, Xs)$y
-        # fitted responses at unknown points ("Xfut")
-        phiS = 10^predict(smooth.spline.out, Xfut)$y
-        # climate response of the reference/control time/global tas
-        phiC = 10^predict(smooth.spline.out, Xrefs)$y
-      }
-      
-      # store climate response for this simulation chain
-      phi[iS,] = phiS
-      # Climate change response: phiStar, and internal variability expressed as a change: etaStar
-      if(typeChangeVariable=='abs'){
-        # Eq. 5
-        phiStar[iS,] = phiS-phiC
-        etaStar[iS,] = Ys-phiY
-        YStar[iS,] = Ys-phiC
-      }else if(typeChangeVariable=='rel'){
-        # Eq. 6
-        phiStar[iS,] = phiS/phiC-1
-        etaStar[iS,] = (Ys-phiY)/phiC
-        YStar[iS,] = (Ys-phiC)/phiC
-      }else{
-        stop("fit.climate.response: argument type.change.var must be equal to 'abs' (absolute changes) or 'rel' (relative changes)")
-      }
-    }
-    # Variance related to the internal variability: considered constant over the time period
-    # (see Eq. 22 and 23 in Hingray and Said, 2014). We use a direct empirical estimate
-    # of the variance of eta for each simulation chain and take the mean, see Eq. 19
-    varInterVariability = mean(apply(etaStar,2,function(x) var(x)),na.rm=T)
+    out=prepare_clim_resp_2D(Y = Y,Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail)
   }
   
   if(paralType=="Grid"){
@@ -427,10 +465,7 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6){
         climResponse.g = list(phiStar = NA, etaStar = NA, phi = NA,
                               varInterVariability = NA)
       }else{
-        climResponse.g = fit.climate.response(Y[g,,],
-                                              spar=spar,
-                                              Xmat=Xmat, Xfut=Xfut,
-                                              typeChangeVariable=typeChangeVariable)
+        climResponse.g = prepare_clim_resp_2D(Y = Y[g,,],Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail)
       }
       return(climResponse.g)
     }
@@ -445,10 +480,11 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6){
       YStar[g,,] = climResponse[[g]]$YStar
       climateResponse[[g]]=climResponse[[g]]$climateResponse
     }
+    out=list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability)
   }
   
   # return objects
-  return(list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability))
+  return(out)
   
 }
 
