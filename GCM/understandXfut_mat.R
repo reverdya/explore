@@ -23,7 +23,7 @@ path_data="C:/Users/reverdya/Documents/Docs/2_data/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/fictiveT/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
-load(file=paste0(path_data,"simu_lst.Rdata"))
+load(file=paste0(path_data,"/processed/Explore2-meteo/simu_lst.Rdata"))
 ref_year=1990
 
 
@@ -278,4 +278,39 @@ plt=ggplot(data)+
   scale_linetype_discrete("GCM")+
   ggtitle("Changement de température planétaire pour les différents RCP/GCM\npar rapport à la référence 1850-1900")
 save.plot(plt,Filename = "global_tas",Folder = path_fig,Format = "jpeg")
+
+##############################################
+## Plot emergence dates
+
+
+idx=vector(mode = "list")
+temp_ref=c(1,1.5,2,3,4,5)
+data=pivot_wider(data[,c("year","chain","val")],names_from = chain,values_from = val)
+for(temp in temp_ref){
+  idx[[as.character(temp)]]=apply(data[,-1],MARGIN=2,function(x) min(which(x>=temp)))
+}
+
+idx=data.frame(do.call(rbind, idx))
+idx[idx==Inf]=NA
+idx=data.frame(apply(idx,MARGIN=2,function(x) years[x]))
+idx$temp=temp_ref
+colnames(idx)[-ncol(idx)]=colnames(prep_global_tas(path_temp,ref_year=ref_year,simu_lst=simu_lst)[["mat_Globaltas_gcm"]][,-1])
+data=pivot_longer(data=idx,cols=!temp,names_to = "chain",values_to = "val")
+data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
+
+
+plt=ggplot(data)+
+  geom_boxplot(aes(x=val,y=factor(temp),fill=rcp),alpha=0.7,outlier.shape = NA)+
+  geom_point(aes(x=val,y=factor(temp),fill=rcp), position = position_jitterdodge(jitter.width = 0.15),size=2,alpha=0.5)+
+  xlab("")+
+  ylab("Changement de température planétaire (deg C)")+
+  theme_bw(base_size = 18)+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+  scale_x_continuous(breaks=seq(2000,2100,20))+
+  scale_fill_discrete("",type = as.vector( col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
+  guides(fill=guide_legend(reverse=TRUE))+
+  ggtitle("Première année de franchissement des seuils\nde niveau de réchauffement planétaire\npour les différents RCPs (et GCMs)")
+save.plot(plt,Filename = "dat_threshold_temp",Folder = path_fig,Format = "jpeg")
+
 
