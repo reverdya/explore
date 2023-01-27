@@ -296,7 +296,7 @@ rle2 <- function (x)  {
 
 ## etaStar is by definition of X dimensions's and not Xfut and can contain NA (logical when thinking of tempreature predictor)
 
-prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type,nS,nFut,scenAvail){
+prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type,nY,nS,nFut,scenAvail){
   # prepare outputs
   phiStar = phi = matrix(nrow=nS,ncol=nFut)
   etaStar = YStar = matrix(nrow=nS,ncol=nY)
@@ -445,7 +445,7 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
   
   
   if(paralType=="Time"){
-    out=prepare_clim_resp_2D(Y = Y,Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail)
+    out=prepare_clim_resp_2D(Y = Y,Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail,nY=nY)
   }
   
   if(paralType=="Grid"){
@@ -454,23 +454,22 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
     etaStar = YStar = array(dim=d)
     varInterVariability = vector(length=nG)
     climateResponse=vector(mode="list",length=nG)
-    
-    g = NULL # avoid warning during check
-    cl <- makeCluster(nbcores) # create a cluster with n cores
-    registerDoParallel(cl) # register the cluster
-    climResponse <- foreach(g=1:nG,.export=c("fit.climate.response")) %dopar% {
+    climResponse=vector(mode="list",length=nG)
+
+    gc()
+    # no parallelisation because memory issue in loading Y on each core (and parallelisation on lower level function would require too much core communication)
+    for(g in (1:nG)){
       # check is some simulation chains are entirely missing
       hasAllNa = apply(Y[g,,],1,function(x) all(is.na(x)))
       if(any(hasAllNa)){
-        climResponse.g = list(phiStar = NA, etaStar = NA, phi = NA,
-                              varInterVariability = NA)
+        climResponse[[g]]=list(phiStar = NA, etaStar = NA, phi = NA,
+                               varInterVariability = NA)
       }else{
-        climResponse.g = prepare_clim_resp_2D(Y = Y[g,,],Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail)
+        climResponse[[g]]= prepare_clim_resp_2D(Y = Y[g,,],Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nY=nY,nS = nS,nFut = nFut,scenAvail=scenAvail)
       }
-      return(climResponse.g)
+      if(g%%100==0){gc()}
     }
-    stopCluster(cl) # shut down the cluster
-    
+    gc()
     # fill the matrices
     for(g in 1:nG){
       phiStar[g,,] = climResponse[[g]]$phiStar
@@ -583,7 +582,7 @@ prep_global_tas=function(path_temp,ref_year=1990,simu_lst){
   tas_obs=smooth.spline(x=full_years,y=res,spar=1)$y
   warming_1990=tas_obs[full_years==1990]-tas_obs[full_years==1875]
   mat_Globaltas=mat_Globaltas+warming_1990
-  mat_Globaltas_gcm=mat_Globaltas_gcm+warming_1990
+  mat_Globaltas_gcm[,-1]=mat_Globaltas_gcm[,-1]+warming_1990
   
   return(list(mat_Globaltas=mat_Globaltas,mat_Globaltas_gcm=mat_Globaltas_gcm,gcm_years=gcm_years,warming_1990=warming_1990))
 }
@@ -1255,11 +1254,11 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   
   phiStar.corr=bind_rows(phiStar.corr)
   if(var!="tasAdjust"){
-    if(any(phiStar.corr[,c(1:3)]<(-1))){
+    if(any(phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]<(-1))){
       warning("Lower bound forced to -100%")
-      phiStar.corr[phiStar.corr[,c(1:3)]<-1,c(1:3)]=(-1)
+      phiStar.corr[phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]<-1,c(1:(ncol(phiStar.corr)-1))]=(-1)
     }
-    phiStar.corr[,c(1:3)]=phiStar.corr[,c(1:3)]*100
+    phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]=phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]*100
   }
   phiStar.corr=pivot_longer(phiStar.corr,cols=-c(rcp),names_to = "horiz",values_to = "val")
   
@@ -1647,11 +1646,20 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   exut$idx=seq(1:nrow(exut))
   
   tmp=exut
-  for (i in 1:8){
-    exut=rbind(exut,tmp)
+  if(pred=="time"){
+    for (i in 1:8){
+      exut=rbind(exut,tmp)
+    }
+    exut$horiz=rep(horiz,each=nrow(exut)/3)
+    exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
   }
-  exut$horiz=rep(horiz,each=nrow(exut)/3)
-  exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
+  if(pred=="temp"){
+    for (i in 1:11){
+      exut=rbind(exut,tmp)
+    }
+    exut$horiz=rep(horiz,each=nrow(exut)/4)
+    exut$quant=rep(rep(quant,each=nrow(exut)/12),times=4)
+  }
   exut$val=0
   exut$sign=0
   
