@@ -87,7 +87,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     
     ## 3 RCP
     Xfut=c(global_tas[["warming_1990"]],seq(0.7,1.5,0.1))
-    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
+    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(SPAR,nrow(scenAvail)),type="linear_rcp26",nbcores = nbcore,scenAvail = scenAvail)
     listOption_3rcp = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
     gc()
@@ -121,7 +121,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     scenAvail=scenAvail[idx_rcp,]
     X=X[idx_rcp,]
     Y=Y[,idx_rcp,]
-    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
+    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(SPAR,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
     listOption_2rcp = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
     gc()
@@ -156,7 +156,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     scenAvail=scenAvail[idx_rcp,]
     X=X[idx_rcp,]
     Y=Y[,idx_rcp,]
-    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
+    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(SPAR,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
     listOption_1rcp = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
     gc()
