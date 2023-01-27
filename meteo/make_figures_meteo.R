@@ -65,8 +65,8 @@ for(v in unique(simu_lst$var)[c(1,2)]){
   dir.create(paste0(path_fig,v,"/"))
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
-    # for (preds in c("time","temp")){
-    for (preds in c("temp")){
+    for (preds in c("time","temp")){
+    # for (preds in c("temp")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/")
         load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
@@ -85,7 +85,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
         predict="temp"
         pred_unit="°C"
         xlim=c(min(lst.QUALYPSOOUT[[1]]$Xfut),max(lst.QUALYPSOOUT[[1]]$Xfut))
-        horiz3=c(1.5,2,3)
+        horiz3=c(1.5,2,3,4)
       }
       
       dir.create(folder_out)
@@ -130,8 +130,8 @@ for(v in unique(simu_lst$var)[c(1,2)]){
 for(v in unique(simu_lst$var)[c(1,2)]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
-    # for (preds in c("time","temp")){
-    for (preds in c("temp")){
+    for (preds in c("time","temp")){
+    # for (preds in c("temp")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/maps/")
         load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
@@ -152,7 +152,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
         pred_unit="°C"
         xlim=c(min(lst.QUALYPSOOUT[[1]]$Xfut),max(lst.QUALYPSOOUT[[1]]$Xfut))
         horiz=3
-        horiz3=c(1.5,2,3)
+        horiz3=c(1.5,2,3,4)
       }
       dir.create(folder_out)
       freq_col=0.99
