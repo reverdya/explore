@@ -32,6 +32,7 @@ library(plotly)#interactive plot
 library(htmlwidgets)#save interactive plot
 library(plotwidgets)#hsl colors (would be better to use hsluv model but not available on my R version)
 library(abind)#abind
+library(gridExtra)#grid.arrange
 
 
 #############################################################
@@ -282,10 +283,6 @@ rle2 <- function (x)  {
 }
 
 
-
-
-
-
 #############################################################
 ## Prepare specific climate response for QUALYPSO
 ## Y the nS x nY or nG x nS x nY indicator, can take in NA
@@ -387,7 +384,6 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
   
 }
 
-
 prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,scenAvail){
   
   # dimensions
@@ -488,7 +484,6 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
 }
 
 
-
 #######################################################################################
 ## Takes a QUALYPSOOUT object and reconstructs chains from mean change +effects
 ## QUALYPSOOUT a Qualypso output
@@ -586,8 +581,6 @@ prep_global_tas=function(path_temp,ref_year=1990,simu_lst){
   
   return(list(mat_Globaltas=mat_Globaltas,mat_Globaltas_gcm=mat_Globaltas_gcm,gcm_years=gcm_years,warming_1990=warming_1990))
 }
-
-
 
 
 
@@ -1627,7 +1620,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
 ## rcp_name the name of the wanted rcp
 ## folder_out the saving folder
 
-map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6){
+map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6,path_temp=NULL){
   
   if(pred=="time"){
     ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
@@ -1753,6 +1746,8 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     br=seq(lim_col[1],lim_col[2],length.out=11)
   }
   
+  
+  
   if(!pix){
     plt=base_map_outlets(data = exut[exut$sign_agree=="<80%",],val_name = "val",alpha_name = "sign_agree")+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Pas d'accord [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
@@ -1775,10 +1770,10 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
       plt=base_map_grid(data = exut,val_name = "val",pattern_name="sign_agree",facet_vert_name ="horiz",threshold="<80%",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
       plt=plt+
         facet_grid(horiz ~ quant,labeller = labeller(horiz = horiz.labs, quant = quant.labs))+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
-        ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," VS 1990)"))+
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
+        ggtitle(paste0("Changement relatif du ",ind_name_full,"\net son incertitude pour différents horizons et\nle prédicteur ",pred_name,"(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        scale_pattern_density_discrete("Accord sur le\nsigne du changement",range = c(0.4,0),labels=c("<80%",">80%"))+
+        scale_pattern_density_discrete("Accord sur le\nsigne du\nchangement",range = c(0.4,0),labels=c("<80%",">80%"))+
         theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
     }else{
@@ -1786,12 +1781,19 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
       plt=plt+
         facet_grid(horiz ~ quant,labeller = labeller(horiz = horiz.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
-        ggtitle(paste0("Changement du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," VS 1990)"))+
+        ggtitle(paste0("Changement du ",ind_name_full,"\net son incertitude pour différents horizons et le\nprédicteur ",pred_name,"(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
     }
   }
-  
+  if(pred=="temp"){
+    emerg=plot_emergence(path_temp = path_temp,temp_ref = horiz,simu_lst = scenAvail)
+    lay <- rbind(c(1,NA,NA,NA),
+                 c(1,2,NA,NA),
+                 c(1,2,3,NA),
+                 c(1,2,NA,NA))
+    plt=grid.arrange(plt, emerg[[1]],emerg[[2]], layout_matrix = lay,widths=c(2,0.7,0.6,0.05),heights=c(0.1,0.225,0.45,0.225))
+  }
   
   if (is.na(folder_out)){
     return(plt)
@@ -1803,7 +1805,6 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 }
 
 
-
 #############################################################################################
 ## Map of 3 quantiles by 3 RCP for one horizon of time using basic mean and q5/q95
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
@@ -1813,7 +1814,6 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 ## folder_out the saving folder
 
 ## Will not work for predictor temperature (cannot do average +- 30 years)
-
 
 map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",ref0=1990){
   
@@ -1933,9 +1933,6 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
     save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz),Folder = folder_out,Format = "jpeg")
   }
 }
-
-
-
 
 
 #######################################################################
@@ -2336,6 +2333,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   
 }
 
+
 ############################################################################
 ## Map variance partition
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
@@ -2457,4 +2455,68 @@ plot_bv_areas=function(folder_out){
   }
 }
 
+##################################################################
+## Emergence dates for reference in predictor temperature maps
+
+plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4)){
+  data=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=simu_lst)[["mat_Globaltas_gcm"]]
+  idx=vector(mode = "list")
+  for(temp in temp_ref){
+    idx[[as.character(temp)]]=apply(data[,-1],MARGIN=2,function(x) min(which(x>=temp)))
+  }
+  
+  idx=data.frame(do.call(rbind, idx))
+  idx[idx==Inf]=NA
+  years=seq(1861,2100)
+  idx=data.frame(apply(idx,MARGIN=2,function(x) years[x]))
+  idx$temp=temp_ref
+  colnames(idx)[-ncol(idx)]=colnames(prep_global_tas(path_temp,ref_year=ref_year,simu_lst=simu_lst)[["mat_Globaltas_gcm"]][,-1])
+  data=pivot_longer(data=idx,cols=!temp,names_to = "chain",values_to = "val")
+  data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
+  data=data[data$rcp=="rcp85",]
+  
+  data_min=aggregate(data$val,by=list(data$temp), min,na.rm=T)
+  colnames(data_min)=c("temp","val")
+  data_max=aggregate(data$val,by=list(data$temp), max)
+  colnames(data_max)=c("temp","val")
+  data_max$val[is.na(data_max$val)]=">2100"#One GCM does not cross 4°C
+  data_max$pos=aggregate(data$val,by=list(data$temp),max, na.rm=T)[,2]
+  
+  custom_boxplot=function(x){
+    return(data.frame(ymin=min(x), ymax=max(x), upper=quantile(x,probs=0.75), lower=quantile(x,probs=0.25), middle=quantile(x,probs=0.5)))
+  }
+  
+  plt1=ggplot(data)+
+    stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=1,y=val),lwd=1.2,width=0.02)+
+    # geom_point(aes(x=1,y=val),size=3,alpha=0.7)+
+    xlab("")+
+    ylab("")+
+    theme_bw(base_size = 18)+
+    theme(axis.ticks =element_blank(),axis.text =element_blank(),panel.grid = element_blank() )+
+    theme(plot.title = element_text( face="bold",  size=16,hjust=0.5))+
+    facet_wrap(vars(temp),nrow=4)+
+    theme(strip.background = element_blank(),strip.text.x = element_blank())+
+    scale_x_continuous("",limits = c(0.985,1.015),expand=c(0,0))+
+    scale_y_reverse(limits = c(2110,2003),expand=c(0,0))+
+    ggtitle("Date d'émergence")+
+    geom_text(data=data_min,aes(x=1,y=val-7,label=val),fontface = "bold",size=4.5,color="red2")+
+    geom_text(data=data_max,aes(x=1,y=pos+7,label=val),fontface = "bold",size=4.5,color="red2")
+  
+  plt2=ggplot(data.frame(x=rep(1,100),y=c(1:100)))+
+    stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=x,y=y),lwd=2,width=0.02)+
+    geom_text(aes(x=1.05,y=50,label="Quantile 50%"),fontface = "bold",size=4.5)+
+    geom_text(aes(x=1.05,y=75,label="Quantile 75%"),fontface = "bold",size=4.5)+
+    geom_text(aes(x=1.05,y=25,label="Quantile 25%"),fontface = "bold",size=4.5)+
+    geom_text(aes(x=1.05,y=100,label="Maximum"),fontface = "bold",size=4.5)+
+    geom_text(aes(x=1,y=105,label="Max"),fontface = "bold",size=4.5,color="red2")+
+    geom_text(aes(x=1.05,y=0,label="Minimum"),fontface = "bold",size=4.5)+
+    geom_text(aes(x=1,y=-5,label="Min"),fontface = "bold",size=4.5,color="red2")+
+    scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
+    theme_void()+
+    theme(panel.background = element_rect(colour="black"))+
+    theme(plot.title = element_text( face="bold",  size=14,hjust=0.5))
+
+
+  return(list(plt1,plt2))
+}
 
