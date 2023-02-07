@@ -45,7 +45,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     typechangeVar="rel"
     SPAR=1.2
   }
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[17]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[5]){
     tic()
     
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]

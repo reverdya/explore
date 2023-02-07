@@ -48,7 +48,7 @@ if(v=="tasAdjust"){
   typechangeVar="rel"
   SPAR=1.1
 }
-i=unique(simu_lst[simu_lst$var==v,]$indic)[17]
+i=unique(simu_lst[simu_lst$var==v,]$indic)[5]
 dir.create(paste0(path_data,"Qualypso/",v,"/",i))
 scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
 all_chains=vector(length=nrow(scenAvail),mode="list")

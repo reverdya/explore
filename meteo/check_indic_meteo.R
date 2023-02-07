@@ -27,13 +27,16 @@ path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
 Var=vector(mode="list")
-Var[["tasAdjust"]]=c(rep("monmean",12),"seasmean","seasmean","seasmean","seasmean","yearmean")
+Var[["tasAdjust"]]=c("seasmean","seasmean","seasmean","seasmean","yearmean")
+# Var[["tasAdjust"]]=c(rep("monmean",12),"seasmean","seasmean","seasmean","seasmean","yearmean")
 # Var[["prtotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
-Var[["prtotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
+Var[["prtotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
 # Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
 # Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
-Var[["evspsblpotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
-period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
+# Var[["evspsblpotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
+Var[["evspsblpotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
+# period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
+period=c("_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","R2D2")
 
@@ -308,7 +311,7 @@ v="prsnAdjust"
 count_0=list()
 dir.create(paste0(path_fig,"count_0/"))
 
-for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]){
+for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(1,2,3,4)]){
   closeAllConnections()
   gc()
   scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i & simu_lst$rcp=="rcp85",]

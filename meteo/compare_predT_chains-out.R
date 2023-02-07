@@ -40,7 +40,7 @@ load(paste0(path_data,"simu_lst.Rdata"))
 
 
 for(v in unique(simu_lst$var)[c(1,2)]){
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
     load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp_1rcp_allyears.RData"))
     idx_Xfut=which(lst.QUALYPSOOUT_temp_1rcp[[1]]$Xfut==1.5)
     chains_1rcp=reconstruct_chains(lst.QUALYPSOOUT_temp_1rcp,idx_space = idx_Xfut)

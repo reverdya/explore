@@ -98,9 +98,9 @@ for(v in unique(simu_lst$var)[1:2]){
   dir.create(paste0(path_fig,v,"/"))
   if (v!="tasAdjust"){
     # stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16,30,31,32,33)]#outdated because not doing ocurences anymore
-    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]
+    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(1,2,3,4)]
   }else{
-    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]
+    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(1,2,3,4)]
   }
   
   
@@ -196,10 +196,10 @@ for(v in unique(simu_lst$var)[1:2]){
 cpt=1
 for(v in unique(simu_lst$var)[1:2]){
   if (v!="tasAdjust"){
-    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16,30,31,32,33)]
+    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(1,2,3,4,6,7,8,9)]
     # stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,30)]
   }else{
-    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]
+    stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(1,2,3,4)]
     # stats=unique(simu_lst[simu_lst$var==v,]$indic)[c(13)]
     bins_size=c(0.1,0.1)
     br=c(100,1000,5000,50000)

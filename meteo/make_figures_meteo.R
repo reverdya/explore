@@ -64,7 +64,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
 
   dir.create(paste0(path_fig,v,"/"))
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
     for (preds in c("time","temp")){
     # for (preds in c("temp")){
       if (preds == "time"){
@@ -129,7 +129,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
 # for(v in unique(simu_lst$var)){
 for(v in unique(simu_lst$var)[c(1,2)]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
     for (preds in c("time","temp")){
     # for (preds in c("temp")){
       if (preds == "time"){
@@ -200,7 +200,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
 # for(v in unique(simu_lst$var)){
 for(v in unique(simu_lst$var)[c(1,2)]){
   #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(17)]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
     load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
     lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
