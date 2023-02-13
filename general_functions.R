@@ -1270,7 +1270,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   }
   
   custom_boxplot=function(x){
-    return(data.frame(ymin=min(x), ymax=max(x), upper=quantile(x,probs=0.75), lower=quantile(x,probs=0.25), middle=quantile(x,probs=0.5)))
+    return(data.frame(ymin=min(x), ymax=max(x), upper=quantile(x,probs=0.95), lower=quantile(x,probs=0.05), middle=mean(x)))
   }
   
   plt1=ggplot(phiStar.corr)+
@@ -1298,11 +1298,11 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   
   plt2=ggplot(data.frame(x=rep(1,100),y=c(1:100)))+
     stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=x,y=y),lwd=2,width=0.02)+
-    geom_text(aes(x=1.05,y=50,label="Quantile 50%"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=75,label="Quantile 75%"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=25,label="Quantile 25%"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=100,label="Maximum"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=0,label="Minimum"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=50,label="Moyenne d'ensemble"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=95,label="Incertitude modèle (95%)"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=5,label="Incertitude modèle (5%)"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=100,label="Expérience climatique maximale"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=0,label="Expérience climatique minimale"),fontface = "bold",size=5)+
     scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
     theme_void()+
     theme(panel.background = element_rect(colour="black"))
@@ -1541,7 +1541,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
   names(rcp.labs) <- rcp_names
-  quant.labs <- c("Q5 ensemble", "Moyenne ensemble", "Q95 ensemble")
+  quant.labs <- c("Modélisation basse", "Modélisation intermédiaire", "Modélisation haute")
   names(quant.labs) <- quant
   
   
@@ -1729,7 +1729,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   horiz.labs <- paste0(horiz," ",pred_unit)
   names(horiz.labs) <- horiz
-  quant.labs <- c("Q5 ensemble", "Moyenne ensemble", "Q95 ensemble")
+  quant.labs <- c("Modélisation basse", "Modélisation intermédiaire", "Modélisation haute")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -1871,7 +1871,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   
   rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
   names(rcp.labs) <- rcp_names
-  quant.labs <- c("Q5 ensemble", "Moyenne ensemble", "Q95 ensemble")
+  quant.labs <- c("Modélisation basse", "Modélisation intermédiaire", "Modélisation haute")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -2514,7 +2514,8 @@ plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4)){
     scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
     theme_void()+
     theme(panel.background = element_rect(colour="black"))+
-    theme(plot.title = element_text( face="bold",  size=14,hjust=0.5))
+    theme(plot.title = element_text( face="bold",  size=14,hjust=0.5))+
+    scale_y_reverse()
 
 
   return(list(plt1,plt2))
