@@ -40,10 +40,10 @@ for(v in unique(simu_lst$var)[c(1,2)]){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
   if(v=="tasAdjust"){
     typechangeVar="abs"
-    SPAR=1.2
+    SPAR=1.5
   }else{
     typechangeVar="rel"
-    SPAR=1.2
+    SPAR=1.5
   }
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)[5]){
     tic()
