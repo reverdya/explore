@@ -1298,11 +1298,11 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   
   plt2=ggplot(data.frame(x=rep(1,100),y=c(1:100)))+
     stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=x,y=y),lwd=2,width=0.02)+
-    geom_text(aes(x=1.05,y=50,label="Moyenne d'ensemble"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=95,label="Incertitude modèle (95%)"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=5,label="Incertitude modèle (5%)"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=100,label="Expérience climatique maximale"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=0,label="Expérience climatique minimale"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=50,label="Moyenne\nd'ensemble"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=75,label="Incertitude\nmodèle (95%)"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=25,label="Incertitude\nmodèle (5%)"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=100,label="Projection\nmaximale"),fontface = "bold",size=5)+
+    geom_text(aes(x=1.05,y=0,label="Projection\nminimale"),fontface = "bold",size=5)+
     scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
     theme_void()+
     theme(panel.background = element_rect(colour="black"))
@@ -1541,7 +1541,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
   names(rcp.labs) <- rcp_names
-  quant.labs <- c("Modélisation basse", "Modélisation intermédiaire", "Modélisation haute")
+  quant.labs <- c("Modélisation basse", "Modélisation\nintermédiare", "Modélisation haute")
   names(quant.labs) <- quant
   
   
@@ -1729,7 +1729,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   horiz.labs <- paste0(horiz," ",pred_unit)
   names(horiz.labs) <- horiz
-  quant.labs <- c("Modélisation basse", "Modélisation intermédiaire", "Modélisation haute")
+  quant.labs <- c("Modélisation basse", "Modélisation\nintermédiare", "Modélisation haute")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -1771,7 +1771,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
       plt=plt+
         facet_grid(horiz ~ quant,labeller = labeller(horiz = horiz.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
-        ggtitle(paste0("Changement relatif du ",ind_name_full,"\net son incertitude pour différents horizons et\nle prédicteur ",pred_name,"(",rcp_plainname," VS 1990)"))+
+        ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents horizons et\nle prédicteur ",pred_name,"(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         scale_pattern_density_discrete("Accord sur le\nsigne du\nchangement",range = c(0.4,0),labels=c("<80%",">80%"))+
         theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
@@ -1781,7 +1781,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
       plt=plt+
         facet_grid(horiz ~ quant,labeller = labeller(horiz = horiz.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
-        ggtitle(paste0("Changement du ",ind_name_full,"\net son incertitude pour différents horizons et le\nprédicteur ",pred_name,"(",rcp_plainname," VS 1990)"))+
+        ggtitle(paste0("Changement du ",ind_name_full," et\nson incertitude pour différents horizons et le\nprédicteur ",pred_name,"(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
     }
@@ -1871,7 +1871,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   
   rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
   names(rcp.labs) <- rcp_names
-  quant.labs <- c("Modélisation basse", "Modélisation intermédiaire", "Modélisation haute")
+  quant.labs <- c("Modélisation basse", "Modélisation\nintermédiare", "Modélisation haute")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
