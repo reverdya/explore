@@ -53,7 +53,7 @@ fr_8km_dep=lapply(fr_8km_dep,function(x) t(drop(as.array(x)))[,ncol(t(drop(as.ar
 fr_8km_dep=abind(fr_8km_dep,along = 3)
 fr_8km_dep[!is.na(fr_8km_dep)]=1
 
-reg_hyd=readOGR(paste0(path_sig,"raw/IGN/RegionHydro_FXX-shp/RegionHydro_FXX.shp"), use_iconv = TRUE, encoding = "UTF-8")
+reg_hyd=readOGR(paste0(path_sig,"processed/SecteurHydro_FXX_Explore2_20230217.shp"), use_iconv = TRUE, encoding = "UTF-8")
 reg_hyd=spTransform(reg_hyd,crs(fr_8km))
 fr_8km_reg_hyd=vector(mode="list")
 for(i in 1:length(reg_hyd$LbRegionHy)){
@@ -61,7 +61,7 @@ for(i in 1:length(reg_hyd$LbRegionHy)){
 }
 
 for(i in 1:length(reg_hyd$LbRegionHy)){
-  plot(fr_8km_reg_hyd[[i]],alpha=0.5,col=viridis(24)[i])
+  plot(fr_8km_reg_hyd[[i]],alpha=0.5,col=viridis(172)[i])
   par(new=T)
 }
 lines(reg_hyd)
