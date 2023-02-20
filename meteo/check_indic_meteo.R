@@ -155,7 +155,6 @@ for(v in unique(simu_lst$var)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     closeAllConnections()
     gc()
-    clim_resp=vector(length=nrow(simu_lst),mode="list")
     dir.create(paste0(path_fig,v,"/",i))
     dir.create(paste0(path_fig,v,"/",i,"/plot_chains/"))
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
