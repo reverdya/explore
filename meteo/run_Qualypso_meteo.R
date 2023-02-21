@@ -58,7 +58,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
       if(scenAvail$bc[c]=="ADAMONT"){
         full_years=year(as.Date(full_years,origin="1950-01-01"))
       }
-      if(scenAvail$bc[c]=="R2D2"){
+      if(scenAvail$bc[c]=="CDFt"){
         full_years=year(as.Date(full_years,origin="1850-01-01"))
       }
       nc_close(nc)
