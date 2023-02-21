@@ -20,7 +20,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 ####################
 
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/"
-path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/analyse_indic/"
+path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/analyse-indic/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
@@ -72,14 +72,14 @@ scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
 all_chains=vector(length=nrow(scenAvail),mode="list")
 for(c in 1:nrow(scenAvail)){# for each chain
   
-  pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+  pth_tmp=list.files(paste0("C:/Users/reverdya/Documents/Docs/2_Data/raw/meteo/indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
   nc=load_nc(pth_tmp)
   res=ncvar_get(nc,varid=v)
   full_years=nc$dim$time$vals
   if(scenAvail$bc[c]=="ADAMONT"){
     full_years=year(as.Date(full_years,origin="1950-01-01"))
   }
-  if(scenAvail$bc[c]=="R2D2"){
+  if(scenAvail$bc[c]=="CDFt"){
     full_years=year(as.Date(full_years,origin="1850-01-01"))
   }
   nc_close(nc)#for some reason stays opened otherwise
@@ -97,12 +97,12 @@ for(c in 1:nrow(scenAvail)){# for each chain
 
 
 SPAR=1.1
-Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections))
+Y=t(Reduce(function(...) merge(...,by="year", all=T), all_chains))
 Y=Y[,Y[1,]<=2100]
 X=Y[1,]
 Y=Y[-1,]
 nS=nrow(scenAvail)
-Xfut=seq(centr_ref_year,X[length(X)])
+Xfut=seq(ref_year,X[length(X)])
 clim_resp=prepare_clim_resp(Y=Y,X=X,Xfut=Xfut,typeChangeVariable = "abs",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
 raw=data.frame(t(Y[,X>=Xfut[1]]))
 colnames(raw)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
@@ -141,5 +141,5 @@ for (r in unique(data$rcp)){
     facet_grid(gcm~bc)+
     theme(panel.spacing.x = unit(0.5, "lines"))+
     theme(strip.text.y = element_text(size = 9))
-  save.plot(plt,Filename = paste0(v,"_",i,"_chronique_pixel_problem_",r,"_spar",SPAR),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
+  save.plot(plt,Filename = paste0(v,"_",i,"_chronique_pixel_problem_",r,"_spar",SPAR),Folder = paste0(path_fig),Format = "jpeg")
 }
