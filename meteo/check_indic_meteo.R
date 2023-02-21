@@ -38,7 +38,7 @@ Var[["evspsblpotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
 # period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
 period=c("_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
-bc=c("ADAMONT","R2D2")
+bc=c("ADAMONT","CDFt")
 
 units=c("°C","mm")
 
@@ -88,15 +88,15 @@ for (v in names(Var)){
   }
 }
 simu_lst=data.frame(simu_lst)
-simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
-simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
+# simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
+# simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
 save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
 load(paste0(path_data,"simu_lst.Rdata"))
 
 ###################################################################################
 ## Prepare mask of 0 and 1 in shape of SAFRAN zone, lon, lat matrixes and time vector
 
-pth_tmp=list.files(paste0(path_data,"indic/",simu_lst$var[1],"/"),full.names=T)[18]#18 to get r2d2 and lambert coordinates
+pth_tmp=list.files(paste0(path_data,"indic/",simu_lst$var[1],"/"),full.names=T)[18]#18 to get cdft and lambert coordinates
 nc=load_nc(pth_tmp)
 res=ncvar_get(nc,varid=simu_lst$var[1])
 lon=ncvar_get(nc,varid="lon")
@@ -171,7 +171,7 @@ for(v in unique(simu_lst$var)){
       if(scenAvail$bc[c]=="ADAMONT"){
         full_years=year(as.Date(full_years,origin="1950-01-01"))
       }
-      if(scenAvail$bc[c]=="R2D2"){
+      if(scenAvail$bc[c]=="CDFt"){
         full_years=year(as.Date(full_years,origin="1850-01-01"))
       }
       nc_close(nc)#for some reason stays opened otherwise
@@ -324,7 +324,7 @@ for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(1,2,3,4)]){
     if(scenAvail$bc[c]=="ADAMONT"){
       full_years=year(as.Date(full_years,origin="1950-01-01"))
     }
-    if(scenAvail$bc[c]=="R2D2"){
+    if(scenAvail$bc[c]=="CDFt"){
       full_years=year(as.Date(full_years,origin="1850-01-01"))
     }
     nc_close(nc)#for some reason stays opened otherwise
