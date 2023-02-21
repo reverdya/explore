@@ -78,7 +78,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     gc()
     
     ########################################
-    ## Compare the 3 runs for RCP8.5
+    ## Compare the 3 analyses for RCP8.5
     
     chains1=data.frame(t(chains_1rcp))
     chains2=data.frame(t(chains_2rcp[seq(2,nrow(chains_2rcp),2),]))
@@ -116,15 +116,15 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     
     plt=ggarrange(plt1,plt2,common.legend = T,legend="right")
     if(v!="tasAdjust"){
-      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des runs en prédicteur température\npour tous les pixels et chaînes RCP8.5 reconstituées\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
+      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des analyses en prédicteur température\npour tous les pixels et chaînes RCP8.5 reconstituées\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
     }else{
-      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des runs en prédicteur température\npour tous les pixels et chaînes RCP8.5 reconstituées\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
+      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des analyses en prédicteur température\npour tous les pixels et chaînes RCP8.5 reconstituées\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
     }
     save.plot(plt,Filename = paste0("comp_runs_predT_all_",v,"_",i),Folder = path_fig,Format = "jpeg")
     
     
     
-    ## Compare the 3 runs for RCP8.5 a few cities
+    ## Compare the 3 analyses for RCP8.5 a few cities
     
     for(c in 1:nrow(ref_cities)){
       idx=ref_cities$idx_masked[c]
@@ -143,20 +143,20 @@ for(v in unique(simu_lst$var)[c(1,2)]){
         theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
         xlab("3 RCPs")+
         ylab("1 ou 2 RCPs")+
-        scale_color_manual("Run",values = c("2 RCPs"=ipcc_6col[2],"1 RCP"=ipcc_6col[6]))+
+        scale_color_manual("analyse",values = c("2 RCPs"=ipcc_6col[2],"1 RCP"=ipcc_6col[6]))+
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))
         if(v!="tasAdjust"){
           plt=plt+
-            ggtitle(paste0("Comparaison des runs en prédicteur température\npour toutes les chaînes RCP8.5 reconstituées\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"))
+            ggtitle(paste0("Comparaison des analyses en prédicteur température\npour toutes les chaînes RCP8.5 reconstituées\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"))
         }else{
           plt=plt+
-            ggtitle(paste0("Comparaison des runs en prédicteur température\npour toutes les chaînes RCP8.5 reconstituées\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"))
+            ggtitle(paste0("Comparaison des analyses en prédicteur température\npour toutes les chaînes RCP8.5 reconstituées\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"))
         }
         save.plot(plt,Filename = paste0("comp_runs_predT_",ref_cities$name[c],"_",v,"_",i),Folder = path_fig,Format = "jpeg")
     }
     
     ############################################
-    ## Compare intra run 3RCP between RCP
+    ## Compare intra analyse 3RCP between RCP
     
     data=data.frame(t(chains_3rcp))
     data=pivot_longer(data,cols=everything(),names_to="chains",values_to = "val")
@@ -192,15 +192,15 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     
     plt=ggarrange(plt1,plt2,common.legend = T,legend="right")
     if(v!="tasAdjust"){
-      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des chaines reconstituées pour les 3 RCPs en prédicteur température\npour tous les pixels et la run à 3 RCPs\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
+      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des chaines reconstituées pour les 3 RCPs en prédicteur température\npour tous les pixels et l'analyse à 3 RCPs\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
     }else{
-      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des chaines reconstituées pour les 3 RCPs en prédicteur température\npour tous les pixels et la run à 3 RCPs\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
+      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des chaines reconstituées pour les 3 RCPs en prédicteur température\npour tous les pixels et l'analyse à 3 RCPs\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
     }
     save.plot(plt,Filename = paste0("comp_rcps_predT_all_",v,"_",i),Folder = path_fig,Format = "jpeg")
     
     
     
-    ## Compare intra run 3RCP between RCP for a few cities
+    ## Compare intra analyse 3RCP between RCP for a few cities
     
     for(c in 1:nrow(ref_cities)){
       idx=ref_cities$idx_masked[c]
@@ -223,16 +223,16 @@ for(v in unique(simu_lst$var)[c(1,2)]){
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))
       if(v!="tasAdjust"){
         plt=plt+
-          ggtitle(paste0("Comparaison des chaines reconstituées pour les 3 RCPs en prédicteur température\npour tous les pixels et la run à 3 RCPs\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"))
+          ggtitle(paste0("Comparaison des chaines reconstituées pour les 3 RCPs en prédicteur température\npour tous les pixels et l'analyse à 3 RCPs\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"))
       }else{
         plt=plt+
-          ggtitle(paste0("Comparaison des chaines reconstituées pour les 3 RCPs en prédicteur température\npour tous les pixels et la run à 3 RCPs\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"))
+          ggtitle(paste0("Comparaison des chaines reconstituées pour les 3 RCPs en prédicteur température\npour tous les pixels et l'analyse à 3 RCPs\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"))
       }
       save.plot(plt,Filename = paste0("comp_rcps_predT_",ref_cities$name[c],"_",v,"_",i),Folder = path_fig,Format = "jpeg")
     }
     
     ########################################
-    ## Compare ensemble mean between runs
+    ## Compare ensemble mean between analyses
     
     load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp_1rcp_allyears.RData"))
     idx_Xfut=which(lst.QUALYPSOOUT_temp_1rcp[[1]]$Xfut==1.5)
@@ -274,14 +274,14 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     
     plt=ggarrange(plt1,plt2,common.legend = T,legend="right")
     if(v!="tasAdjust"){
-      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des runs en prédicteur température\npour tous les pixels et moyenne d'ensemble\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
+      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des analyses en prédicteur température\npour tous les pixels et moyenne d'ensemble\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
     }else{
-      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des runs en prédicteur température\npour tous les pixels et moyenne d'ensemble\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
+      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des analyses en prédicteur température\npour tous les pixels et moyenne d'ensemble\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
     }
     save.plot(plt,Filename = paste0("comp_runs_mean_predT_",v,"_",i),Folder = path_fig,Format = "jpeg")
     
     #######################################################
-    ## Compare ensemble means between RCPs for 3RCPs run
+    ## Compare ensemble means between RCPs for 3RCPs analyse
     
     load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp_3rcp_allyears.RData"))
     idx_Xfut=which(lst.QUALYPSOOUT_temp_3rcp[[1]]$Xfut==1.5)
@@ -314,9 +314,9 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     
     plt=ggarrange(plt1,plt2,common.legend = T,legend="right")
     if(v!="tasAdjust"){
-      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des RCPs de la run à 3RCPs en prédicteur température\npour tous les pixels et moyenne d'ensemble\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
+      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des RCPs de l'analyse à 3RCPs en prédicteur température\npour tous les pixels et moyenne d'ensemble\nà l'horizon 1.5°C (Changement relatif en % du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
     }else{
-      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des RCPs de la run à 3RCPs en prédicteur température\npour tous les pixels et moyenne d'ensemble\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
+      plt=annotate_figure(plt, top = text_grob(paste0("Comparaison des RCPs de l'analyse à 3RCPs en prédicteur température\npour tous les pixels et moyenne d'ensemble\nà l'horizon 1.5°C (Changement en °C du ",v,"_",i," )"), face = "bold", size = 18,hjust=0.5))
     }
     save.plot(plt,Filename = paste0("comp_rcps_mean_predT_",v,"_",i),Folder = path_fig,Format = "jpeg")
       
