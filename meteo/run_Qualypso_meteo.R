@@ -35,7 +35,7 @@ ref_year=1990# central year of 1975-2005 reference period
 ######
 
 # for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(1,2)]){
+for(v in unique(simu_lst$var)){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
   if(v=="tasAdjust"){
     typechangeVar="abs"
@@ -44,7 +44,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
     typechangeVar="rel"
     SPAR=1.1
   }
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[5]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     tic()
   # for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     dir.create(paste0(path_data,"Qualypso/",v,"/",i))
