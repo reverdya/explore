@@ -58,15 +58,15 @@ ref_cities$idx_masked=which(tmp %in% ref_cities$idx)
 ## Times series Qualypso for selected cities
 ## lst.QUALYPSOUT is a list of QUALYPSOOUT objects through time (or temperature)
 
-# for(v in unique(simu_lst$var)){
+for(v in unique(simu_lst$var)){
 
-for(v in unique(simu_lst$var)[c(1,2)]){
+# for(v in unique(simu_lst$var)[c(1,2)]){
 
   dir.create(paste0(path_fig,v,"/"))
-  #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
-    for (preds in c("time","temp")){
-    # for (preds in c("temp")){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
+  # for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
+    # for (preds in c("time","temp")){
+    for (preds in c("time")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/")
         load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
@@ -111,7 +111,7 @@ for(v in unique(simu_lst$var)[c(1,2)]){
         
         if(v=="evspsblpotAdjust"){
           plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = T,idx_row = ref_cities$row[c],idx_col = ref_cities$col[c],path_temp=path_temp)
-          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = F,path_temp=path_temp)
+          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = F,idx_row = ref_cities$row[c],idx_col = ref_cities$col[c],path_temp=path_temp)
         }else{
           plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = T,idx_pix = idx,path_temp=path_temp)
           plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = F,idx_pix = idx,path_temp=path_temp)
@@ -126,12 +126,12 @@ for(v in unique(simu_lst$var)[c(1,2)]){
 ##############################################
 ## Maps
 
-# for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(1,2)]){
-  #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
-    for (preds in c("time","temp")){
-    # for (preds in c("temp")){
+for(v in unique(simu_lst$var)){
+# for(v in unique(simu_lst$var)[c(1,2)]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
+  # for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
+    # for (preds in c("time","temp")){
+    for (preds in c("time")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/maps/")
         load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
@@ -197,18 +197,17 @@ for(v in unique(simu_lst$var)[c(1,2)]){
 ## Plot map of reference (1990) value of indicator mean response
 
 
-# for(v in unique(simu_lst$var)){
-for(v in unique(simu_lst$var)[c(1,2)]){
-  #for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
+for(v in unique(simu_lst$var)){
+# for(v in unique(simu_lst$var)[c(1,2)]){
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
+  # for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
     load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
     lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
     exut$idx=seq(1:nrow(exut))
-    idx_ref0=which(lst.QUALYPSOOUT[[1]]$Xmat[1,]==ref_year)
-    exut$val=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phi[,,idx_ref0],1,mean)
+    exut$val=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phi[,,1],1,mean)
     colnames(exut)=c("x","y","idx","val")
     
     q99=quantile(exut$val,probs=0.99)
