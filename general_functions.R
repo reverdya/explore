@@ -1296,8 +1296,11 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
       scale_x_discrete("Niveau de réchauffement (°C)",labels = horiz)
   }
   
+  custom_boxplot2=function(x){
+    return(data.frame(ymin=min(x), ymax=max(x), upper=quantile(x,probs=0.75), lower=quantile(x,probs=0.25), middle=mean(x)))
+  }
   plt2=ggplot(data.frame(x=rep(1,100),y=c(1:100)))+
-    stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=x,y=y),lwd=2,width=0.02)+
+    stat_summary(fun.data = custom_boxplot2,geom = "boxplot",aes(x=x,y=y),lwd=2,width=0.02)+
     geom_text(aes(x=1.05,y=50,label="Moyenne\nd'ensemble"),fontface = "bold",size=5)+
     geom_text(aes(x=1.05,y=75,label="Incertitude\nmodèle (95%)"),fontface = "bold",size=5)+
     geom_text(aes(x=1.05,y=25,label="Incertitude\nmodèle (5%)"),fontface = "bold",size=5)+
@@ -1424,8 +1427,8 @@ base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,face
     mask_polygon[,facet_horizontal_name]=factor(mask_polygon[,facet_horizontal_name],levels=levels(data[,facet_horizontal_name]))
     plt=ggplot(data=data)+
       geom_tile(aes(x=x,y=y,fill=get(val_name)))+
-      geom_polygon_pattern(data=mask_polygon,aes(x = long, y = lat,group=group,pattern_density=as.character(layer)),pattern_alpha=0.5,pattern_color="black",pattern_fill="white",pattern_size=0.6,color=NA,fill=NA,pattern="circle")+
-      scale_pattern_density_discrete(range = c(0.4,0))+
+      geom_polygon_pattern(data=mask_polygon,aes(x = long, y = lat,group=group,pattern_density=factor(layer,levels=c(0,1))),pattern_alpha=0.5,pattern_color="black",pattern_fill="white",pattern_size=0.6,color=NA,fill=NA,pattern="circle")+
+      scale_pattern_density_manual(values = c("0"=0.4,"1"=0),drop=F)
       guides(fill=guide_colorbar(barwidth = 2, barheight = 15,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))+
       geom_polygon(data=fr_L2,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)
   }else{
@@ -1549,7 +1552,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-    lim_col=max(q99pos,q99neg)
+    lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
     q99=quantile(exut$val,probs=freq_col)
@@ -1583,12 +1586,15 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
       plt=plt+
         facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
-        ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
+        ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents RCPs\net le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        scale_pattern_density_discrete("Accord sur le\nsigne du changement",range = c(0.4,0),labels=c("<80%",">80%"))+
+        scale_pattern_density_manual("Accord sur le signe du\nchangement (modélisation intermédiaire)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
         theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
-      
+        if(var=="evspsblpotAdjust"){
+          plt=plt+
+            binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+        }
     }else{
       plt=base_map_grid(data = exut,val_name = "val")
       plt=plt+
@@ -1736,7 +1742,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-    lim_col=max(q99pos,q99neg)
+    lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
     q99=quantile(exut$val,probs=freq_col)
@@ -1773,9 +1779,13 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents horizons et\nle prédicteur ",pred_name,"(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        scale_pattern_density_discrete("Accord sur le\nsigne du\nchangement",range = c(0.4,0),labels=c("<80%",">80%"))+
+        scale_pattern_density_manual("Accord sur le signe du\nchangement (modélisation intermédiaire)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
         theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
+      if(var=="evspsblpotAdjust"){
+        plt=plt+
+          binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+      }
     }else{
       plt=base_map_grid(data = exut,val_name = "val")
       plt=plt+
@@ -1878,7 +1888,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-    lim_col=max(q99pos,q99neg)
+    lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
     # q99=quantile(exut$val,probs=freq_col)
@@ -1912,11 +1922,15 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
       plt=plt+
         facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
-        ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990),\n ensemble non balancé"))+
+        ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents RCPs\net le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990),\n ensemble non balancé"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        scale_pattern_density_discrete("Accord sur le\nsigne du changement",range = c(0.4,0),labels=c("<80%",">80%"))+
+        scale_pattern_density_manual("Accord sur le signe du\nchangement (modélisation intermédiaire)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
         theme(legend.key =element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
+      if(var=="evspsblpotAdjust"){
+        plt=plt+
+          binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+      }
     }else{
       plt=base_map_grid(data = exut,val_name = "val")
       plt=plt+
@@ -2022,7 +2036,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   if(var!="tasAdjust"|(is.null(includeRCP)&includeMean==F)){
     q99pos=quantile(tmp[tmp>=0],probs=freq_col)
     q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col)))
-    lim_col=max(q99pos,q99neg)
+    lim_col=max(q99pos,q99neg,na.rm=T)
     if(var!="tasAdjust"){
       lim_col=round(lim_col/10)*10#arrondi au 10 le plus proche
     }else{
@@ -2050,6 +2064,10 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
         ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+      if(var=="evspsblpotAdjust"){
+        plt=plt+
+          binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+      }
     }else{
       plt=plt+
         facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
@@ -2101,6 +2119,10 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
           ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full," le ",includeRCP,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
           theme(panel.border = element_rect(colour = "black",fill=NA))+
           guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+        if(var=="evspsblpotAdjust"){
+          plt=plt+
+            binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+        }
       }else{
         plt=plt+
           facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
@@ -2216,11 +2238,15 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-      lim_col=max(q99pos,q99neg)
+      lim_col=max(q99pos,q99neg,na.rm=T)
       lim_col=round(lim_col/5)*5#arrondi au 5 le plus proche
       plt=plt+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),oob=squish,show.limits = T)+#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
         ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))#+
+      if(var=="evspsblpotAdjust"){
+        plt=plt+
+          binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+      }
     }else{
       q99=quantile(exut$val,probs=freq_col)
       q01=quantile(exut$val,probs=(1-freq_col))
@@ -2305,11 +2331,15 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-      lim_col=max(q99pos,q99neg)
+      lim_col=max(q99pos,q99neg,na.rm=T,na.rm=T)
       lim_col=round(lim_col/5)*5#arrondi au 5 le plus proche
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
         ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," et le RCP 8.5\n(",horiz," ",pred_unit," VS 1990)"))
+      if(var=="evspsblpotAdjust"){
+        plt=plt+
+          binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+      }
     }else{
       q99=quantile(exut$val,probs=freq_col)
       q01=quantile(exut$val,probs=(1-freq_col))
