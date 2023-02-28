@@ -29,6 +29,7 @@ load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
 
 ref_year=1990# central year of 1975-2005 reference period
+horiz=c(2030,2050,2085)
 
 ######
 #MAIN#
@@ -78,11 +79,11 @@ for(v in unique(simu_lst$var)){
     Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
     Y=aperm(Y,c(1,3,2))
     X=unique(ClimateProjections$year)
-    Xfut=seq(ref_year,X[length(X)])
+    Xfut=c(ref_year,horiz)
     rm(ClimateProjections)
     gc()
     
-    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = SPAR,type="spline",nbcores = nbcore)
+    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(SPAR,nrow(scenAvail)),type="spline",nbcores = nbcore)
     listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
     gc()
