@@ -155,6 +155,15 @@ tmp["L",6]=0.425
 # col=rev(c("orange","yellow","cadetblue1","blue1","darkgreen","darkgoldenrod4","darkorchid1"))
 # col_7var=rev(viridis(7))
 col_7var=hsl2col(tmp)
+tmp=col_7var
+##alternating colors for easier rading
+col_7var[1]=tmp[2]
+col_7var[2]=tmp[5]
+col_7var[3]=tmp[3]
+col_7var[4]=tmp[6]
+col_7var[5]=tmp[4]
+col_7var[6]=tmp[1]
+col_7var[7]=tmp[7]
 names(col_7var)=c("rcp","gcm","rcm","bc","hm","res","int")
 legend_7var=c("RCP","GCM","RCM","BC","HM","Variabilité Résiduelle","Variabilité Interne")
 
@@ -581,6 +590,162 @@ prep_global_tas=function(path_temp,ref_year=1990,simu_lst){
   
   return(list(mat_Globaltas=mat_Globaltas,mat_Globaltas_gcm=mat_Globaltas_gcm,gcm_years=gcm_years,warming_1990=warming_1990))
 }
+
+
+###########################################################
+## Plot raw indicator and spline (2 functions necessary)
+
+extract_chains=function(scenAvail,row=ref_cities$row,col=ref_cities$col){
+  
+  all_chains=vector(length=nrow(scenAvail),mode="list")
+  for(c in 1:nrow(scenAvail)){# for each chain
+    
+    pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+    nc=load_nc(pth_tmp)
+    res=ncvar_get(nc,varid=scenAvail$var[c])
+    full_years=nc$dim$time$vals
+    if(scenAvail$bc[c]=="ADAMONT"){
+      full_years=year(as.Date(full_years,origin="1950-01-01"))
+    }
+    if(scenAvail$bc[c]=="CDFt"){
+      full_years=year(as.Date(full_years,origin="1850-01-01"))
+    }
+    nc_close(nc)#for some reason stays opened otherwise
+    rm(nc)
+    gc()
+    res2=data.frame(matrix(nrow=dim(res)[3],ncol=nrow(ref_cities)+1))
+    res2[,1]=full_years
+    for (j in 1 :nrow(ref_cities)){
+      res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
+    }
+    colnames(res2)[1]="year"
+    all_chains[[c]]=res2
+    rm(res)
+    rm(res2)
+    gc()
+  }
+  return(all_chains)
+}
+
+
+plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name){
+  
+  scen_rcp=which(scenAvail$rcp==rcp)
+  chains_rcp=all_chains[scen_rcp]
+  ClimateProjections=lapply(chains_rcp, function(x) x[,c(1,c+1)])
+  Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections))
+  Y=Y[,Y[1,]<=2100]
+  X=Y[1,]
+  if(pred=="temp"){
+    vec_years=X
+    X=globaltas[["mat_Globaltas"]][,globaltas[["gcm_years"]] %in% vec_years]
+    X=X[scen_rcp,]
+    Xfut=c(global_tas[["warming_1990"]],seq(0.7,5,0.1))
+  }else{
+    Xfut=seq(centr_ref_year,X[length(X)])
+  }
+  Y=Y[-1,]
+  nS=nrow(scenAvail)
+  if(scenAvail$var[1]!="tasAdjust"){
+    typeChangeVar="rel"
+  }else{
+    typeChangeVar="abs"
+  }
+  clim_resp=prepare_clim_resp(Y=Y,X=X,Xfut=Xfut,typeChangeVariable = typeChangeVar,spar = rep(SPAR,nS),type = spline_type)
+  if(pred=="time"){
+    if(type=="raw_spline"|type=="raw"){
+      raw=data.frame(t(Y[,X>=Xfut[1]]))
+      spline=data.frame(t(clim_resp$phi))
+    }
+    if(type=="diff_spline"|type=="diff"){
+      raw=data.frame(t(clim_resp$YStar[,X>=Xfut[1]]))
+      spline=data.frame(t(clim_resp$phiStar))
+    }
+    raw[is.na(t(Y[,X>=Xfut[1]]))]=NA
+    colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    raw$xfut=X[X>=Xfut[1]]
+    raw=pivot_longer(data=raw,cols=!xfut,names_to = "model",values_to = "val")
+    spline[is.na(t(Y[,X>=Xfut[1]]))]=NA
+    colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    spline$xfut=X[X>=Xfut[1]]
+    spline=pivot_longer(data=spline,cols=!xfut,names_to = "model",values_to = "val")
+  }
+  if(pred=="temp"){
+    if(type=="raw_spline"|type=="raw"){
+      raw=data.frame(t(Y))
+      spline=data.frame(t(clim_resp$phi))
+    }
+    if(type=="diff_spline"|type=="diff"){
+      raw=data.frame(t(clim_resp$YStar))
+      spline=data.frame(t(clim_resp$phiStar))
+    }
+    colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    raw=pivot_longer(data=raw,cols=everything(),names_to = "model",values_to = "val")
+    raw_x=data.frame(t(X))
+    colnames(raw_x)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    raw$xfut=pivot_longer(data=raw_x,cols=everything(),names_to = "model",values_to = "val")$val
+    colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    spline$xfut=Xfut
+    spline=pivot_longer(data=spline,cols=!xfut,names_to = "model",values_to = "val")
+  }
+  
+  raw$type="raw"
+  spline$type="spline"
+  data=rbind(raw,spline)
+  data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
+  data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
+  data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[3]))
+  data$bc=unlist(lapply(strsplit(data$model,"_"),function(x) x[4]))
+  
+  if(v!="tasAdjust"&(type=="raw_spline"|type=="raw")){
+    ylabel="Réponse climatique"
+    unit=" (mm)"
+  }
+  if(v=="tasAdjust"&(type=="raw_spline"|type=="raw")){
+    ylabel="Réponse climatique"
+    unit=" (°C)"
+  }
+  if(v!="tasAdjust"&(type=="diff_spline"|type=="diff")){
+    ylabel="Réponse en\nchangement climatique"
+    unit=" (%)"
+  }
+  if(v=="tasAdjust"&(type=="diff_spline"|type=="diff")){
+    ylabel="Réponse en\nchangement climatique"
+    unit=" (°C)"
+  }
+  
+  if(type=="diff_spline"|type=="raw_spline"){
+    plt=ggplot(data)+#Warnings okay
+      geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
+      scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur",ylabel))
+  }
+  if(type=="diff"|type=="raw"){
+    plt=ggplot(data[data$type=="raw",])+#Warnings okay
+      geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
+      scale_size_manual("",values=c(0.7),label=c("Indicateur"))
+  }
+  plt=plt+
+    scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
+    #scale_linetype("")+
+    theme_bw(base_size = 18)+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    scale_x_continuous("")+
+    scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
+    guides(color = guide_legend(override.aes = list(size = 1.7)))+
+    facet_grid(gcm~bc)+
+    theme(panel.spacing.x = unit(0.5, "lines"))+
+    theme(strip.text.y = element_text(size = 9))
+  if(SPAR==1){
+    save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+  }else{
+    save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+  }
+  
+}
+
+
+
 
 
 

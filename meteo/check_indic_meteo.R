@@ -135,20 +135,19 @@ for (i in 1:nrow(ref_cities)){
   ref_cities$col[i]=min_dist[2]
 }
 
-plot(refs$mask)
-points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
+#plot(refs$mask)
+#points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 
 
 ###############################################################################################
 ## Plot raw indicator , and its spline for all models and selection of watersheds by RCP for time
 ## Check for coherence of using spline and possible chains that are outlying
 ## checks particularly that data is not cyclical
-## Climate response not climate change response
-
+# type : raw_spline, raw, diff, diff_spline
 
 ##Merge data frame warnings are okay
+## Sometimes problem with too many connections opened requires running step by step (v by v)
 
-## Problem with too many connections opened requires running step by step (v by v)
 
 for(v in unique(simu_lst$var)){
   dir.create(paste0(path_fig,v,"/"))
@@ -156,151 +155,33 @@ for(v in unique(simu_lst$var)){
     closeAllConnections()
     gc()
     dir.create(paste0(path_fig,v,"/",i))
-    dir.create(paste0(path_fig,v,"/",i,"/plot_chains/"))
+    
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
-    
     global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail)
-    
-    all_chains=vector(length=nrow(scenAvail),mode="list")
-    for(c in 1:nrow(scenAvail)){# for each chain
-      
-      pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
-      nc=load_nc(pth_tmp)
-      res=ncvar_get(nc,varid=v)
-      full_years=nc$dim$time$vals
-      if(scenAvail$bc[c]=="ADAMONT"){
-        full_years=year(as.Date(full_years,origin="1950-01-01"))
-      }
-      if(scenAvail$bc[c]=="CDFt"){
-        full_years=year(as.Date(full_years,origin="1850-01-01"))
-      }
-      nc_close(nc)#for some reason stays opened otherwise
-      rm(nc)
-      gc()
-      res2=data.frame(matrix(nrow=dim(res)[3],ncol=nrow(ref_cities)+1))
-      res2[,1]=full_years
-      for (j in 1 :nrow(ref_cities)){
-        res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
-      }
-      colnames(res2)[1]="year"
-      all_chains[[c]]=res2
-      rm(res)
-      rm(res2)
-      gc()
-    }
-
-    for(cities in 2:(nrow(ref_cities)+1)){
-      for (SPAR in c(0.8,0.9,1.0,1.1,1.2)){
-        ClimateProjections=lapply(all_chains, function(x) x[,c(1,cities)])
-        Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections))
-        Y=Y[,Y[1,]<=2100]
-        X=Y[1,]
-        Y=Y[-1,]
-        nS=nrow(scenAvail)
-        Xfut=seq(centr_ref_year,X[length(X)])
-        clim_resp=prepare_clim_resp(Y=Y,X=X,Xfut=Xfut,typeChangeVariable = "abs",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
-        raw=data.frame(t(Y[,X>=Xfut[1]]))
-        colnames(raw)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-        raw[is.na(t(Y[,X>=Xfut[1]]))]=NA
-        raw$year=X[X>=Xfut[1]]
-        raw=pivot_longer(data=raw,cols=!year,names_to = "model",values_to = "val")
-        raw$type="raw"
-        spline=data.frame(t(clim_resp$phi))
-        colnames(spline)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-        spline[is.na(t(Y[,X>=Xfut[1]]))]=NA
-        spline$year=X[X>=Xfut[1]]
-        spline=pivot_longer(data=spline,cols=!year,names_to = "model",values_to = "val")
-        spline$type="spline"
-
-        data=rbind(raw,spline)
-        data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
-        data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
-        data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[3]))
-        data$bc=unlist(lapply(strsplit(data$model,"_"),function(x) x[4]))
-
-        
-        if(v!="tasAdjust"){
-          ylabel="Réponse climatique"
-          unit=" (mm)"
-        }else{
-          ylabel="Réponse climatique"
-          unit=" (°C)"
+    all_chains=extract_chains(scenAvail)
+    for(c in 1:nrow(ref_cities)){
+      for(R in c("rcp26","rcp45","rcp85")){
+        # plot_spline(all_chains=all_chains,type="diff",pred="time",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c])
+        # plot_spline(all_chains=all_chains,type="raw",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c])
+        for(S in c(0.8,0.9,1,1.1,1.2)){
+          plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c])
+          # plot_spline(all_chains=all_chains,type="diff_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c])
         }
-
-        for (r in unique(data$rcp)){
-          plt=ggplot(data[data$rcp==r,])+#Warnings okay
-            geom_line(aes(x=year,y=val,size=type,color=rcm))+
-            scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur",ylabel))+
-            scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
-            #scale_linetype("")+
-            theme_bw(base_size = 18)+
-            theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-            theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-            scale_x_continuous("")+
-            scale_y_continuous(paste0(ylabel,unit),limits = c(min(data[data$rcp==r,]$val,na.rm=T),max(data[data$rcp==r,]$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
-            guides(color = guide_legend(override.aes = list(size = 1.7)))+
-            facet_grid(gcm~bc)+
-            theme(panel.spacing.x = unit(0.5, "lines"))+
-            theme(strip.text.y = element_text(size = 9))
-          if(SPAR==1){
-            save.plot(plt,Filename = paste0(v,"_",i,"_chronique_",ref_cities$name[cities-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
-          }else{
-            save.plot(plt,Filename = paste0(v,"_",i,"_chronique_",ref_cities$name[cities-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,v,"/",i,"/plot_chains/"),Format = "jpeg")
-          }
+      }
+      for(R in c("rcp85")){
+        # plot_spline(all_chains=all_chains,type="raw",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas)
+        # plot_spline(all_chains=all_chains,type="diff",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas)
+        for(S in c(1.2,1.3,1.4,1.5,1.6)){
+          plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas)
+          # plot_spline(all_chains=all_chains,type="diff_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas)
         }
-        
-        ## temperature predictor
-        
-        dir.create(paste0(path_fig,v,"/",i,"/plot_chains_T/"))
-        vec_years=X
-        X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
-        Xfut=c(global_tas[["warming_1990"]],seq(0.7,5,0.1))
-        clim_resp=prepare_clim_resp(Y=Y,X=X,Xfut=Xfut,typeChangeVariable = "abs",spar = rep(SPAR,nrow(scenAvail)),type = "spline")
-        raw=data.frame(t(Y))
-        colnames(raw)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-        raw=pivot_longer(data=raw,cols=everything(),names_to = "model",values_to = "val")
-        raw$type="raw"
-        raw_x=data.frame(t(X))
-        colnames(raw_x)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-        raw$x=pivot_longer(data=raw_x,cols=everything(),names_to = "model",values_to = "val")$val
-        spline=data.frame(t(clim_resp$phi))
-        colnames(spline)=paste0(scenAvail$rcp,"_",scenAvail$gcm,"_",scenAvail$rcm,"_",scenAvail$bc)
-        spline$x=Xfut
-        spline=pivot_longer(data=spline,cols=!x,names_to = "model",values_to = "val")
-        spline$type="spline"
-        
-        data=rbind(raw,spline)
-        data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
-        data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
-        data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[3]))
-        data$bc=unlist(lapply(strsplit(data$model,"_"),function(x) x[4]))
-        
-        for (r in unique(data$rcp)){
-          plt=ggplot(data[data$rcp==r,])+#Warnings okay
-            geom_line(aes(x=x,y=val,size=type,color=rcm))+
-            scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur",ylabel))+
-            scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
-            #scale_linetype("")+
-            theme_bw(base_size = 18)+
-            theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-            theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-            scale_x_continuous("",limits=c(min(X),max(X)))+
-            scale_y_continuous(paste0(ylabel,unit),limits = c(min(data[data$rcp==r,]$val,na.rm=T),max(data[data$rcp==r,]$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
-            guides(color = guide_legend(override.aes = list(size = 1.7)))+
-            facet_grid(gcm~bc)+
-            theme(panel.spacing.x = unit(0.5, "lines"))+
-            theme(strip.text.y = element_text(size = 9))
-          if(SPAR==1){
-            save.plot(plt,Filename = paste0(v,"_",i,"_chroniqueT_",ref_cities$name[cities-1],"_",r,"_spar1.0"),Folder = paste0(path_fig,v,"/",i,"/plot_chains_T/"),Format = "jpeg")
-          }else{
-            save.plot(plt,Filename = paste0(v,"_",i,"_chroniqueT_",ref_cities$name[cities-1],"_",r,"_spar",SPAR),Folder = paste0(path_fig,v,"/",i,"/plot_chains_T/"),Format = "jpeg")
-          }
-        }
-        
       }
     }
   }
 }
+  
+
+
 
 
 ##########################################################################################
