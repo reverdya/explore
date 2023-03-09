@@ -65,11 +65,11 @@ for(v in unique(simu_lst$var)){
   dir.create(paste0(path_fig,v,"/"))
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   # for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
-    # for (preds in c("time","temp")){
-    for (preds in c("time")){
+    for (preds in c("time","temp")){
+    # for (preds in c("time")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/")
-        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
+        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
         lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
         pred_name="temps"
         predict="time"
@@ -79,7 +79,7 @@ for(v in unique(simu_lst$var)){
       }
       if (preds == "temp"){
         folder_out=paste0(path_fig,v,"/",i,"/temp/")
-        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp_1rcp_allyears.RData"))
+        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp.RData"))
         lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp_1rcp
         pred_name="température"
         predict="temp"
@@ -130,11 +130,11 @@ for(v in unique(simu_lst$var)){
 # for(v in unique(simu_lst$var)[c(1,2)]){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   # for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
-    # for (preds in c("time","temp")){
-    for (preds in c("time")){
+    for (preds in c("time","temp")){
+    # for (preds in c("time")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/maps/")
-        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
+        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_times.RData"))
         lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
         pred_name="temps"
         predict="time"
@@ -145,7 +145,7 @@ for(v in unique(simu_lst$var)){
       }
       if (preds == "temp"){
         folder_out=paste0(path_fig,v,"/",i,"/temp/maps/")
-        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp_1rcp_allyears.RData"))
+        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp.RData"))
         lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp_1rcp
         pred_name="température"
         predict="temp"

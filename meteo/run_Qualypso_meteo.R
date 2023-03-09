@@ -83,6 +83,7 @@ for(v in unique(simu_lst$var)){
     rm(ClimateProjections)
     gc()
     
+    ## Time
     tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(SPAR,nrow(scenAvail)),type="spline",nbcores = nbcore)
     listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
@@ -108,14 +109,53 @@ for(v in unique(simu_lst$var)){
       if(((cpt) %% 10)==0){print(cpt)}
     }
     
-    rm(Y,X,listOption)
+    rm(Y,listOption)
     closeAllConnections()
     gc()
-    save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
+    save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
     rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
     closeAllConnections()
     gc()
     toc()
+    
+    ## Temperature
+    vec_years=X
+    X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
+    Xfut=c(global_tas[["warming_1990"]],seq(0.7,1,1.5,2,2.5,3.5,4))
+    idx_rcp=which(scenAvail$rcp=="rcp85")
+    scenAvail=scenAvail[idx_rcp,]
+    X=X[idx_rcp,]
+    Y=Y[,idx_rcp,]
+    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(1.4,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
+    listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
+    rm(tmp)
+    gc()
+    
+    lst.QUALYPSOOUT_temp=vector(mode="list",length=length((Xfut)))
+    for(cpt in 1:length(Xfut)){
+      lst.QUALYPSOOUT_temp[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
+                                                  scenAvail=scenAvail[,c("gcm","rcm","bc")],
+                                                  X=X,
+                                                  Xfut=Xfut,
+                                                  iFut=cpt,
+                                                  listOption=listOption)
+      lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse=NA #to not store twice the same information
+      lst.QUALYPSOOUT_temp[[cpt]]$RESERR=NA
+      lst.QUALYPSOOUT_temp[[cpt]]$CHANGEBYEFFECT=NA
+      lst.QUALYPSOOUT_temp[[cpt]]$CLIMATEESPONSE$YStar=NA
+      if(cpt!=1){
+        lst.QUALYPSOOUT_temp[[cpt]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
+        lst.QUALYPSOOUT_temp[[cpt]]$Y=NA #to not store 9892 times the same information, stored only the first time
+      }
+      print(cpt)
+    }
+    save(lst.QUALYPSOOUT_temp,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp.RData"))
+    rm(lst.QUALYPSOOUT_temp,listOption) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
+    closeAllConnections()
+    gc()
+    rm(Y,X)
+    closeAllConnections()
+    gc()
   }
 }
 
