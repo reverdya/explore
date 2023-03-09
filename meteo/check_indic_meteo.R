@@ -23,7 +23,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/analyse-indic/"
-path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
+path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
 Var=vector(mode="list")
@@ -31,10 +31,11 @@ Var[["tasAdjust"]]=c("seasmean","seasmean","seasmean","seasmean","yearmean")
 # Var[["tasAdjust"]]=c(rep("monmean",12),"seasmean","seasmean","seasmean","seasmean","yearmean")
 # Var[["prtotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
 Var[["prtotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
-# Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
-# Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
 # Var[["evspsblpotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
 Var[["evspsblpotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
+# Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
+# Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
+Var[["prsnAdjust"]]=c("NDJFMAsum")
 # period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
 period=c("_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
@@ -66,6 +67,9 @@ for (v in names(Var)){
   for(r in rcp[-1]){# -1 for not historical
     for(b in bc){
       s=1
+      if(v=="prsnAdjust"){
+        s=5
+      }
       for(v2 in Var[[v]]){
         lst_f=list.files(paste0(path_data,"indic/",v,"/"),pattern=glob2rx(paste0(v,"*",r,"*",b,"*",v2,"*",period[s],"*"))) #list all files of projections in folder
         gcm=sapply(strsplit(lst_f,"_"),"[",4)
@@ -94,7 +98,8 @@ save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
 load(paste0(path_data,"simu_lst.Rdata"))
 
 ###################################################################################
-## Prepare mask of 0 and 1 in shape of SAFRAN zone, lon, lat matrixes and time vector
+## Prepare mask of 0 and 1 in shape of SAFRAN zone, lon, lat matrixes
+## Also mask with altitude above 1000m for snowfall
 
 pth_tmp=list.files(paste0(path_data,"indic/",simu_lst$var[1],"/"),full.names=T)[18]#18 to get cdft and lambert coordinates
 nc=load_nc(pth_tmp)
@@ -117,16 +122,28 @@ gc()
 mask=res[,,1]
 mask[!is.na(mask)]=1
 mask[is.na(mask)]=0
-refs=list(mask,lon,lat,X_l2,Y_l2)
-names(refs)=c("mask","lon","lat","x_l2","y_l2")
+
+##For snowfall
+pth_tmp=list.files(paste0(path_data,"indic/",unique(simu_lst$var)[4],"/"),full.names=T)[18]#18 to get cdft and lambert coordinates
+nc=load_nc(pth_tmp)
+res=ncvar_get(nc,varid=unique(simu_lst$var)[4])
+rm(nc)
+gc()
+mask_prsn=res[,,1]
+mask_prsn[!is.na(mask_prsn)]=1
+mask_prsn[is.na(mask_prsn)]=0
+
+refs=list(mask,mask_prsn,lon,lat,X_l2,Y_l2)
+names(refs)=c("mask","mask_prsn","lon","lat","x_l2","y_l2")
 save(refs,file=paste0(path_data,"refs.Rdata"))
 load(paste0(path_data,"refs.Rdata"))
 # plot(rotate(refs$mask))
+# plot(rotate(refs$mask_prsn))
 
 #######################################################################################
 ## Extract indexes of reference "cities"
 
-ref_cities=read.xlsx(paste0(path_sig,"French_cities_coord.xlsx"))
+ref_cities=read.xlsx(paste0(path_sig,"raw/French_cities/French_cities_coord.xlsx"))
 ref_cities$col=ref_cities$row=ref_cities$xcoord
 for (i in 1:nrow(ref_cities)){
   dist=sqrt((lon-ref_cities$xcoord[i])^2+(lat-ref_cities$ycoord[i])^2)
@@ -135,9 +152,19 @@ for (i in 1:nrow(ref_cities)){
   ref_cities$col[i]=min_dist[2]
 }
 
-#plot(refs$mask)
-#points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
+## by nature this plot will be rotated
+# plot(refs$mask)
+# points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 
+#########################################################################################
+## Reference departments and zones
+
+ref_dep=read.csv(paste0(path_sig,"processed/SAFRAn_ref_deptmt.csv"))
+colnames(ref_dep)=c("id","code","name")
+idx_ref_dep=c(12,34,64,65,75)
+ref_reg=read.csv(paste0(path_sig,"processed/SAFRAn_ref_reg_hyd.csv"))
+colnames(ref_reg)=c("id","name")
+idx_ref_reg=c(1,4,139)
 
 ###############################################################################################
 ## Plot raw indicator , and its spline for all models and selection of watersheds by RCP for time
@@ -158,31 +185,70 @@ for(v in unique(simu_lst$var)){
     
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
     global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail)
-    all_chains=extract_chains(scenAvail)
+    all_chains=extract_chains(scenAvail,ref_cities)
     for(c in 1:nrow(ref_cities)){
       for(R in c("rcp26","rcp45","rcp85")){
-        # plot_spline(all_chains=all_chains,type="diff",pred="time",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c])
-        # plot_spline(all_chains=all_chains,type="raw",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c])
+        # plot_spline(all_chains=all_chains,type="diff",pred="time",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c],idx=c)
+        # plot_spline(all_chains=all_chains,type="raw",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],idx=c)
         for(S in c(0.8,0.9,1,1.1,1.2)){
-          plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c])
-          # plot_spline(all_chains=all_chains,type="diff_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c])
+          plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],idx=c)
+          # plot_spline(all_chains=all_chains,type="diff_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],idx=c)
         }
       }
       for(R in c("rcp85")){
-        # plot_spline(all_chains=all_chains,type="raw",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas)
-        # plot_spline(all_chains=all_chains,type="diff",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas)
+        # plot_spline(all_chains=all_chains,type="raw",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas,idx=c)
+        # plot_spline(all_chains=all_chains,type="diff",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas,idx=c)
         for(S in c(1.2,1.3,1.4,1.5,1.6)){
-          plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas)
-          # plot_spline(all_chains=all_chains,type="diff_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas)
+          plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas,idx=c)
+          # plot_spline(all_chains=all_chains,type="diff_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_cities$name[c],globaltas = global_tas,idx=c)
         }
       }
     }
   }
 }
   
+## Idem for regions hydro and departments
 
 
-
+for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
+  dir.create(paste0(path_fig,v,"/"))
+  for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
+    closeAllConnections()
+    gc()
+    dir.create(paste0(path_fig,v,"/",i))
+    dir.create(paste0(path_fig,v,"/",i,"/reg/"))
+    dir.create(paste0(path_fig,v,"/",i,"/dep/"))
+    
+    scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
+    global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail)
+    all_chains_reg=extract_chains(scenAvail,ref_cities = ref_reg[idx_ref_reg,],type = "reg")
+    all_chains_dep=extract_chains(scenAvail,ref_cities = ref_dep[idx_ref_dep,],type = "dep")
+    for(c in 1:nrow(ref_reg[idx_ref_reg,])){
+      for(R in c("rcp26","rcp45","rcp85")){
+        for(S in c(0.8,0.9,1,1.1,1.2)){
+          plot_spline(all_chains=all_chains_reg,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_reg$name[idx_ref_reg[c]]),categ="reg",idx=c)
+        }
+      }
+      for(R in c("rcp85")){
+        for(S in c(1.2,1.3,1.4,1.5,1.6)){
+          plot_spline(all_chains=all_chains_reg,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_reg$name[idx_ref_reg[c]]),globaltas = global_tas,categ="reg",idx=c)
+        }
+      }
+    }
+    for(c in 1:nrow(ref_dep[idx_ref_dep,])){
+      for(R in c("rcp26","rcp45","rcp85")){
+        for(S in c(0.8,0.9,1,1.1,1.2)){
+          plot_spline(all_chains=all_chains_dep,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_dep$name[idx_ref_dep[c]]),categ="dep",idx=c)
+        }
+      }
+      for(R in c("rcp85")){
+        for(S in c(1.2,1.3,1.4,1.5,1.6)){
+          plot_spline(all_chains=all_chains_dep,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_dep$name[idx_ref_dep[c]]),globaltas = global_tas,categ="dep",idx=c)
+        }
+      }
+    }
+  }
+}
 
 ##########################################################################################
 ## Check season prsnadjust for % of null chains over 20,40 and 60% of 2070-2100 and map

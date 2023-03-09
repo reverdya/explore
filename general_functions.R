@@ -595,12 +595,20 @@ prep_global_tas=function(path_temp,ref_year=1990,simu_lst){
 ###########################################################
 ## Plot raw indicator and spline (2 functions necessary)
 
-extract_chains=function(scenAvail,row=ref_cities$row,col=ref_cities$col){
+extract_chains=function(scenAvail,ref_cities,type="cities"){
   
   all_chains=vector(length=nrow(scenAvail),mode="list")
   for(c in 1:nrow(scenAvail)){# for each chain
     
-    pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+    if(type=="cities"){
+      pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))#by default recursive=F
+    }
+    if(type=="reg"){
+      pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/reg/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+    }
+    if(type=="dep"){
+      pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/dep/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+    }
     nc=load_nc(pth_tmp)
     res=ncvar_get(nc,varid=scenAvail$var[c])
     full_years=nc$dim$time$vals
@@ -613,10 +621,14 @@ extract_chains=function(scenAvail,row=ref_cities$row,col=ref_cities$col){
     nc_close(nc)#for some reason stays opened otherwise
     rm(nc)
     gc()
-    res2=data.frame(matrix(nrow=dim(res)[3],ncol=nrow(ref_cities)+1))
+    res2=data.frame(matrix(nrow=dim(res)[length(dim(res))],ncol=nrow(ref_cities)+1))
     res2[,1]=full_years
     for (j in 1 :nrow(ref_cities)){
-      res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
+      if(type=="cities"){
+        res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
+      }else{
+        res2[,j+1]=res[ref_cities$id[j],]
+      }
     }
     colnames(res2)[1]="year"
     all_chains[[c]]=res2
@@ -628,11 +640,11 @@ extract_chains=function(scenAvail,row=ref_cities$row,col=ref_cities$col){
 }
 
 
-plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name){
+plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name,categ="cities",idx){
   
   scen_rcp=which(scenAvail$rcp==rcp)
   chains_rcp=all_chains[scen_rcp]
-  ClimateProjections=lapply(chains_rcp, function(x) x[,c(1,c+1)])
+  ClimateProjections=lapply(chains_rcp, function(x) x[,c(1,idx+1)])
   Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections))
   Y=Y[,Y[1,]<=2100]
   X=Y[1,]
@@ -736,11 +748,20 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
     facet_grid(gcm~bc)+
     theme(panel.spacing.x = unit(0.5, "lines"))+
     theme(strip.text.y = element_text(size = 9))
-  if(SPAR==1){
-    save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+  if(categ=="cities"){
+    if(SPAR==1){
+      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+    }else{
+      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+    }
   }else{
-    save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+    if(SPAR==1){
+      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",categ,"/"),Format = "jpeg")
+    }else{
+      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",categ,"/"),Format = "jpeg")
+    }
   }
+  
   
 }
 
