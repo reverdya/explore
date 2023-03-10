@@ -54,6 +54,28 @@ tmp=c(1:length(as.vector(refs$mask)))
 tmp=tmp[as.logical(refs$mask)]
 ref_cities$idx_masked=which(tmp %in% ref_cities$idx)
 
+#########################################################################################
+## Reference departments and zones
+
+ref_dep=read.csv(paste0(path_sig,"processed/SAFRAn_ref_deptmt.csv"))
+colnames(ref_dep)=c("id","code","name")
+idx_ref_dep=c(12,34,64,65,75)
+ref_reg=read.csv(paste0(path_sig,"processed/SAFRAn_ref_reg_hyd.csv"))
+colnames(ref_reg)=c("id","name")
+idx_ref_reg=c(1,4,139)
+
+#########################################################################################
+## Reference cities above 1000 m
+
+ref_snow=data.frame(name=c("La Grave","Font-Romeu","Mont-Dore"),xcoord=c(6.30620,2.04383,2.80826),ycoord=c(45.04667,42.50592,45.57661))
+ref_snow$col=ref_snow$row=ref_snow$xcoord
+for (i in 1:nrow(ref_snow)){
+  dist=sqrt((lon-ref_snow$xcoord[i])^2+(lat-ref_snow$ycoord[i])^2)
+  min_dist=as.vector(which(dist==min(dist),arr.ind = T))
+  ref_snow$row[i]=min_dist[1]
+  ref_snow$col[i]=min_dist[2]
+}
+
 #############################################################
 ## Times series Qualypso for selected cities
 ## lst.QUALYPSOUT is a list of QUALYPSOOUT objects through time (or temperature)
