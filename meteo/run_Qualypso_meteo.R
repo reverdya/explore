@@ -23,7 +23,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
-nbcore=detectCores()-3 #Number of cores for parallelization
+nbcore=detectCores()-4 #Number of cores for parallelization
 
 
 
