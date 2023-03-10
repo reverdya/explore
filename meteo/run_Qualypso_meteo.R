@@ -27,6 +27,7 @@ nbcore=detectCores()-4 #Number of cores for parallelization
 
 
 
+
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
 
@@ -250,7 +251,6 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
       closeAllConnections()
       gc()
-
       
       ## Temperature
       vec_years=X
