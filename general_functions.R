@@ -2,6 +2,7 @@
 # Explore 2
 # general data science function and data representations
 
+library(fst)#read_fst
 library(svglite) #save svg
 library(ggplot2) #plots
 library(ggrepel)# labels
@@ -736,8 +737,11 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
       scale_size_manual("",values=c(0.7),label=c("Indicateur"))
   }
+  rcm_colors=tol(length(unique(scenAvail$rcm)))
+  names(rcm_colors)=unique(scenAvail$rcm)
+  
   plt=plt+
-    scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
+    scale_color_manual("RCM",values=rcm_colors[unique(data$rcm)])+
     #scale_linetype("")+
     theme_bw(base_size = 18)+
     theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
@@ -1216,6 +1220,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       a_label=data.frame(lab="a",eff="rcp85")
       idx_label=3
     }
+    
     plt1=ggplot(data)+
       geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
       scale_fill_discrete("Dispersion des expériences\nclimatiques",type= as.vector(col_3rcp_shade[color_select]),labels=NULL)+
@@ -1285,7 +1290,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   }
   
   plt2=ggplot(data)+
-    geom_point(aes(x=pred,y=factor(rcp,levels=rev(c("rcp26","rcp45","rcp85"))),fill=val),color="black",size=5,shape=21)+
+    geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=val),color="black",size=5,shape=21)+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les chaînes sur\nle signe de la tendance",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T,oob=squish,limits=c(0,100),breaks=c(20,40,60,80),labels=~ if(length(.x) == 2) {c("- à 100%","+ à 100%")} else {c("- à 80%","- à 60%","+ à 60%","+ à 80%")})+#that way because stepsn deforms colors
     scale_y_discrete("",labels=rev(rcp.labs))+
     theme_bw(base_size = 16)+
@@ -1730,7 +1735,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
   names(rcp.labs) <- rcp_names
-  quant.labs <- c("Modélisation\nbasse", "Modélisation\nintermédiaire", "Modélisation\nhaute")
+  quant.labs <- c("Projections\nbasses", "Projections\nintermédiaires", "Projections\nhautes")
   names(quant.labs) <- quant
   
   
@@ -1774,7 +1779,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents RCPs\net le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        scale_pattern_density_manual("Accord sur le signe du\nchangement (modélisation intermédiaire)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
+        scale_pattern_density_manual("Accord sur le signe du\nchangement (Projections intermédiaires)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
         theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
         if(var=="evspsblpotAdjust"){
@@ -1921,7 +1926,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   horiz.labs <- paste0(horiz," ",pred_unit)
   names(horiz.labs) <- horiz
-  quant.labs <- c("Modélisation\nbasse", "Modélisation\nintermédiaire", "Modélisation\nhaute")
+  quant.labs <- c("Projections\nbasses", "Projections\nintermédiaires", "Projections\nhautes")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -1965,7 +1970,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents horizons et\nle prédicteur ",pred_name,"(",rcp_plainname," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        scale_pattern_density_manual("Accord sur le signe du\nchangement (modélisation intermédiaire)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
+        scale_pattern_density_manual("Accord sur le signe du\nchangement (Projections intermédiaires)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
         theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
       if(var=="evspsblpotAdjust"){
@@ -2067,7 +2072,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   
   rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
   names(rcp.labs) <- rcp_names
-  quant.labs <- c("Modélisation\nbasse", "Modélisation\nintermédiaire", "Modélisation\nhaute")
+  quant.labs <- c("Projections\nbasses", "Projections\nintermédiaires", "Projections\nhautes")
   names(quant.labs) <- quant
   
   #Setting limits for color scale
@@ -2110,7 +2115,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents RCPs\net le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990),\n ensemble non balancé"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))+
-        scale_pattern_density_manual("Accord sur le signe du\nchangement (modélisation intermédiaire)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
+        scale_pattern_density_manual("Accord sur le signe du\nchangement (Projections intermédiaires)",values = c("0"=0.4,"1"=0),drop=F,labels=c("<80%",">80%"))+
         theme(legend.key =element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
         guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
       if(var=="evspsblpotAdjust"){
