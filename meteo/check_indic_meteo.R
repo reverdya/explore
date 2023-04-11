@@ -185,7 +185,7 @@ for (i in 1:nrow(ref_snow)){
 # points(ref_snow$col,nrow(refs$mask)-ref_snow$row,pch=19)
 
 ###############################################################################################
-## Plot raw indicator , and its spline for all models and selection of watersheds by RCP for time
+## Plot raw indicator , and its spline for all models and selection of places by RCP for time
 ## Check for coherence of using spline and possible chains that are outlying
 ## checks particularly that data is not cyclical
 # type : raw_spline, raw, diff, diff_spline
