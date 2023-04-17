@@ -95,7 +95,6 @@ simu_lst=data.frame(simu_lst)
 # simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
 # simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
 save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
-load(paste0(path_data,"simu_lst.Rdata"))
 
 ###################################################################################
 ## Prepare mask of 0 and 1 in shape of SAFRAN zone, lon, lat matrixes
@@ -138,7 +137,6 @@ mask_prsn[is.na(mask_prsn)]=0
 refs=list(mask,mask_prsn,lon,lat,X_l2,Y_l2)
 names(refs)=c("mask","mask_prsn","lon","lat","x_l2","y_l2")
 save(refs,file=paste0(path_data,"refs.Rdata"))
-load(paste0(path_data,"refs.Rdata"))
 # plot(rotate(refs$mask))
 # plot(rotate(refs$mask_prsn))
 

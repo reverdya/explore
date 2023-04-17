@@ -215,7 +215,7 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       Y=aperm(Y,c(1,3,2))
       X=unique(ClimateProjections$year)
       Xfut=seq(ref_year,final_year)
-      rm(ClimateProjections)
+      rm(ClimateProjections,all_chains)
       gc()
       
       ## Time

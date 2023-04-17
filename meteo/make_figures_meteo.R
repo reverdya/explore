@@ -102,7 +102,7 @@ for(v in unique(simu_lst$var)){
       if (preds == "temp"){
         folder_out=paste0(path_fig,v,"/",i,"/temp/")
         load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp.RData"))
-        lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp_1rcp
+        lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp
         pred_name="température"
         predict="temp"
         pred_unit="°C"
@@ -156,7 +156,7 @@ for(v in unique(simu_lst$var)){
     # for (preds in c("time")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/maps/")
-        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_times.RData"))
+        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
         lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
         pred_name="temps"
         predict="time"
@@ -168,7 +168,7 @@ for(v in unique(simu_lst$var)){
       if (preds == "temp"){
         folder_out=paste0(path_fig,v,"/",i,"/temp/maps/")
         load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp.RData"))
-        lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp_1rcp
+        lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp
         pred_name="température"
         predict="temp"
         pred_unit="°C"
