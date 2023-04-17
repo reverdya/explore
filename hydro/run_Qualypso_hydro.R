@@ -31,6 +31,7 @@ nbcore=detectCores()-2 #Number of cores for parallelization
 
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
+load(file=paste0(path_data,"ref.Rdata"))
 
 ref_year=1990# central year of 1975-2005 reference period
 horiz=c(2030,2050,2085)
@@ -66,16 +67,37 @@ for(i in unique(simu_lst$indic)){
     all_chains[[c]]=res
   }
 
-  #######
+  #################
   ##To be adjusted
-  basin_sample=
+  ## After that need to adjust scenAvail in run QUALYPSO to include or not bc
+  basin_sample=ref[ref$n==7,]$code
+  n_bv=length(basin_sample)
+  # bc_sample="ADAMONT"
+  bc_sample=c("ADAMONT","CDFt")
+  hm_sample=hm=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","MORDOR-SD","SMASH")
+  ################
+  
+  all_chains=all_chains[scenAvail$bc %in% bc_sample]
+  scenAvail=scenAvail[scenAvail$bc %in% bc_sample,]
+  all_chains=all_chains[scenAvail$hm %in% hm_sample]
+  scenAvail=scenAvail[scenAvail$hm %in% hm_sample,]
+  all_chains=lapply(all_chains,function(x) x[,c("year",basin_sample)])
+
+  for(c in 1:nrow(scenAvail)){
+    if(scenAvail$rcp[c]!="historical"){
+      hist_idx=which(scenAvail$rcp=="historical"&scenAvail$gcm==scenAvail$gcm[c]&scenAvail$rcm==scenAvail$rcm[c]&scenAvail$bc==scenAvail$bc[c]&scenAvail$hm==scenAvail$hm[c])
+      all_chains[[c]]=rbind(all_chains[[hist_idx]],all_chains[[c]])
+    }
+  }
+  all_chains=all_chains[which(scenAvail$rcp!="historical")]
+  scenAvail=scenAvail[scenAvail$rcp!="historical",]
   
   ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
-  Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
+  Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_bv) ), along=3)
   Y=aperm(Y,c(1,3,2))
   X=unique(ClimateProjections$year)
   Xfut=seq(ref_year,final_year)
-  rm(ClimateProjections)
+  rm(ClimateProjections,all_chains)
   gc()
   
   ## Time
@@ -88,7 +110,7 @@ for(i in unique(simu_lst$indic)){
   for(cpt in 1:length(Xfut)){
     # for(x in c(2030,2050,2085)){
     lst.QUALYPSOOUT_time[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                           scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                           scenAvail=scenAvail[,c("rcp","gcm","rcm","bc","hm")],
                                            X=X,
                                            Xfut=Xfut,
                                            iFut=cpt,
@@ -103,17 +125,17 @@ for(i in unique(simu_lst$indic)){
     }
     if(((cpt) %% 10)==0){print(cpt)}
   }
-  
   rm(listOption)
   closeAllConnections()
   gc()
-  save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_",type_reg,".RData"))
-  rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
+  save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time.RData"))
+  # rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
   closeAllConnections()
   gc()
   
   ## Temperature
   vec_years=X
+  global_tas=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=scenAvail,var="hydro")
   X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
   Xfut=c(global_tas[["warming_1990"]],c(global_tas[["warming_1990"]],seq(0.7,4,0.1)))
   idx_rcp=which(scenAvail$rcp=="rcp85")
@@ -128,7 +150,7 @@ for(i in unique(simu_lst$indic)){
   lst.QUALYPSOOUT_temp=vector(mode="list",length=length((Xfut)))
   for(cpt in 1:length(Xfut)){
     lst.QUALYPSOOUT_temp[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                           scenAvail=scenAvail[,c("gcm","rcm","bc")],
+                                           scenAvail=scenAvail[,c("gcm","rcm","bc","hm")],
                                            X=X,
                                            Xfut=Xfut,
                                            iFut=cpt,
@@ -143,7 +165,7 @@ for(i in unique(simu_lst$indic)){
     }
     if(((cpt) %% 10)==0){print(cpt)}
   }
-  save(lst.QUALYPSOOUT_temp,file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp_",type_reg,".RData"))
+  save(lst.QUALYPSOOUT_temp,file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_temp.RData"))
   rm(lst.QUALYPSOOUT_temp,listOption) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
   closeAllConnections()
   gc()
