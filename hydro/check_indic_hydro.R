@@ -27,7 +27,7 @@ path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 indic=c("QA","QA_DJF","QA_MAM","QA_JJA","QA_SON","QA_janv","QA_févr","QA_mars","QA_avr","QA_mai","QA_juin","QA_juill","QA_août","QA_sept","QA_oct","QA_nov","QA_déc","QA05","QA10","QA50","QA90","QA95","QJXA","QMNA","VCN3","VCN10","VCX3")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","CDFt")
-hm=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","MORDOR-SD","SMASH")
+hm=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","MORDOR-SD","SMASH","ORCHIDEE")
 hm_domain=c("FR","Lo-Br","FR","Lo-Rh","FR","Lo","FR")
 hm_NBbc=c(1,2,2,2,2,2,2)
 
