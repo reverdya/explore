@@ -200,7 +200,7 @@ for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
   lim_col=round(lim_col)#arrondi au 1 le plus proche
   br=round(seq(lim_col[1],lim_col[2],length.out=6))
 
-  plt=base_map_grid(data = exut,val_name = "val")
+  plt=base_map_outlets(data = exut,val_name = "val")
   plt=plt+
     guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
     binned_scale(aesthetics = "fill",scale_name = "toto",name = "",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),limits=lim_col,oob=squish,show.limits = T,breaks=br,labels= c(paste0(">",br[1]),br[2:5],paste0("<",br[6])) )+#that way because stepsn deforms colors

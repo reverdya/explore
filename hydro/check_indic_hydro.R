@@ -124,25 +124,28 @@ for(i in unique(simu_lst$indic)){
   closeAllConnections()
   gc()
   
-  #############ref_c=ref
+  ref_c=ref[ref$code %in% bv_sample,]
   scenAvail=simu_lst[simu_lst$indic==i,]
+  all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c,cat="hydro")
+  
+  scenAvail=scenAvail[scenAvail$rcp!="historical",]
   global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail)
-  ############all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c)
+  
   for(c in 1:nrow(ref_c)){
     for(R in c("rcp26","rcp45","rcp85")){
-      # plot_spline(all_chains=all_chains,type="diff",pred="time",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],idx=c)
-      # plot_spline(all_chains=all_chains,type="raw",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c)
+      # plot_spline(all_chains=all_chains,type="diff",pred="time",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
+      # plot_spline(all_chains=all_chains,type="raw",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
       for(S in c(0.8,0.9,1,1.1,1.2)){
-        plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c)
-        # plot_spline(all_chains=all_chains,type="diff_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c)
+        plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
+        # plot_spline(all_chains=all_chains,type="diff_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
       }
     }
     for(R in c("rcp85")){
-      # plot_spline(all_chains=all_chains,type="raw",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c)
-      # plot_spline(all_chains=all_chains,type="diff",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c)
+      # plot_spline(all_chains=all_chains,type="raw",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
+      # plot_spline(all_chains=all_chains,type="diff",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
       for(S in c(1.2,1.3,1.4,1.5,1.6)){
-        plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c)
-        # plot_spline(all_chains=all_chains,type="diff_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c)
+        plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
+        # plot_spline(all_chains=all_chains,type="diff_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
       }
     }
   }

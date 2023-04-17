@@ -601,52 +601,78 @@ prep_global_tas=function(path_temp,ref_year=1990,simu_lst,var="meteo"){
 ###########################################################
 ## Plot raw indicator and spline (2 functions necessary)
 
-extract_chains=function(scenAvail,ref_cities,type="cities"){
-  
-  all_chains=vector(length=nrow(scenAvail),mode="list")
-  for(c in 1:nrow(scenAvail)){# for each chain
-    
-    if(type=="cities"){
-      pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))#by default recursive=F
-    }
-    if(type=="reg"){
-      pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/reg/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
-    }
-    if(type=="dep"){
-      pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/dep/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
-    }
-    nc=load_nc(pth_tmp)
-    res=ncvar_get(nc,varid=scenAvail$var[c])
-    full_years=nc$dim$time$vals
-    if(scenAvail$bc[c]=="ADAMONT"){
-      full_years=year(as.Date(full_years,origin="1950-01-01"))
-    }
-    if(scenAvail$bc[c]=="CDFt"){
-      full_years=year(as.Date(full_years,origin="1850-01-01"))
-    }
-    nc_close(nc)#for some reason stays opened otherwise
-    rm(nc)
-    gc()
-    res2=data.frame(matrix(nrow=dim(res)[length(dim(res))],ncol=nrow(ref_cities)+1))
-    res2[,1]=full_years
-    for (j in 1 :nrow(ref_cities)){
+extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
+ 
+  if(cat=="meteo"){
+    all_chains=vector(length=nrow(scenAvail),mode="list")
+    for(c in 1:nrow(scenAvail)){# for each chain
+      
       if(type=="cities"){
-        res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
-      }else{
-        res2[,j+1]=res[ref_cities$id[j],]
+        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))#by default recursive=F
+      }
+      if(type=="reg"){
+        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/reg/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+      }
+      if(type=="dep"){
+        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/dep/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+      }
+      nc=load_nc(pth_tmp)
+      res=ncvar_get(nc,varid=scenAvail$var[c])
+      full_years=nc$dim$time$vals
+      if(scenAvail$bc[c]=="ADAMONT"){
+        full_years=year(as.Date(full_years,origin="1950-01-01"))
+      }
+      if(scenAvail$bc[c]=="CDFt"){
+        full_years=year(as.Date(full_years,origin="1850-01-01"))
+      }
+      nc_close(nc)#for some reason stays opened otherwise
+      rm(nc)
+      gc()
+      res2=data.frame(matrix(nrow=dim(res)[length(dim(res))],ncol=nrow(ref_cities)+1))
+      res2[,1]=full_years
+      for (j in 1 :nrow(ref_cities)){
+        if(type=="cities"){
+          res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
+        }else{
+          res2[,j+1]=res[ref_cities$id[j],]
+        }
+      }
+      colnames(res2)[1]="year"
+      all_chains[[c]]=res2
+      rm(res)
+      rm(res2)
+      gc()
+    }
+  }
+  if(cat=="hydro"){
+    all_chains=vector(length=nrow(scenAvail),mode="list")
+    for(c in 1:nrow(scenAvail)){# for each chain
+      dir_tmp <- list.files(paste0(path_data,"indic"), recursive = TRUE, include.dirs = TRUE,full.names = T,pattern =glob2rx(paste0("*",scenAvail$gcm[c],"*",scenAvail$rcp[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",scenAvail$hm[c],"*")))
+      pth_tmp=list.files(dir_tmp,full.names=T,recursive = T,include.dirs = F,pattern=glob2rx(paste0("*",i,".f*")))
+      res=read_fst(pth_tmp)
+      colnames(res)=c("gcm","rcp","rcm","bc","hm","code","year","indic")
+      res$year=year(res$year)
+      res=res[!is.na(res$indic),]
+      res=res[,c("year","code","indic")]
+      res=res[res$code %in% ref_cities$code,]
+      res=distinct(res)
+      res=pivot_wider(res,names_from = code,values_from = indic)
+      all_chains[[c]]=res
+    }
+    for(c in 1:nrow(scenAvail)){
+      if(scenAvail$rcp[c]!="historical"){
+        hist_idx=which(scenAvail$rcp=="historical"&scenAvail$gcm==scenAvail$gcm[c]&scenAvail$rcm==scenAvail$rcm[c]&scenAvail$bc==scenAvail$bc[c]&scenAvail$hm==scenAvail$hm[c])
+        all_chains[[c]]=rbind(all_chains[[hist_idx]],all_chains[[c]])
       }
     }
-    colnames(res2)[1]="year"
-    all_chains[[c]]=res2
-    rm(res)
-    rm(res2)
-    gc()
+    all_chains=all_chains[which(scenAvail$rcp!="historical")]
   }
+  
   return(all_chains)
 }
 
 
-plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name,categ="cities",idx){
+plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name,place="cities",idx,cat="meteo"){
   
   scen_rcp=which(scenAvail$rcp==rcp)
   chains_rcp=all_chains[scen_rcp]
@@ -664,10 +690,15 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   }
   Y=Y[-1,]
   nS=nrow(scenAvail)
-  if(scenAvail$var[1]!="tasAdjust"){
+  if(cat=="meteo"){
+    if(scenAvail$var[1]!="tasAdjust"){
+      typeChangeVar="rel"
+    }else{
+      typeChangeVar="abs"
+    }
+  }
+  if(cat=="hydro"){
     typeChangeVar="rel"
-  }else{
-    typeChangeVar="abs"
   }
   clim_resp=prepare_clim_resp(Y=Y,X=X,Xfut=Xfut,typeChangeVariable = typeChangeVar,spar = rep(SPAR,nS),type = spline_type)
   if(pred=="time"){
@@ -680,11 +711,21 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       spline=data.frame(t(clim_resp$phiStar))
     }
     raw[is.na(t(Y[,X>=Xfut[1]]))]=NA
-    colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    if(cat=="meteo"){
+      colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    }
+    if(cat=="hydro"){
+      colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp],"_",scenAvail$hm[scen_rcp])
+    }
     raw$xfut=X[X>=Xfut[1]]
     raw=pivot_longer(data=raw,cols=!xfut,names_to = "model",values_to = "val")
     spline[is.na(t(Y[,X>=Xfut[1]]))]=NA
-    colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    if(cat=="meteo"){
+      colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    }
+    if(cat=="hydro"){
+      colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp],"_",scenAvail$hm[scen_rcp])
+    }
     spline$xfut=X[X>=Xfut[1]]
     spline=pivot_longer(data=spline,cols=!xfut,names_to = "model",values_to = "val")
   }
@@ -698,11 +739,21 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       spline=data.frame(t(clim_resp$phiStar))
     }
     colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
-    raw=pivot_longer(data=raw,cols=everything(),names_to = "model",values_to = "val")
+    if(cat=="meteo"){
+      colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    }
+    if(cat=="hydro"){
+      colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp],"_",scenAvail$hm[scen_rcp])
+    }
     raw_x=data.frame(t(X))
     colnames(raw_x)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
     raw$xfut=pivot_longer(data=raw_x,cols=everything(),names_to = "model",values_to = "val")$val
-    colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    if(cat=="meteo"){
+      colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    }
+    if(cat=="hydro"){
+      colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp],"_",scenAvail$hm[scen_rcp])
+    }
     spline$xfut=Xfut
     spline=pivot_longer(data=spline,cols=!xfut,names_to = "model",values_to = "val")
   }
@@ -714,50 +765,92 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
   data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[3]))
   data$bc=unlist(lapply(strsplit(data$model,"_"),function(x) x[4]))
-  
-  if(v!="tasAdjust"&(type=="raw_spline"|type=="raw")){
-    ylabel="Réponse climatique"
-    unit=" (mm)"
-  }
-  if(v=="tasAdjust"&(type=="raw_spline"|type=="raw")){
-    ylabel="Réponse climatique"
-    unit=" (°C)"
-  }
-  if(v!="tasAdjust"&(type=="diff_spline"|type=="diff")){
-    ylabel="Réponse en\nchangement climatique"
-    unit=" (%)"
-  }
-  if(v=="tasAdjust"&(type=="diff_spline"|type=="diff")){
-    ylabel="Réponse en\nchangement climatique"
-    unit=" (°C)"
+  if(cat=="hydro"){
+    data$hm=unlist(lapply(strsplit(data$model,"_"),function(x) x[5]))
   }
   
-  if(type=="diff_spline"|type=="raw_spline"){
-    plt=ggplot(data)+#Warnings okay
-      geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
-      scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur",ylabel))
+  if(cat=="meteo"){
+    if(scenAvail$var[1]!="tasAdjust"&(type=="raw_spline"|type=="raw")){
+      ylabel="Réponse climatique"
+      unit=" (mm)"
+    }
+    if(scenAvail$var[1]=="tasAdjust"&(type=="raw_spline"|type=="raw")){
+      ylabel="Réponse climatique"
+      unit=" (°C)"
+    }
+    if(scenAvail$var[1]!="tasAdjust"&(type=="diff_spline"|type=="diff")){
+      ylabel="Réponse en\nchangement climatique"
+      unit=" (%)"
+    }
+    if(scenAvail$var[1]=="tasAdjust"&(type=="diff_spline"|type=="diff")){
+      ylabel="Réponse en\nchangement climatique"
+      unit=" (°C)"
+    }
   }
-  if(type=="diff"|type=="raw"){
-    plt=ggplot(data[data$type=="raw",])+#Warnings okay
-      geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
-      scale_size_manual("",values=c(0.7),label=c("Indicateur"))
+  if(cat=="hydro"){
+    if(type=="raw_spline"|type=="raw"){
+      ylabel="Réponse climatique"
+      unit="m3/s"
+    }
+    if(type=="diff_spline"|type=="diff"){
+      ylabel="Réponse en\nchangement climatique"
+      unit=" (%)"
+    }
   }
+  
   rcm_colors=tol(length(unique(scenAvail$rcm)))
   names(rcm_colors)=unique(scenAvail$rcm)
   
-  plt=plt+
-    scale_color_manual("RCM",values=rcm_colors[unique(data$rcm)])+
-    #scale_linetype("")+
-    theme_bw(base_size = 18)+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    scale_x_continuous("")+
-    scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
-    guides(color = guide_legend(override.aes = list(size = 1.7)))+
-    facet_grid(gcm~bc)+
-    theme(panel.spacing.x = unit(0.5, "lines"))+
-    theme(strip.text.y = element_text(size = 9))
-  if(categ=="cities"){
+  if(cat=="meteo"){
+    if(type=="diff_spline"|type=="raw_spline"){
+      plt=ggplot(data)+#Warnings okay
+        geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
+        scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur",ylabel))
+    }
+    if(type=="diff"|type=="raw"){
+      plt=ggplot(data[data$type=="raw",])+#Warnings okay
+        geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
+        scale_size_manual("",values=c(0.7),label=c("Indicateur"))
+    }
+    plt=plt+
+      scale_color_manual("RCM",values=rcm_colors[unique(data$rcm)])+
+      #scale_linetype("")+
+      theme_bw(base_size = 18)+
+      theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+      theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+      scale_x_continuous("")+
+      scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
+      guides(color = guide_legend(override.aes = list(size = 1.7)))+
+      facet_grid(gcm~bc)+
+      theme(panel.spacing.x = unit(0.5, "lines"))+
+      theme(strip.text.y = element_text(size = 9))
+  }
+  if(cat=="hydro"){
+    if(type=="diff_spline"|type=="raw_spline"){
+      plt=ggplot(data)+#Warnings okay
+        geom_line(aes(x=xfut,y=val,size=type,color=rcm,linetype=bc))+
+        scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur",ylabel))
+    }
+    if(type=="diff"|type=="raw"){
+      plt=ggplot(data[data$type=="raw",])+#Warnings okay
+        geom_line(aes(x=xfut,y=val,size=type,color=rcm,linetype=bc))+
+        scale_size_manual("",values=c(0.7),label=c("Indicateur"))
+    }
+    plt=plt+
+      scale_color_manual("RCM",values=rcm_colors[unique(data$rcm)])+
+      scale_linetype("BC",values=c("solid","dashed"))+
+      theme_bw(base_size = 18)+
+      theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+      theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+      scale_x_continuous("")+
+      scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
+      guides(color = guide_legend(override.aes = list(size = 1.7)))+
+      facet_grid(gcm~hm)+
+      theme(panel.spacing.x = unit(0.5, "lines"))+
+      theme(strip.text.y = element_text(size = 9))
+  }
+  
+  if(place=="cities"){
     if(SPAR==1){
       save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
     }else{
@@ -765,9 +858,9 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
     }
   }else{
     if(SPAR==1){
-      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",categ,"/"),Format = "jpeg")
+      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
     }else{
-      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",categ,"/"),Format = "jpeg")
+      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
     }
   }
   
