@@ -544,7 +544,7 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
 ##simu_lst the list of simulations
 #first_data_year and last_data_year the first an last years with data for simu all year round
 
-prep_global_tas=function(path_temp,ref_year=1990,simu_lst){
+prep_global_tas=function(path_temp,ref_year=1990,simu_lst,var="meteo"){
   ## Prepare temperatures RCP/GCM
   paths=list.files(path_temp,pattern=glob2rx("global_tas*"),full.names = T)
   for ( i in 1:length(paths)){
@@ -567,6 +567,11 @@ prep_global_tas=function(path_temp,ref_year=1990,simu_lst){
   gcm_years=mat_Globaltas_gcm$year
   
   ## Format global temperature for Qualypso
+  if(var=="hydro"){
+    colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp85_CNRM-CM5-LR"]="rcp85_CNRM-CM5"
+    colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp45_CNRM-CM5-LR"]="rcp45_CNRM-CM5"
+    colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp26_CNRM-CM5-LR"]="rcp26_CNRM-CM5"
+  }
   mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
   vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
   vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
@@ -924,7 +929,7 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
 ## xlim the starting value (often 1990 or 0.7°C)
 
 
-plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,var="toto",indic="titi",simpler=F,idx_pix="tata",idx_row="tata",idx_col="tata",path_temp=NULL){
+plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,var="toto",indic="titi",idx_pix="tata",idx_row="tata",idx_col="tata",path_temp=NULL){
   
   if(var!="tasAdjust"){
     Ystar=(lst.QUALYPSOOUT[[1]]$Y[idx,,]-lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phi[idx,,1])/lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phi[idx,,1]*100
@@ -1075,13 +1080,13 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       }else{
         fake_obs=data.frame(full_years,fake_obs-fake_obs[full_years==1990])
       }
+      colnames(fake_obs)=c("pred","val")
     }else{
       fake_obs=data.frame(lst.QUALYPSOOUT[[1]]$Xmat[2,],Ystar[2,])
-      lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_rcp,]
+      colnames(fake_obs)=c("pred","val")
+      fake_obs=fake_obs[!is.na(fake_obs$val),]
+      fake_obs=fake_obs[fake_obs$pred<=2005,]
     }
-    colnames(fake_obs)=c("pred","val")
-    fake_obs$trend=smooth.spline(x=fake_obs$pred,y=fake_obs$val,spar = lst.QUALYPSOOUT[[1]]$listOption$spar)$y
-    #fake_obs$trend=as.vector(predict(lm(fake_obs$val~fake_obs$pred),data.frame(fake_obs$pred)))*-0.7-2
   }
   if(pred=="temp"){
     chains=chains[chains$pred>=xlim[1] & chains$pred<=xlim[2],]
@@ -1128,37 +1133,13 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       }else{
         fake_obs=data.frame(tas_obs,fake_obs-fake_obs[full_years==1990])
       }
+      colnames(fake_obs)=c("pred","val")
     }else{
       fake_obs=data.frame(lst.QUALYPSOOUT[[1]]$Xmat[2,],Ystar[2,])
-      lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_rcp,]
+      colnames(fake_obs)=c("pred","val")
+      fake_obs=fake_obs[!is.na(fake_obs$val),]
+      fake_obs=fake_obs[fake_obs$pred<=0.9,]
     }
-    colnames(fake_obs)=c("pred","val")
-    fake_obs$trend=smooth.spline(x=fake_obs$pred,y=fake_obs$val,spar = lst.QUALYPSOOUT[[1]]$listOption$spar)$y
-    #fake_obs$trend=as.vector(predict(lm(fake_obs$val~fake_obs$pred),data.frame(fake_obs$pred)))*-0.7-2
-  }
-  
-  if(!simpler){
-    if(pred=="time"){
-      idx_shrtlst=c(1,4,8,12,15,19,23,25,27,29,30,34,36,38,40,41,45,49,52,57,58,64,68,71,76,77)
-    }
-    if(pred=="temp"){
-      idx_shrtlst=c(1,5,8,13,14,20,24,27,32,33)
-    }
-    if(var!="tasAdjust"){
-      shortlist=data.frame(t(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_shrtlst,]))*100
-    }else{
-      shortlist=data.frame(t(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_shrtlst,]))
-    }
-    if(pred=="time"){
-      colnames(shortlist)=paste0(scenAvail$rcp[idx_shrtlst],"/",scenAvail$gcm[idx_shrtlst],"/",scenAvail$rcm[idx_shrtlst],"/",scenAvail$bc[idx_shrtlst])
-    }
-    if(pred=="temp"){
-      colnames(shortlist)=paste0("rcp85","/",scenAvail$gcm[idx_shrtlst],"/",scenAvail$rcm[idx_shrtlst],"/",scenAvail$bc[idx_shrtlst])
-    }
-    shortlist$pred=Xfut
-    shortlist=shortlist[shortlist$pred>=xlim[1],]
-    shortlist=pivot_longer(shortlist,cols=!pred,names_to="chain",values_to = "val")
-    shortlist$rcp=unlist(lapply(strsplit(shortlist$chain,"/"),function(x) x[1]))
   }
   
   if(pred=="time"){
@@ -1173,89 +1154,53 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     color_select="rcp8.5"
   }
 
-  if(!simpler){
-    plt1=ggplot(data)+
-      geom_line(data=chains,aes(x=pred,y=val,group=chain,color=eff,size="aa"),alpha=0.4)+#raw chains
-      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.3)+#uncertainty band
-      geom_line(aes(x=pred,y=med,group=eff,color=eff,size="cc"))+#RCP mean
-      geom_line(data=shortlist,aes(x=pred,y=val,group=chain,size="bb",color=rcp))+#shortlist
-      scale_x_continuous("",limits=xlim2,expand=c(0,0))+
-      scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
-      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
-      scale_size_manual("",values=c("aa"=0.15,"bb"=0.5,"cc"=1.5),labels=c('Ensemble de projections "brutes"','Réponse en changement\ndes chaînes de référence (shortlist)',"Réponse moyenne\nen changement"))+
-      guides(size = guide_legend(order=3,byrow = TRUE,override.aes = list(size=c(0.15,1,2))))+#byrow necessary for option of spacing between lines
-      theme_bw(base_size = 16)+
-      theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-      theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-      theme(legend.key.width = unit(1.5,"cm"))+
-      theme(legend.title = element_text(size=13))+
-      theme( legend.margin = margin(-2, 0, -2, 0))+
-      annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=8)
-    if(var!="tasAdjust"){
-      plt1=plt1+
-        scale_y_continuous(paste0("Changement relatif moyen (%)"),expand=c(0,0))
-    }else{
-      plt1=plt1+
-        scale_y_continuous(paste0("Changement moyen (°C)"),expand=c(0,0))
-    }
-    plt1=plt1+
-      geom_line(data=fake_obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+#raw obs
-      geom_line(data=fake_obs,aes(x=pred,y=trend,size="cc",color="gray50"))+#obs trend
-      scale_color_discrete("",type = c("gray50", as.vector(col_3rcp[color_select])),labels=c("Observations",labels_rcp[which(names(col_3rcp)%in%color_select)]))+
-      guides(color = guide_legend(order=1,override.aes = list(size = 1.2)))
-    if(pred=="temp"){
-      plt1=plt1+
-        scale_x_continuous("Niveau de réchauffement planétaire (°C)",limits=xlim2,expand=c(0,0))
-    }
-    
-  }else{
-    chain_band=aggregate(chains$val,by=list(chains$pred,chains$eff),max)
-    colnames(chain_band)=c('pred',"eff","max")
-    chain_band$min=aggregate(chains$val,by=list(chains$pred,chains$eff),min)[,3]
-    if(pred=="time"){
-      a_label=data.frame(lab="a",eff="rcp26")
-      idx_label=seq(1,3)
-    }
-    if(pred=="temp"){
-      a_label=data.frame(lab="a",eff="rcp85")
-      idx_label=3
-    }
-    
-    plt1=ggplot(data)+
-      geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
-      scale_fill_discrete("Dispersion des expériences\nclimatiques",type= as.vector(col_3rcp_shade[color_select]),labels=NULL)+
-      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
-      new_scale_fill()+
-      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.4)+#uncertainty band
-      scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
-      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
-      geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.5,lty="21")+#RCP mean
-      scale_x_continuous("",limits=xlim2,expand=c(0,0))+
-      scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=labels_rcp[idx_label])+
-      theme_bw(base_size = 16)+
-      theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-      theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-      theme(legend.key.width = unit(1.5,"cm"))+
-      theme(legend.title = element_text(size=13))+
-      theme( legend.margin = margin(-2, 0, -2, 0))+
-      facet_wrap(vars(eff),nrow = length(unique(data$eff)))+
-      theme(strip.background = element_blank(),strip.text.x = element_blank())+
-      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=12)
-    if(var!="tasAdjust"){
-      plt1=plt1+
-        scale_y_continuous(paste0("Changement relatif moyen (%)"),expand=c(0,0))
-    }else{
-      plt1=plt1+
-        scale_y_continuous(paste0("Changement moyen (°C)"),expand=c(0,0))
-    }
-    plt1=plt1+
-      geom_line(data=fake_obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+#raw obs
-      scale_size_manual("",values = c("aa"=1),labels=c("Observations"))
-    if(pred=="temp"){
-      plt1=plt1+
-        scale_x_continuous("Niveau de réchauffement planétaire (°C)",limits=xlim2,expand=c(0,0))
-    }
+  chain_band=aggregate(chains$val,by=list(chains$pred,chains$eff),max)
+  colnames(chain_band)=c('pred',"eff","max")
+  chain_band$min=aggregate(chains$val,by=list(chains$pred,chains$eff),min)[,3]
+  if(pred=="time"){
+    a_label=data.frame(lab="a",eff="rcp26")
+    idx_label=seq(1,3)
   }
+  if(pred=="temp"){
+    a_label=data.frame(lab="a",eff="rcp85")
+    idx_label=3
+  }
+  
+  plt1=ggplot(data)+
+    geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
+    scale_fill_discrete("Dispersion des expériences\nclimatiques",type= as.vector(col_3rcp_shade[color_select]),labels=NULL)+
+    guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+    new_scale_fill()+
+    geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.4)+#uncertainty band
+    scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
+    guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+    geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.5,lty="21")+#RCP mean
+    scale_x_continuous("",limits=xlim2,expand=c(0,0))+
+    scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=labels_rcp[idx_label])+
+    theme_bw(base_size = 16)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+    theme(legend.key.width = unit(1.5,"cm"))+
+    theme(legend.title = element_text(size=13))+
+    theme( legend.margin = margin(-2, 0, -2, 0))+
+    facet_wrap(vars(eff),nrow = length(unique(data$eff)))+
+    theme(strip.background = element_blank(),strip.text.x = element_blank())+
+    geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=12)
+  if(var!="tasAdjust"){
+    plt1=plt1+
+      scale_y_continuous(paste0("Changement relatif moyen (%)"),expand=c(0,0))
+  }else{
+    plt1=plt1+
+      scale_y_continuous(paste0("Changement moyen (°C)"),expand=c(0,0))
+  }
+  plt1=plt1+
+    geom_line(data=fake_obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+#raw obs
+    scale_size_manual("",values = c("aa"=1),labels=c("Observations"))
+  if(pred=="temp"){
+    plt1=plt1+
+      scale_x_continuous("Niveau de réchauffement planétaire (°C)",limits=xlim2,expand=c(0,0))
+  }
+
   
   
   
@@ -1290,7 +1235,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   }
   
   plt2=ggplot(data)+
-    geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=val),color="black",size=5,shape=21)+
+    geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=val),color="transparent",size=5,shape=21)+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les chaînes sur\nle signe de la tendance",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T,oob=squish,limits=c(0,100),breaks=c(20,40,60,80),labels=~ if(length(.x) == 2) {c("- à 100%","+ à 100%")} else {c("- à 80%","- à 60%","+ à 60%","+ à 80%")})+#that way because stepsn deforms colors
     scale_y_discrete("",labels=rev(rcp.labs))+
     theme_bw(base_size = 16)+
@@ -1333,7 +1278,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   
   plt3=ggplot(data)+
     geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var))+
-    geom_line(data=data[data$var!="int",],aes(x=Xfut,y=val,group=var),color="black",linetype="dashed",size=0.5)+
+    # geom_line(data=data[data$var!="int",],aes(x=Xfut,y=val,group=var),color="black",linetype="dashed",size=0.5)+
     scale_fill_discrete("",type = vec_color,labels=labels_var)+
     scale_x_continuous("",limits = xlim2,expand=c(0,0))+
     scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
@@ -1352,7 +1297,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("summary_change_",ind_name,"_",pred,"_",bv_name,"_simpler",simpler),Folder = folder_out,Format = "jpeg")
+    save.plot(plt,Filename = paste0("summary_change_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
   }
   
 }
@@ -1669,7 +1614,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
   }else{
-    exut=sim_stations[,c("Lon","Lat")]
+    exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
   exut$idx=seq(1:nrow(exut))
   
@@ -1766,7 +1711,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       theme(legend.box = "horizontal")
     plt=plt+
-      facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
+      facet_grid(rcp ~ quant,labeller = labeller(rcp=rcp.labs, quant = quant.labs))+
       ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(Horizon ",horiz," avec référence 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
     plt$layers[[3]]$aes_params$size= 3
@@ -1830,7 +1775,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
   }else{
-    exut=sim_stations[,c("Lon","Lat")]
+    exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
   
   exut$idx=seq(1:nrow(exut))
@@ -2016,8 +1961,8 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 
 ## Will not work for predictor temperature (cannot do average +- 30 years)
 
-map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",ref0=1990){
-  
+map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",ref0=1990){
+
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
   quant=c("5%","mean","95%")
@@ -2029,7 +1974,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
   }else{
-    exut=sim_stations[,c("Lon","Lat")]
+    exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
   exut$idx=seq(1:nrow(exut))
   
@@ -2046,7 +1991,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
   for(r in rcp_names){
     
     idx_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r)
-    ref0=apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_ref0-15):(idx_ref0+15)],MARGIN=1,mean)
+    ref0=apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_ref0-15):(idx_ref0+15)],MARGIN=1,mean,na.rm=T)
     
     if(var!="tasAdjust"){
       rel_chg=(apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_Xfut-15):(idx_Xfut+15)],MARGIN=c(1,2),mean,na.rm=T)-ref0)/ref0*100
@@ -2102,8 +2047,8 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,ind_name,ind_name_fu
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       theme(legend.box = "horizontal")
     plt=plt+
-      facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
-      ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990),\n ensemble non balancé"))+
+      facet_grid(rcp ~ quant,labeller = labeller(rcp=rcp.labs, quant = quant.labs))+
+      ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCPs et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990),\n ensemble non balancé"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
     plt$layers[[3]]$aes_params$size= 3
     plt$layers[[4]]$aes_params$size= 3
@@ -2160,7 +2105,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
   }else{
-    exut=sim_stations[,c("Lon","Lat")]
+    exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
   exut$idx=seq(1:nrow(exut))
   
@@ -2242,9 +2187,11 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   }
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val")
+    plt=base_map_outlets(data = exut,val_name = "val")+
+      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
-    plt=base_map_grid(data = exut,val_name = "val")
+    plt=base_map_grid(data = exut,val_name = "val")+
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   
   if(includeMean){
@@ -2253,8 +2200,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
         facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels= c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
         ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-        theme(panel.border = element_rect(colour = "black",fill=NA))+
-        guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+        theme(panel.border = element_rect(colour = "black",fill=NA))
       if(var=="evspsblpotAdjust"){
         plt=plt+
           binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
@@ -2264,9 +2210,8 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
         facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C))",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
         ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-        theme(panel.border = element_rect(colour = "black",fill=NA))+
-        guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
-    }
+        theme(panel.border = element_rect(colour = "black",fill=NA))
+      }
     if(!pix){
       plt$layers[[3]]$aes_params$size= 3
     }
@@ -2283,15 +2228,13 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
           facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
           binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(temp_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels= c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),oob=squish,show.limits = T)+#that way because stepsn deforms colors
           ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-          theme(panel.border = element_rect(colour = "black",fill=NA))+
-          guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+          theme(panel.border = element_rect(colour = "black",fill=NA))
       }else{
         plt=plt+
           facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
           binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(rev(temp_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels= c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),oob=squish,show.limits = T)+#that way because stepsn deforms colors
           ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-          theme(panel.border = element_rect(colour = "black",fill=NA))+
-          guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+          theme(panel.border = element_rect(colour = "black",fill=NA))
       }
       if(!pix){
         plt$layers[[3]]$aes_params$size= 3
@@ -2308,8 +2251,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
           facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
           binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels= c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
           ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full," le ",includeRCP,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-          theme(panel.border = element_rect(colour = "black",fill=NA))+
-          guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+          theme(panel.border = element_rect(colour = "black",fill=NA))
         if(var=="evspsblpotAdjust"){
           plt=plt+
             binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
@@ -2319,8 +2261,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
           facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
           binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (%)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
           ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full," le ",includeRCP,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
-          theme(panel.border = element_rect(colour = "black",fill=NA))+
-          guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+          theme(panel.border = element_rect(colour = "black",fill=NA))
       }
       if(!pix){
         plt$layers[[3]]$aes_params$size= 3
@@ -2332,7 +2273,6 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
       }
       
     }
-    
     
   }
 }
@@ -2357,7 +2297,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
   }else{
-    exut=sim_stations[,c("Lon","Lat")]
+    exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
   exut$idx=seq(1:nrow(exut))
   exut$val=0
@@ -2421,9 +2361,11 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   ## We show uncertainties not variances
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val")
+    plt=base_map_outlets(data = exut,val_name = "val")+
+      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
-    plt=base_map_grid(data = exut,val_name = "val")
+    plt=base_map_grid(data = exut,val_name = "val")+
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   if(vartype=="mean"){
     if(var!="tasAdjust"){
@@ -2572,7 +2514,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
   }else{
-    exut=sim_stations[,c("Lon","Lat")]
+    exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
   colnames(exut)=c("x","y")
   exut$idx=seq(1:nrow(exut))
@@ -2614,7 +2556,8 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   lim_col2=as.numeric(round(quantile((exut[exut$source=="iv",]$val),probs=c(0.01,0.99)),-1))
   
   if(!pix){
-    plt1=base_map_outlets(data = exut[exut$source!="iv",],val_name = "val")
+    plt1=base_map_outlets(data = exut[exut$source!="iv",],val_name = "val")+
+      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt1=base_map_grid(data = exut[exut$source!="iv",],val_name = "val")+
       guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
@@ -2626,16 +2569,17 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
     plt1$layers[[3]]$aes_params$size=3
   }
   
-  exut$title="Variabilité interne"
+  exut$cat="Variabilité interne"
   if(!pix){
-    plt2=base_map_outlets(data = exut[exut$source=="iv",],val_name = "val")
+    plt2=base_map_outlets(data = exut[exut$source=="iv",],val_name = "val")+
+      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt2=base_map_grid(data = exut[exut$source=="iv",],val_name = "val")+
       guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   plt2=plt2+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
-    facet_grid(. ~ title)+
+    facet_grid(. ~ cat)
   if(!pix){
     plt2$layers[[3]]$aes_params$size=3
   }
@@ -2657,24 +2601,6 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   
 }
 
-
-#####################################################
-## Plot watershed areas
-
-plot_bv_areas=function(folder_out){
-  exut=sim_stations[,c("Num_ordre_Modcou","Lat","Lon","Surf_mod")]
-  colnames(exut)=c("Num_ordre_Modcou","y","x","val")
-  plt=base_map_outlets(data = exut,val_name = "val")
-  plt=plt+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Superficie (km2)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",trans="log10",show.limits = T,breaks=c(500,1000,5000,1e4),limits=c(100,5e4),oob=squish)+#that way because stepsn deforms colors and with trans cannot show limits
-    ggtitle("Superficie des bassins versants")
-  plt$layers[[3]]$aes_params$size=5
-  if (is.na(folder_out)){
-    return(plt)
-  }else{
-    save.plot(plt,Filename = "superficie_bv",Folder = folder_out,Format = "jpeg")
-  }
-}
 
 ##################################################################
 ## Emergence dates for reference in predictor temperature maps
