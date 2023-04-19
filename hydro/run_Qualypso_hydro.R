@@ -70,11 +70,11 @@ for(i in unique(simu_lst$indic)){
   #################
   ##To be adjusted
   ## After that need to adjust scenAvail in run QUALYPSO to include or not bc
-  basin_sample=ref[ref$n==7,]$code
+  basin_sample=ref[ref$n==8,]$code
   n_bv=length(basin_sample)
   # bc_sample="ADAMONT"
   bc_sample=c("ADAMONT","CDFt")
-  hm_sample=hm=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","MORDOR-SD","SMASH")
+  hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","MORDOR-SD","SMASH","ORCHIDEE")
   ################
   
   all_chains=all_chains[scenAvail$bc %in% bc_sample]
