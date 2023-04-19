@@ -24,16 +24,16 @@ path_fig="C:/Users/reverdya/Documents/Docs/3_figures/hydro/analyse-indic/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
-indic=c("QA","QA_DJF","QA_MAM","QA_JJA","QA_SON","QA_janv","QA_févr","QA_mars","QA_avr","QA_mai","QA_juin","QA_juill","QA_août","QA_sept","QA_oct","QA_nov","QA_déc","QA05","QA10","QA50","QA90","QA95","QJXA","QMNA","VCN3","VCN10","VCX3")
+indic=c("QA","QA_DJF","QA_MAM","QA_JJA","QA_SON","QA_janv","QA_fevr","QA_mars","QA_avr","QA_mai","QA_juin","QA_juill","QA_aout","QA_sept","QA_oct","QA_nov","QA_dec","QA05","QA10","QA50","QA90","QA95","QJXA","QMNA","VCN3","VCN10","VCX3")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","CDFt")
 hm=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","MORDOR-SD","SMASH","ORCHIDEE")
-hm_domain=c("FR","Lo-Br","FR","Lo-Rh","FR","Lo","FR")
-hm_NBbc=c(1,2,2,2,2,2,2)
+hm_domain=c("FR","Lo-Br","FR","Lo-Rh","FR","Lo","FR","FR")
+hm_NBbc=c(1,2,2,2,2,2,2,1)
 
 centr_ref_year=1990# central year of 1975-2005 reference period
 
-bv_sample=c("K010002010","K055001010","K118001010","K206401002","L541181001")
+bv_sample=c("K002000101","K206401002","K118001010")
 
 ###########
 #FUNCTIONS#
@@ -116,39 +116,43 @@ save(ref,file=paste0(path_data,"ref.Rdata"))
 # type : raw_spline, raw, diff, diff_spline
 
 ##Merge data frame warnings are okay
-## Sometimes problem with too many connections opened requires running step by step (i by i)
+## Sometimes problem with too many connections opened requires running step by step (i by i) (or memory problem)
 
+ref_c=ref[ref$code %in% bv_sample,]
 
-for(i in unique(simu_lst$indic)){
-  dir.create(paste0(path_fig,i,"/"))
-  closeAllConnections()
-  gc()
+memory_saving_function=function(){
   
-  ref_c=ref[ref$code %in% bv_sample,]
-  scenAvail=simu_lst[simu_lst$indic==i,]
   all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c,cat="hydro")
-  
   scenAvail=scenAvail[scenAvail$rcp!="historical",]
-  global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail)
   
   for(c in 1:nrow(ref_c)){
-    for(R in c("rcp26","rcp45","rcp85")){
-      # plot_spline(all_chains=all_chains,type="diff",pred="time",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
-      # plot_spline(all_chains=all_chains,type="raw",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
-      for(S in c(0.8,0.9,1,1.1,1.2)){
+    for(R in c("rcp26","rcp85")){
+      for(S in c(1,1.1)){
         plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
-        # plot_spline(all_chains=all_chains,type="diff_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
       }
     }
     for(R in c("rcp85")){
-      # plot_spline(all_chains=all_chains,type="raw",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
-      # plot_spline(all_chains=all_chains,type="diff",pred="temp",scenAvail = scenAvail,SPAR=1,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
-      for(S in c(1.2,1.3,1.4,1.5,1.6)){
+      for(S in c(1.4)){
         plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
-        # plot_spline(all_chains=all_chains,type="diff_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
       }
     }
   }
+  rm(all_chains,global_tas)
+  gc()
+}
+
+
+
+for(i in unique(simu_lst$indic)){
+  dir.create(paste0(path_fig,i))
+  closeAllConnections()
+  gc()
+  
+  scenAvail=simu_lst[simu_lst$indic==i,]
+  global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail[scenAvail$rcp!="historical",],var = "hydro")
+  
+  memory_saving_function()
+  print(i)
 }
 
 
