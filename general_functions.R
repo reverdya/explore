@@ -604,7 +604,7 @@ prep_global_tas=function(path_temp,ref_year=1990,simu_lst,var="meteo"){
 extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
  
   if(cat=="meteo"){
-    all_chains=vector(length=nrow(scenAvail),mode="list")
+    all_chain=vector(length=nrow(scenAvail),mode="list")
     for(c in 1:nrow(scenAvail)){# for each chain
       
       if(type=="cities"){
@@ -638,17 +638,17 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
         }
       }
       colnames(res2)[1]="year"
-      all_chains[[c]]=res2
+      all_chain[[c]]=res2
       rm(res)
       rm(res2)
       gc()
     }
   }
   if(cat=="hydro"){
-    all_chains=vector(length=nrow(scenAvail),mode="list")
+    all_chain=vector(length=nrow(scenAvail),mode="list")
     for(c in 1:nrow(scenAvail)){# for each chain
       dir_tmp <- list.files(paste0(path_data,"indic"), recursive = TRUE, include.dirs = TRUE,full.names = T,pattern =glob2rx(paste0("*",scenAvail$gcm[c],"*",scenAvail$rcp[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",scenAvail$hm[c],"*")))
-      pth_tmp=list.files(dir_tmp,full.names=T,recursive = T,include.dirs = F,pattern=glob2rx(paste0("*",i,".f*")))
+      pth_tmp=Sys.glob(paths=paste0(dir_tmp,"/*/*/*",i,"*"))#sys.glob allow accents
       res=read_fst(pth_tmp)
       colnames(res)=c("gcm","rcp","rcm","bc","hm","code","year","indic")
       res$year=year(res$year)
@@ -657,18 +657,21 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
       res=res[res$code %in% ref_cities$code,]
       res=distinct(res)
       res=pivot_wider(res,names_from = code,values_from = indic)
-      all_chains[[c]]=res
+      all_chain[[c]]=res
     }
+    rm(res)
+    gc()
     for(c in 1:nrow(scenAvail)){
       if(scenAvail$rcp[c]!="historical"){
         hist_idx=which(scenAvail$rcp=="historical"&scenAvail$gcm==scenAvail$gcm[c]&scenAvail$rcm==scenAvail$rcm[c]&scenAvail$bc==scenAvail$bc[c]&scenAvail$hm==scenAvail$hm[c])
-        all_chains[[c]]=rbind(all_chains[[hist_idx]],all_chains[[c]])
+        all_chain[[c]]=rbind(all_chain[[hist_idx]],all_chain[[c]])
       }
     }
-    all_chains=all_chains[which(scenAvail$rcp!="historical")]
+    all_chain=all_chain[which(scenAvail$rcp!="historical")]
   }
   
-  return(all_chains)
+  return(all_chain)
+  rm(all_chain)
 }
 
 
@@ -738,7 +741,6 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       raw=data.frame(t(clim_resp$YStar))
       spline=data.frame(t(clim_resp$phiStar))
     }
-    colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
     if(cat=="meteo"){
       colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
     }
@@ -746,7 +748,7 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       colnames(raw)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp],"_",scenAvail$hm[scen_rcp])
     }
     raw_x=data.frame(t(X))
-    colnames(raw_x)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
+    raw=pivot_longer(data=raw,cols=everything(),names_to = "model",values_to = "val")
     raw$xfut=pivot_longer(data=raw_x,cols=everything(),names_to = "model",values_to = "val")$val
     if(cat=="meteo"){
       colnames(spline)=paste0(scenAvail$rcp[scen_rcp],"_",scenAvail$gcm[scen_rcp],"_",scenAvail$rcm[scen_rcp],"_",scenAvail$bc[scen_rcp])
@@ -761,6 +763,8 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   raw$type="raw"
   spline$type="spline"
   data=rbind(raw,spline)
+  rm(chains_rcp,ClimateProjections,clim_resp,raw,spline,Y)
+  gc()
   data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
   data$gcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[2]))
   data$rcm=unlist(lapply(strsplit(data$model,"_"),function(x) x[3]))
@@ -790,7 +794,7 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   if(cat=="hydro"){
     if(type=="raw_spline"|type=="raw"){
       ylabel="Réponse climatique"
-      unit="m3/s"
+      unit=" (m3/s)"
     }
     if(type=="diff_spline"|type=="diff"){
       ylabel="Réponse en\nchangement climatique"
@@ -814,7 +818,6 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
     }
     plt=plt+
       scale_color_manual("RCM",values=rcm_colors[unique(data$rcm)])+
-      #scale_linetype("")+
       theme_bw(base_size = 18)+
       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -824,47 +827,53 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       facet_grid(gcm~bc)+
       theme(panel.spacing.x = unit(0.5, "lines"))+
       theme(strip.text.y = element_text(size = 9))
+    if(place=="cities"){
+      if(SPAR==1){
+        save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+      }else{
+        save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+      }
+    }else{
+      if(SPAR==1){
+        save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
+      }else{
+        save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
+      }
+    }
   }
+  
   if(cat=="hydro"){
-    if(type=="diff_spline"|type=="raw_spline"){
-      plt=ggplot(data)+#Warnings okay
-        geom_line(aes(x=xfut,y=val,size=type,color=rcm,linetype=bc))+
-        scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur",ylabel))
-    }
-    if(type=="diff"|type=="raw"){
-      plt=ggplot(data[data$type=="raw",])+#Warnings okay
-        geom_line(aes(x=xfut,y=val,size=type,color=rcm,linetype=bc))+
-        scale_size_manual("",values=c(0.7),label=c("Indicateur"))
-    }
-    plt=plt+
-      scale_color_manual("RCM",values=rcm_colors[unique(data$rcm)])+
-      scale_linetype("BC",values=c("solid","dashed"))+
-      theme_bw(base_size = 18)+
-      theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-      theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-      scale_x_continuous("")+
-      scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
-      guides(color = guide_legend(override.aes = list(size = 1.7)))+
-      facet_grid(gcm~hm)+
-      theme(panel.spacing.x = unit(0.5, "lines"))+
-      theme(strip.text.y = element_text(size = 9))
-  }
-  
-  if(place=="cities"){
-    if(SPAR==1){
-      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
-    }else{
-      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
-    }
-  }else{
-    if(SPAR==1){
-      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
-    }else{
-      save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
+    for(h in unique(data$hm)){
+      if(type=="diff_spline"|type=="raw_spline"){
+        plt=ggplot(data[data$hm==h,])+#Warnings okay
+          geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
+          scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur",ylabel))
+      }
+      if(type=="diff"|type=="raw"){
+        plt=ggplot(data[data$type=="raw"&data$hm==h,])+#Warnings okay
+          geom_line(aes(x=xfut,y=val,size=type,color=rcm))+
+          scale_size_manual("",values=c(0.7),label=c("Indicateur"))
+      }
+      plt=plt+
+        scale_color_manual("RCM",values=rcm_colors[unique(data$rcm)])+
+        theme_bw(base_size = 18)+
+        theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+        theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+        scale_x_continuous("")+
+        scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
+        guides(color = guide_legend(override.aes = list(size = 1.7)))+
+        facet_grid(gcm~bc)+
+        theme(panel.spacing.x = unit(0.5, "lines"))+
+        theme(strip.text.y = element_text(size = 9))
+      if(SPAR==1){
+        save.plot(plt,Filename = paste0(scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_",h,"_spar1.0"),Folder = paste0(path_fig,scenAvail$indic[1],"/"),Format = "jpeg")
+      }else{
+        save.plot(plt,Filename = paste0(scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_",h,"_spar",SPAR),Folder = paste0(path_fig,scenAvail$indic[1],"/"),Format = "jpeg")
+      }
     }
   }
-  
-  
+  rm(plt,data)
+  gc()
 }
 
 
