@@ -34,6 +34,7 @@ library(htmlwidgets)#save interactive plot
 library(plotwidgets)#hsl colors (would be better to use hsluv model but not available on my R version)
 library(abind)#abind
 library(gridExtra)#grid.arrange
+library(rstudioapi)#restartSession
 
 
 #############################################################
@@ -81,6 +82,31 @@ save.plot=function(plot.object,Filename,Folder,Type="ggplot",plot.function=NULL,
   }
 }
 
+
+###########################################################################################################
+## Restart session in code for memory issues
+## fct the heavy function
+## cpt the first iteration (do not change default=1)
+## last the last iteration
+## step the step to which have the restart launched
+
+restart_loop=function(fct,cpt=1,last,step){
+  fct(cpt) 
+  print(cpt)
+  if(cpt==1){
+    assign("STEP",step,envir = globalenv())
+    assign("LAST",last,envir = globalenv())
+    assign("FCT",fct,envir = globalenv())
+  }
+  assign("CPT",cpt+1,envir = globalenv())
+  if((cpt)!=last){
+    if(cpt%%step==0){
+      restartSession(command="restart_loop(fct=FCT,cpt=CPT,last=LAST,step=STEP)")#using only stuff in global environment
+    }else{
+      restart_loop(fct=FCT,cpt=CPT,last=LAST,step=STEP)
+    }
+  }
+}
 
 
 #########################################
@@ -651,12 +677,16 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
       pth_tmp=Sys.glob(paths=paste0(dir_tmp,"/*/*/*",i,"*"))#sys.glob allow accents
       res=read_fst(pth_tmp)
       colnames(res)=c("gcm","rcp","rcm","bc","hm","code","year","indic")
+      RES=res[res$code %in% ref_cities$code,]
+      rm(res);gc()
+      res=RES[!is.na(RES$indic),]
       res$year=year(res$year)
-      res=res[!is.na(res$indic),]
       res=res[,c("year","code","indic")]
-      res=res[res$code %in% ref_cities$code,]
       res=distinct(res)
       res=pivot_wider(res,names_from = code,values_from = indic)
+      if(scenAvail$rcp[c]=="historical"){#to ultimately remove
+        res=res[res$year<2005,]
+      }
       all_chain[[c]]=res
     }
     rm(res)
