@@ -137,7 +137,7 @@ for(i in unique(simu_lst$indic)){
   vec_years=X
   global_tas=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=scenAvail,var="hydro")
   X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
-  Xfut=c(global_tas[["warming_1990"]],c(global_tas[["warming_1990"]],seq(0.7,4,0.1)))
+  Xfut=c(global_tas[["warming_1990"]],seq(1,4,0.5))
   idx_rcp=which(scenAvail$rcp=="rcp85")
   scenAvail=scenAvail[idx_rcp,]
   X=X[idx_rcp,]
