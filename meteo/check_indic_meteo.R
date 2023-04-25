@@ -23,20 +23,14 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/analyse-indic/"
-path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
+pth_mask="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
 Var=vector(mode="list")
 Var[["tasAdjust"]]=c("seasmean","seasmean","seasmean","seasmean","yearmean")
-# Var[["tasAdjust"]]=c(rep("monmean",12),"seasmean","seasmean","seasmean","seasmean","yearmean")
-# Var[["prtotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
 Var[["prtotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
-# Var[["evspsblpotAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
 Var[["evspsblpotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
-# Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum",rep("monocc",12),"seasocc","seasocc","seasocc","seasocc","yearocc")
-# Var[["prsnAdjust"]]=c(rep("monsum",12),"seassum","seassum","seassum","seassum","yearsum")
 Var[["prsnAdjust"]]=c("NDJFMAsum")
-# period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
 period=c("_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","CDFt")
@@ -92,6 +86,7 @@ for (v in names(Var)){
   }
 }
 simu_lst=data.frame(simu_lst)
+simu_lst=simu_lst[!(simu_lst$gcm=="IPSL-CM5A-MR"&simu_lst$rcm=="WRF381P"),]
 # simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
 # simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
 save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
@@ -100,9 +95,8 @@ save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
 ## Prepare mask of 0 and 1 in shape of SAFRAN zone, lon, lat matrixes
 ## Also mask with altitude above 1000m for snowfall
 
-pth_tmp=list.files(paste0(path_data,"indic/",simu_lst$var[1],"/"),full.names=T)[18]#18 to get cdft and lambert coordinates
-nc=load_nc(pth_tmp)
-res=ncvar_get(nc,varid=simu_lst$var[1])
+nc=load_nc(pth_mask)
+res=ncvar_get(nc,varid="mask")
 lon=ncvar_get(nc,varid="lon")
 lat=ncvar_get(nc,varid="lat")
 
@@ -119,9 +113,7 @@ for(i in 1:ncol(lon)){
 nc_close(nc)
 rm(nc)
 gc()
-mask=res[,,1]
-mask[!is.na(mask)]=1
-mask[is.na(mask)]=0
+mask=res
 
 ##For snowfall
 pth_tmp=paste0(path_data,"/indic/masks/mask_alti1000.nc")

@@ -21,17 +21,22 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/Qualypso/"
-path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
+path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
+mask_fr=as.vector(refs$mask)
+
+path_river=paste0(path_sig,"/processed/CoursEau_idx1_wgs84.shp")
+path_fr=paste0(path_sig,"/raw/IGN/contours_FR/gadm36_FRA_0.shp")
+background_for_maps(path_river,path_fr)
 
 labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualypsoout, same for color scale. Used inside plot functions
+ref_year=1990
 
 nbcores=detectCores()-2
 
-ref_year=1990
 
 ######
 #MAIN#
@@ -41,7 +46,7 @@ ref_year=1990
 #######################################################################################
 ## Extract indexes of reference "cities"
 
-ref_cities=read.xlsx(paste0(path_sig,"French_cities_coord.xlsx"))
+ref_cities=read.xlsx(paste0(path_sig,"raw/French_cities/French_cities_coord.xlsx"))
 ref_cities$col=ref_cities$row=ref_cities$xcoord
 for (i in 1:nrow(ref_cities)){
   dist=sqrt((refs$lon-ref_cities$xcoord[i])^2+(refs$lat-ref_cities$ycoord[i])^2)

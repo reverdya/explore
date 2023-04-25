@@ -25,9 +25,6 @@ path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 nbcore=detectCores()-4 #Number of cores for parallelization
 
-
-
-
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
 
@@ -40,7 +37,7 @@ final_year=2100
 ######
 
 ###########################################################
-## General run for 3 steps
+## General run for 3 (time) and 8 (temp) steps
 
 for(v in unique(simu_lst$var)){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
@@ -130,7 +127,7 @@ for(v in unique(simu_lst$var)){
     ## Temperature
     vec_years=X
     X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
-    Xfut=c(global_tas[["warming_1990"]],c(global_tas[["warming_1990"]],0.7,1,1.5,2,2.5,3.5,4))
+    Xfut=c(global_tas[["warming_1990"]],seq(1,4,0.5))
     idx_rcp=which(scenAvail$rcp=="rcp85")
     scenAvail=scenAvail[idx_rcp,]
     X=X[idx_rcp,]
@@ -255,7 +252,7 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       ## Temperature
       vec_years=X
       X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
-      Xfut=c(global_tas[["warming_1990"]],c(global_tas[["warming_1990"]],seq(0.7,4,0.1)))
+      Xfut=c(global_tas[["warming_1990"]],seq(0.7,4,0.1))
       idx_rcp=which(scenAvail$rcp=="rcp85")
       scenAvail=scenAvail[idx_rcp,]
       X=X[idx_rcp,]
