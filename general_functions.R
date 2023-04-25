@@ -674,7 +674,7 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
     all_chain=vector(length=nrow(scenAvail),mode="list")
     for(c in 1:nrow(scenAvail)){# for each chain
       dir_tmp <- list.files(paste0(path_data,"indic"), recursive = TRUE, include.dirs = TRUE,full.names = T,pattern =glob2rx(paste0("*",scenAvail$gcm[c],"*",scenAvail$rcp[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",scenAvail$hm[c],"*")))
-      pth_tmp=Sys.glob(paths=paste0(dir_tmp,"/*/*/*",i,"*"))#sys.glob allow accents
+      pth_tmp=Sys.glob(paths=paste0(dir_tmp,"/*/*/*",scenAvail$indic[c],"*"))#sys.glob allow accents
       res=read_fst(pth_tmp)
       colnames(res)=c("gcm","rcp","rcm","bc","hm","code","year","indic")
       RES=res[res$code %in% ref_cities$code,]
@@ -705,7 +705,7 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
 }
 
 
-plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name,place="cities",idx,cat="meteo"){
+plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name,place="cities",idx,cat="meteo",cut_ymax=F){
   
   scen_rcp=which(scenAvail$rcp==rcp)
   chains_rcp=all_chains[scen_rcp]
@@ -890,11 +890,17 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
         theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
         scale_x_continuous("")+
-        scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
         guides(color = guide_legend(override.aes = list(size = 1.7)))+
         facet_grid(gcm~bc)+
         theme(panel.spacing.x = unit(0.5, "lines"))+
         theme(strip.text.y = element_text(size = 9))
+      if(cut_ymax==T){
+        plt=plt+
+          scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),quantile(data$val,probs=0.95,na.rm=T)),n.breaks=4,expand = c(0,0))
+      }else{
+        plt=plt+
+          scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))
+      }
       if(SPAR==1){
         save.plot(plt,Filename = paste0(scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_",h,"_spar1.0"),Folder = paste0(path_fig,scenAvail$indic[1],"/"),Format = "jpeg")
       }else{
@@ -1613,17 +1619,22 @@ read_shp=function(path,wgs84_to_l2=F){
 
 rotate <- function(x) apply(t(x), 2, rev)
 
-path_river="C:/Users/reverdya/Documents/Docs/2_data/SIG/processed/CoursEau_idx1_wgs84.shp"
-path_fr="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/IGN/contours_FR/gadm36_FRA_0.shp"
-river=read_shp(path_river)
-fr=read_shp(path_fr)
-river_L2=read_shp(path_river,wgs84_to_l2 = T)
-fr_L2=read_shp(path_fr,wgs84_to_l2 = T)
+background_for_maps=function(path_river,path_fr){
+  river=read_shp(path_river)
+  fr=read_shp(path_fr)
+  river_L2=read_shp(path_river,wgs84_to_l2 = T)
+  fr_L2=read_shp(path_fr,wgs84_to_l2 = T)
+  
+  data(wrld_simpl)
+  options(warn=-1)
+  wrld <- fortify(wrld_simpl)
+  options(warn=0)
+  assign("river",river,envir = globalenv())
+  assign("river_L2",river,envir = globalenv())
+  assign("fr",river,envir = globalenv())
+  assign("fr_L2",river,envir = globalenv())
+}
 
-data(wrld_simpl)
-options(warn=-1)
-wrld <- fortify(wrld_simpl)
-options(warn=0)
 
 #####################################################################################################################################
 ## Make a ggplot2 base map of France with SIM2 outlets as dots and val_name the name of the column for the color scale, that can be customized afterwards
@@ -1655,14 +1666,6 @@ base_map_outlets=function(data,val_name,alpha_name=NULL){
 #####################################################################################################################################
 ## Make a ggplot2 base map of France with SAFRAN grid as pixels and val_name the name of the column for the color scale, that can be customized afterwards
 ## Data has at least longitude in x, latitude in y and a numeric filling value in val_name and index of pixel in idx
-
-
-nc=load_nc("C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc")
-res=ncvar_get(nc,varid="mask")
-mask_fr=as.vector(res)
-load(file=paste0("C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/refs.Rdata"))
-mask_fr=mask_fr[as.vector(refs$mask)==1]
-
 
 base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,facet_horizontal_name=NULL,threshold="<80%",exclude_horizontal=c("5%","95%"),afterscale=F){
   n=nrow(data)
