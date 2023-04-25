@@ -22,9 +22,14 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-hydro/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/hydro/Qualypso/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
+path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"ref.Rdata"))
+
+path_river=paste0(path_sig,"/processed/CoursEau_idx1_wgs84.shp")
+path_fr=paste0(path_sig,"/raw/IGN/contours_FR/gadm36_FRA_0.shp")
+background_for_maps(path_river,path_fr)
 
 labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualypsoout, same for color scale. Used inside plot functions
 nbcores=detectCores()-2
