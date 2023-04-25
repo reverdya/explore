@@ -120,27 +120,26 @@ save(ref,file=paste0(path_data,"ref.Rdata"))
 
 ref_c=ref[ref$code %in% bv_sample,]
 
-FCT=memory_saving_function=function(){
+memory_saving_function=function(cpt){
   tic()
   dir.create(paste0(path_fig,indic[cpt]))
 
   scenAvail=simu_lst[simu_lst$indic==indic[cpt],]
-  # scenAvail=simu_lst[simu_lst$indic==indic[cpt]&simu_lst$hm=="CTRIP",]
   global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail[scenAvail$rcp!="historical",],var = "hydro")
   assign("global_tas",global_tas,envir = globalenv())
-  
+
   all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c,cat="hydro")
   scenAvail=scenAvail[scenAvail$rcp!="historical",]
 
   for(c in 1:nrow(ref_c)){
     for(R in c("rcp26","rcp85")){
       for(S in c(1,1.1)){
-        plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro")
+        plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c,cat="hydro",cut_ymax=T)
       }
     }
     for(R in c("rcp85")){
       for(S in c(1.4)){
-        plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro")
+        plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro",cut_ymax=T)
       }
     }
   }
