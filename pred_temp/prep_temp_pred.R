@@ -60,9 +60,12 @@ for(i in 1:length(lst_path)){
   nc_close(nc)#for some reason stays opened otherwise
   rm(nc)
   gc()
-  
-
-  ## now need to apply spline 1971-2099 with df=4 and adapt to our method
-  
+  res=res*rep(mask,length(full_years))
+  res=apply(res,MARGIN=3,mean,na.rm=T)
+  res=res[full_years<=2099&full_years>=1971]
+  full_years=full_years[full_years<=2099&full_years>=1971]
+  res_spline=smooth.spline(x=full_years,y = res,df = 4)$y
+  res_spline1990=res_spline-res_spline[full_years==1990]
+  all_chain[[i]]=data.frame(year=full_years,temp_raw=res,temp_spline=res_spline,temp_spline1990=res_spline1990)
 }
 
