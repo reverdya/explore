@@ -682,10 +682,10 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
       res=RES[!is.na(RES$indic),]
       res$year=year(res$year)
       res=res[,c("year","code","indic")]
-      res=distinct(res)
+      res=distinct(res)#to remove
       res=pivot_wider(res,names_from = code,values_from = indic)
-      if(scenAvail$rcp[c]=="historical"){#to ultimately remove
-        res=res[res$year<2005,]
+      if(scenAvail$rcp[c]=="historical"){#to remove
+        res=res[res$year<2005,]## to remove
       }
       all_chain[[c]]=res
     }
@@ -720,6 +720,9 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
     Xfut=c(global_tas[["warming_1990"]],seq(0.7,5,0.1))
   }else{
     Xfut=seq(centr_ref_year,X[length(X)])
+    if(!any(X==2005)){
+      Xfut=Xfut[Xfut!=2005]## to remove
+    }
   }
   Y=Y[-1,]
   nS=nrow(scenAvail)
@@ -896,7 +899,7 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
         theme(strip.text.y = element_text(size = 9))
       if(cut_ymax==T){
         plt=plt+
-          scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),quantile(data$val,probs=0.95,na.rm=T)),n.breaks=4,expand = c(0,0))
+          scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),quantile(data$val,probs=0.99,na.rm=T)),n.breaks=4,expand = c(0,0))
       }else{
         plt=plt+
           scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))

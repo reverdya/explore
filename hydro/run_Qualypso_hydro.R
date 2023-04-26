@@ -62,7 +62,7 @@ for(i in unique(simu_lst$indic)){
     res$year=year(res$year)
     res=res[!is.na(res$indic),]
     res=res[,c("year","code","indic")]
-    res=distinct(res)
+    res=distinct(res)## to remove
     res=pivot_wider(res,names_from = code,values_from = indic)
     all_chains[[c]]=res
   }
