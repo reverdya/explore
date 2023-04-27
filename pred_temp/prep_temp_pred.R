@@ -21,6 +21,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/indic/tasAdjust/"
 pth_mask="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc"
+pth_save="C:/Users/reverdya/Documents/Docs/2_data/processed/"
 centr_ref_year=1990# central year of 1975-2005 reference period
 
 indic="yearmean"
@@ -37,7 +38,7 @@ indic="yearmean"
 
 
 nc=load_nc(pth_mask)
-mask=ncvar_get(nc,varid="mask")
+mask=ncvar_get(nc,varid="masque")
 nc_close(nc)#for some reason stays opened otherwise
 rm(nc)
 gc()
@@ -67,5 +68,8 @@ for(i in 1:length(lst_path)){
   res_spline=smooth.spline(x=full_years,y = res,df = 4)$y
   res_spline1990=res_spline-res_spline[full_years==1990]
   all_chain[[i]]=data.frame(year=full_years,temp_raw=res,temp_spline=res_spline,temp_spline1990=res_spline1990)
+  names(all_chain)[i]=paste0(strsplit(lst_path[i],"_")[[1]][4],"_",strsplit(lst_path[i],"_")[[1]][5],"_",strsplit(lst_path[i],"_")[[1]][6],"_",strsplit(lst_path[i],"_")[[1]][7])
 }
 
+pred_temp=all_chain
+save(pred_temp,file=paste0(pth_save,"pred_temp.Rdata"))

@@ -563,6 +563,18 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
 }
 
 ###################################
+## Format Global temperature for use in Qualypso
+## path_temp the path to the file with France temperatures
+##simu_lst the list of simulations
+
+
+prep_global_tas=function(path_temp,ref_year=1990,simu_lst,cat="meteo"){
+  
+  
+  
+}
+
+###################################
 ## Format Global température for use in Qualypso, to be used inside code run_QUalypso
 ## spline calculated with data between 1860 and 1900
 ## Difference to 1860-1900 average and rcp/gcm matching + spline smoothing
@@ -570,7 +582,9 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
 ##simu_lst the list of simulations
 #first_data_year and last_data_year the first an last years with data for simu all year round
 
-prep_global_tas=function(path_temp,ref_year=1990,simu_lst,var="meteo"){
+## This is outdated by prep_global_tas that uses Meteo France methodology
+
+prep_global_tas_old=function(path_temp,ref_year=1990,simu_lst,var="meteo"){
   ## Prepare temperatures RCP/GCM
   paths=list.files(path_temp,pattern=glob2rx("global_tas*"),full.names = T)
   for ( i in 1:length(paths)){
@@ -636,11 +650,14 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
       if(type=="cities"){
         pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))#by default recursive=F
       }
-      if(type=="reg"){
-        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/reg/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+      if(type=="sect"){
+        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/sect/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
       }
       if(type=="dep"){
         pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/dep/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+      }
+      if(type=="bv"){
+        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/bv/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
       }
       nc=load_nc(pth_tmp)
       res=ncvar_get(nc,varid=scenAvail$var[c])
