@@ -73,3 +73,5 @@ for(i in 1:length(lst_path)){
 
 pred_temp=all_chain
 save(pred_temp,file=paste0(pth_save,"pred_temp.Rdata"))
+
+
