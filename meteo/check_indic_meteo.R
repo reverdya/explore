@@ -103,7 +103,7 @@ rm(nc)
 gc()
 
 ##For snowfall
-pth_tmp=paste0(path_data,"/indic/masks/mask_alti1000.nc")
+pth_tmp=paste0(path_data,"indic/masks/mask_alti1000.nc")
 nc=load_nc(pth_tmp)
 mask_prsn=ncvar_get(nc,varid="height")
 mask_prsn[!is.na(mask_prsn)]=1
@@ -273,81 +273,3 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
     }
   }
 }
-
-##########################################################################################
-## Check season prsnadjust for % of null chains over 20,40 and 60% of 2070-2100 and map
-# 
-# v="prsnAdjust"
-# count_0=list()
-# dir.create(paste0(path_fig,"count_0/"))
-# 
-# for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(1,2,3,4)]){
-#   closeAllConnections()
-#   gc()
-#   scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i & simu_lst$rcp=="rcp85",]
-#   all_chains=vector(length=nrow(scenAvail),mode="list")
-#   for(c in 1:nrow(scenAvail)){# for each chain
-#     
-#     pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
-#     nc=load_nc(pth_tmp)
-#     res=ncvar_get(nc,varid=v)
-#     full_years=nc$dim$time$vals
-#     if(scenAvail$bc[c]=="ADAMONT"){
-#       full_years=year(as.Date(full_years,origin="1950-01-01"))
-#     }
-#     if(scenAvail$bc[c]=="CDFt"){
-#       full_years=year(as.Date(full_years,origin="1850-01-01"))
-#     }
-#     nc_close(nc)#for some reason stays opened otherwise
-#     rm(nc)
-#     gc()
-#     
-#     vec_mask=as.logical(refs$mask)
-#     dim(res)=c(dim(res)[1]*dim(res)[2],dim(res)[3])# collapses one dimension
-#     res=res[vec_mask,]
-#     res=cbind(full_years,t(res))
-#     all_chains[[c]]=res[which(full_years>=2070),c(-1)]
-#   }
-#   
-#   all_chains=lapply(all_chains,function(x) apply(x,MARGIN=2,function(y) sum(y==0)/length(y)*100))
-#   all_chains_df=as.data.frame(do.call(rbind,all_chains))
-#   thresh=c(20,40,60)
-#   tmp_df=data.frame(matrix(nrow=ncol(all_chains_df),ncol = length(thresh)))
-#   for(j in 1:length(thresh)){
-#     tmp_df[,j]=apply(all_chains_df,MARGIN = 2,function(x) sum(x>=thresh[j])/length(x)*100)
-#   }
-#   colnames(tmp_df)=paste0("thresh_",thresh)
-#   tmp_df$season=i
-#   count_0[[i]]=tmp_df
-# }
-# 
-# count_0=as.data.frame(do.call(rbind,count_0))
-# count_0=pivot_longer(count_0,cols=!season,names_to = "thresh",values_to = "freq")
-# count_0=count_0[order(count_0$thresh),]
-# 
-# 
-# exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-# exut=exut[as.logical(refs$mask),]
-# exut$idx=seq(1:nrow(exut))
-# tmp=exut
-# for (j in 1:((3*4)-1)){
-#   exut=rbind(exut,tmp)
-# }
-# exut$thresh=count_0$thresh
-# exut$season=factor(count_0$season,levels=unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)])
-# exut$val=count_0$freq
-# 
-# thresh.labs <- c("20% de 2070-2100","40% de 2070-2100","60% de 2070-2100")
-# names(thresh.labs) <- paste0("thresh_",thresh)
-# season.labs <- c("DJF","MAM","JJA","SON")
-# names(season.labs) <- unique(simu_lst[simu_lst$var==v,]$indic)[c(13,14,15,16)]
-# 
-# plt=base_map_grid(data = exut,val_name = "val")
-# plt=plt+
-#   facet_grid(thresh ~ season,labeller = labeller(thresh = thresh.labs, season = season.labs))+
-#   binned_scale(aesthetics = "fill",scale_name = "toto",name="Part des\nchaînes (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,100),breaks=seq(0,100,20),show.limits = T,oob=squish)+#that way because stepsn deforms colors
-#   ggtitle(paste0("Part des chaînes avec au moins 20%, 40% ou 60% de cumuls de\nprécipitation neigeuse saisonniers nuls entre 2070 et 2100 (RCP 8.5)"))+
-#   theme(panel.border = element_rect(colour = "black",fill=NA))+
-#   theme(legend.key = element_rect(color="black"),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
-#   guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
-# save.plot(plt,Filename = paste0("map_prsn_count0"),Folder = paste0(path_fig,"count_0/"),Format = "jpeg")
