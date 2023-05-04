@@ -25,14 +25,14 @@ path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/analyse-indic/"
 pth_mask="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
-path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_data/processed/"
 
 Var=vector(mode="list")
-Var[["tasAdjust"]]=c("seasmean","seasmean","seasmean","seasmean","yearmean")
-Var[["prtotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
-Var[["evspsblpotAdjust"]]=c("seassum","seassum","seassum","seassum","yearsum")
-Var[["prsnAdjust"]]=c("NDJFMAsum")
-period=c("_DJF","_MAM","_JJA","_SON","")
+Var[["tasAdjust"]]=c("monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","seasmean","seasmean","seasmean","seasmean","yearmean")
+# Var[["prtotAdjust"]]=c("monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","seassum","seassum","seassum","seassum","yearsum")
+# Var[["evspsblpotAdjust"]]=c("monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","seassum","seassum","seassum","seassum","yearsum")
+#Var[["prsnAdjust"]]=c("NDJFMAsum")
+period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","CDFt")
 
@@ -63,7 +63,7 @@ for (v in names(Var)){
     for(b in bc){
       s=1
       if(v=="prsnAdjust"){
-        s=5
+        s=length(period)
       }
       for(v2 in Var[[v]]){
         lst_f=list.files(paste0(path_data,"indic/",v,"/"),pattern=glob2rx(paste0(v,"*",r,"*",b,"*",v2,"*",period[s],"*"))) #list all files of projections in folder
@@ -86,7 +86,7 @@ for (v in names(Var)){
     }
   }
 }
-simu_lst=data.frame(simu_lst)
+simu_lst=data.frame(do.call(cbind, simu_lst)) 
 simu_lst=simu_lst[!(simu_lst$gcm=="IPSL-CM5A-MR"&simu_lst$rcm=="WRF381P"),]
 # simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
 # simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
@@ -147,18 +147,6 @@ for (i in 1:nrow(ref_cities)){
 # plot(refs$mask)
 # points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 
-#########################################################################################
-## Reference departments, sectors and BV
-
-ref_dep=read.csv(paste0(path_sig,"processed/SAFRAn_ref_deptmt.csv"))
-colnames(ref_dep)=c("id","code","name")
-idx_ref_dep=c(12,34,64,65,75)
-ref_bv=read.csv(paste0(path_sig,"processed/SAFRAn_ref_bv.csv"))
-colnames(ref_bv)=c("id","code","name")
-idx_ref_bv=c(206,226,242)
-ref_sect=read.csv(paste0(path_sig,"processed/SAFRAn_ref_sect_hyd.csv"))
-colnames(ref_sect)=c("id","name")
-idx_ref_sect=c(1,4,139)
 
 #########################################################################################
 ## Reference cities above 1000 m
@@ -226,48 +214,20 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
     closeAllConnections()
     gc()
     dir.create(paste0(path_fig,v,"/",i))
-    dir.create(paste0(path_fig,v,"/",i,"/sect/"))
-    dir.create(paste0(path_fig,v,"/",i,"/dep/"))
-    dir.create(paste0(path_fig,v,"/",i,"/bv/"))
+    dir.create(paste0(path_fig,v,"/",i,"/bas/"))
     
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
     global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail)
-    all_chains_sect=extract_chains(scenAvail,ref_cities = ref_sect[idx_ref_sect,],type = "sect")
-    all_chains_dep=extract_chains(scenAvail,ref_cities = ref_dep[idx_ref_dep,],type = "dep")
-    all_chains_sect=extract_chains(scenAvail,ref_cities = ref_bv[idx_ref_bv,],type = "bv")
+    all_chains_bas=extract_chains(scenAvail,ref_cities = ref_bv[idx_ref_bv,],type = "bas")
     for(c in 1:nrow(ref_sect[idx_ref_sect,])){
       for(R in c("rcp26","rcp45","rcp85")){
         for(S in c(0.8,0.9,1,1.1,1.2)){
-          plot_spline(all_chains=all_chains_sect,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_sect$name[idx_ref_sect[c]]),cat="meteo",idx=c)
+          plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_sect$name[idx_ref_sect[c]]),cat="meteo",idx=c)
         }
       }
       for(R in c("rcp85")){
         for(S in c(1.2,1.3,1.4,1.5,1.6)){
-          plot_spline(all_chains=all_chains_sect,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_sect$name[idx_ref_sect[c]]),globaltas = global_tas,cat="meteo",idx=c)
-        }
-      }
-    }
-    for(c in 1:nrow(ref_dep[idx_ref_dep,])){
-      for(R in c("rcp26","rcp45","rcp85")){
-        for(S in c(0.8,0.9,1,1.1,1.2)){
-          plot_spline(all_chains=all_chains_dep,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_dep$name[idx_ref_dep[c]]),cat="meteo",idx=c)
-        }
-      }
-      for(R in c("rcp85")){
-        for(S in c(1.2,1.3,1.4,1.5,1.6)){
-          plot_spline(all_chains=all_chains_dep,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_dep$name[idx_ref_dep[c]]),globaltas = global_tas,cat="meteo",idx=c)
-        }
-      }
-    }
-    for(c in 1:nrow(ref_bv[idx_ref_bv,])){
-      for(R in c("rcp26","rcp45","rcp85")){
-        for(S in c(0.8,0.9,1,1.1,1.2)){
-          plot_spline(all_chains=all_chains_bv,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_bv$name[idx_ref_bv[c]]),cat="meteo",idx=c)
-        }
-      }
-      for(R in c("rcp85")){
-        for(S in c(1.2,1.3,1.4,1.5,1.6)){
-          plot_spline(all_chains=all_chains_bv,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_bv$name[idx_ref_bv[c]]),globaltas = global_tas,cat="meteo",idx=c)
+          plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_sect$name[idx_ref_sect[c]]),globaltas = global_tas,cat="meteo",idx=c)
         }
       }
     }
