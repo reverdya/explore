@@ -568,10 +568,19 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
 ##simu_lst the list of simulations
 
 
-prep_global_tas=function(path_temp,ref_year=1990,simu_lst,cat="meteo"){
-  
-  
-  
+prep_global_tas=function(path_temp,simu_lst){
+  load(file=paste0(path_temp,"pred_temp.Rdata"))
+  chains_pred=names(pred_temp)
+  chains_var=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm,"_",simu_lst$bc)
+  mat_Globaltas=vector(mode="list",length=length(chains_var))
+  for (j in 1:length(chains_var)){
+    mat_Globaltas[[j]]=pred_temp[[which(chains_pred==chains_var[j])]][c("year","temp_spline1990")]
+  }
+  mat_Globaltas=Reduce(function(...) merge(...,by="year", all=T), mat_Globaltas)
+  gcm_years=mat_Globaltas[,1]
+  mat_Globaltas=mat_Globaltas[,-1]
+  colnames(mat_Globaltas)=chains_var
+  return(list(mat_Globaltas=mat_Globaltas,gcm_years=gcm_years))
 }
 
 ###################################
