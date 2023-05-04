@@ -3,6 +3,8 @@
 ##############################################
 # Alix Reverdy
 # 24/04/2023
+# This code requires 10Go of RAM, if you have less, change nrow and ncol in line 15
+# This code will only work in Rstudio
 
 rm(list=ls())
 gc()
@@ -14,8 +16,8 @@ toto=function(CPT){#need to have a function that will loop on a counter
   print(memory.size()/1024)
 }
 
-#######################################
-## The looping and restart function
+###########################################################################################################
+## Restart session in code for memory issues
 ## fct the heavy function
 ## cpt the first iteration (do not change default=1)
 ## last the last iteration
