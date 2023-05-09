@@ -29,9 +29,9 @@ path_temp="C:/Users/reverdya/Documents/Docs/2_data/processed/"
 
 Var=vector(mode="list")
 Var[["tasAdjust"]]=c("monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","seasmean","seasmean","seasmean","seasmean","yearmean")
-# Var[["prtotAdjust"]]=c("monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","seassum","seassum","seassum","seassum","yearsum")
-# Var[["evspsblpotAdjust"]]=c("monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","seassum","seassum","seassum","seassum","yearsum")
-#Var[["prsnAdjust"]]=c("NDJFMAsum")
+Var[["prtotAdjust"]]=c("monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","seassum","seassum","seassum","seassum","yearsum")
+Var[["evspsblpotAdjust"]]=c("monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","seassum","seassum","seassum","seassum","yearsum")
+Var[["prsnAdjust"]]=c("NDJFMAsum")
 period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","CDFt")
@@ -40,6 +40,7 @@ units=c("°C","mm")
 
 centr_ref_year=1990# central year of 1975-2005 reference period
 
+basHy=read.csv(paste0(path_sig,"processed/SAFRAN_ref_basHy.csv"))
 
 
 ###########
@@ -86,7 +87,7 @@ for (v in names(Var)){
     }
   }
 }
-simu_lst=data.frame(do.call(cbind, simu_lst)) 
+simu_lst=data.frame(sapply(simu_lst,unlist))
 simu_lst=simu_lst[!(simu_lst$gcm=="IPSL-CM5A-MR"&simu_lst$rcm=="WRF381P"),]
 # simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
 # simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
@@ -187,7 +188,7 @@ for(v in unique(simu_lst$var)){
     dir.create(paste0(path_fig,v,"/",i))
     
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
-    global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail)
+    global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
     all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c)
     for(c in 1:nrow(ref_c)){
       for(R in c("rcp26","rcp45","rcp85")){
@@ -205,7 +206,7 @@ for(v in unique(simu_lst$var)){
 }
   
 ################################################
-## Idem for sectors hydro, bv and departments
+## Idem for basins hydro
 
 
 for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
@@ -217,17 +218,17 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
     dir.create(paste0(path_fig,v,"/",i,"/bas/"))
     
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
-    global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail)
-    all_chains_bas=extract_chains(scenAvail,ref_cities = ref_bv[idx_ref_bv,],type = "bas")
-    for(c in 1:nrow(ref_sect[idx_ref_sect,])){
+    global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
+    all_chains_bas=extract_chains(scenAvail,ref_cities = basHy,type = "bas")
+    for(c in 1:nrow(basHy)){
       for(R in c("rcp26","rcp45","rcp85")){
         for(S in c(0.8,0.9,1,1.1,1.2)){
-          plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_sect$name[idx_ref_sect[c]]),cat="meteo",idx=c)
+          plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = basHy$name[c],cat="meteo",idx=c,place="bas")
         }
       }
       for(R in c("rcp85")){
         for(S in c(1.2,1.3,1.4,1.5,1.6)){
-          plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = gsub(" ","",ref_sect$name[idx_ref_sect[c]]),globaltas = global_tas,cat="meteo",idx=c)
+          plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = basHy$name[c],globaltas = global_tas,cat="meteo",idx=c,place="bas")
         }
       }
     }

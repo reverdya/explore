@@ -20,12 +20,12 @@ for f in $FILES
 do
 
 tmp=$(basename $f)
-tmp=$(cut -d '_' -f 3)
+tmp=$(echo "$tmp" | cut -d'_' -f3)
 
-if [[ tmp == "Tair" ]]; then
+if [[ "$tmp" == "Tair" ]]; then
 cdo yearmean "$f" tmp2.nc
-cdo seasmean tmp.nc tmp3.nc
-cdo monmean tmp.nc tmp6.nc
+cdo seasmean "$f" tmp3.nc
+cdo monmean "$f" tmp6.nc
 last=$(cdo -ntime tmp3.nc)
 cdo delete,timestep=1,$last tmp3.nc tmp4.nc
 rm tmp3.nc
@@ -40,10 +40,10 @@ rm safran_tasAdjust_monmean.nc
 fi
 
 
-if [[ tmp == "Ptot" ]]; then
+if [[ "$tmp" == "Ptot" ]]; then
 cdo yearsum "$f" tmp2.nc
-cdo seassum tmp.nc tmp3.nc
-cdo monsum tmp.nc tmp6.nc
+cdo seassum "$f" tmp3.nc
+cdo monsum "$f" tmp6.nc
 last=$(cdo -ntime tmp3.nc)
 cdo delete,timestep=1,$last tmp3.nc tmp4.nc
 rm tmp3.nc
@@ -59,10 +59,10 @@ fi
 
 
 
-if [[ tmp == "ETP" ]]; then
+if [[ "$tmp" == "ETP" ]]; then
 cdo yearsum "$f" tmp2.nc
-cdo seassum tmp.nc tmp3.nc
-cdo monsum tmp.nc tmp6.nc
+cdo seassum "$f" tmp3.nc
+cdo monsum "$f" tmp6.nc
 last=$(cdo -ntime tmp3.nc)
 cdo delete,timestep=1,$last tmp3.nc tmp4.nc
 rm tmp3.nc
@@ -77,7 +77,7 @@ rm safran_evspsblpotAdjust_monsum.nc
 fi
 
 
-if [[ tmp == "ETP" ]];then
+if [[ "$tmp" == "Snowf" ]];then
 cdo shifttime,2months "$f" tmp1.nc #to start year in november
 cdo -yearsum -select,season=JFMAMJ tmp1.nc tmp2.nc
 rm tmp1.nc
@@ -85,9 +85,9 @@ cdo shifttime,-2months tmp2.nc tmp3.nc
 rm tmp2.nc
 cdo mulc,86400 tmp3.nc tmp4.nc
 rm tmp3.nc
-cdo selgrid,1 -setgrid,../masks/mygrid tmp4.nc tmp5.nc
+cdo selgrid,1 -setgrid,../../Explore2-meteo/indic/masks/mygrid tmp4.nc tmp5.nc
 rm tmp4.nc
-cdo -mul tmp5.nc ../masks/mask_alti1000.nc tmp6.nc
+cdo -mul tmp5.nc ../../Explore2-meteo/indic/masks/mask_alti1000.nc tmp6.nc
 rm tmp5.nc
 last=$(cdo -ntime tmp6.nc)
 cdo delete,timestep=1,$last tmp6.nc tmp7.nc
@@ -107,18 +107,17 @@ nb_bas=$(cdo -s -nlevel -selname,Basins_hydro ../../Explore2-meteo/indic/masks/S
 
 var=( tasAdjust prtotAdjust evspsblpotAdjust )
 mkdir bas
+cd bas
 
 for V in "${!var[@]}"
 do
 
-FILES="/mnt/c/Users/reverdya/Documents/Docs/2_Data/processed/safran/indic/${var[$V]}*"
+FILES="/mnt/c/Users/reverdya/Documents/Docs/2_Data/processed/safran/indic/*${var[$V]}*"
 
 for f in $FILES
 do
 f_local=${f##*/}
 
-
-cd bas
 for i in $(seq 1 $nb_bas)
 do
 if [ ${var[$V]} != "evspsblpotAdjust" ]; then
@@ -133,15 +132,12 @@ rm tmp_masked.nc
 done
 
 
-f_all="/mnt/c/Users/reverdya/Documents/Docs/2_Data/processed/safran/indic//bas/*${var[$V]}*_bas*"
+f_all="/mnt/c/Users/reverdya/Documents/Docs/2_Data/processed/safran/indic/bas/*${var[$V]}*_bas*"
 f_all=$(ls $f_all -tr --time=ctime) #sort by reverse modification time
 cdo -s merge $f_all "${f_local/%.nc/_all-bas.nc}"
 rm *_bas*
-cd ..
-
 
 done
-cd ..
 done
 
 

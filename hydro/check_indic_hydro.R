@@ -64,7 +64,7 @@ for (i in indic){
     simu_lst$hm_NBbc=c(simu_lst$hm_NBbc,rep(hm_NBbc[h],n))
   }
 }
-simu_lst=data.frame(do.call(cbind, simu_lst)) 
+simu_lst=data.frame(sapply(simu_lst,unlist))
 simu_lst=simu_lst[!(simu_lst$gcm=="IPSL-CM5A-MR"&simu_lst$rcm=="WRF381P"),]
 # simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
 # simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"

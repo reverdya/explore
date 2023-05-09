@@ -341,6 +341,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
     Xrefs = Xref[iS]
     # fit a smooth signal
     zz = !is.na(Ys)
+    phiY=Xs
 
     
     if(type=="spline"){
@@ -348,7 +349,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       # store spline object
       climateResponse[[iS]] = smooth.spline.out
       # fitted responses at the points of the fit (for etaStar)
-      phiY = predict(smooth.spline.out, Xs)$y
+      phiY[zz] = predict(smooth.spline.out, Xs[zz])$y
       # fitted responses at unknown points ("Xfut")
       phiS = predict(smooth.spline.out, Xfut)$y
       # climate response of the reference/control time/global tas
@@ -360,7 +361,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       # store spline object
       climateResponse[[iS]] = smooth.spline.out
       # fitted responses at the points of the fit (for etaStar)
-      phiY = 10^predict(smooth.spline.out, Xs)$y
+      phiY[zz] = 10^predict(smooth.spline.out, Xs[zz])$y
       # fitted responses at unknown points ("Xfut")
       phiS = 10^predict(smooth.spline.out, Xfut)$y
       # climate response of the reference/control time/global tas
@@ -373,7 +374,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
         # store spline object
         climateResponse[[iS]] = smooth.spline.out
         # fitted responses at the points of the fit (for etaStar)
-        phiY = predict(smooth.spline.out, Xs)$y
+        phiY[zz] = predict(smooth.spline.out, Xs[zz])$y
         # fitted responses at unknown points ("Xfut")
         phiS = predict(smooth.spline.out, Xfut)$y
         # climate response of the reference/control time/global tas
@@ -385,7 +386,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
         # store spline object
         climateResponse[[iS]] = smooth.spline.out
         # fitted responses at the points of the fit (for etaStar)
-        phiY = as.vector(predict(smooth.spline.out, data.frame(x=Xs)))
+        phiY[zz] = as.vector(predict(smooth.spline.out, data.frame(x=Xs[zz])))
         # fitted responses at unknown points ("Xfut")
         phiS = as.vector(predict(smooth.spline.out, data.frame(x=Xfut)))
         # climate response of the reference/control time/global tas
@@ -420,7 +421,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
   
 }
 
-prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,scenAvail){
+prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,scenAvail=scenAvail){
   
   # dimensions
   d = dim(Y)
@@ -657,16 +658,10 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
     for(c in 1:nrow(scenAvail)){# for each chain
       
       if(type=="cities"){
-        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))#by default recursive=F
+        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c][[1]],"_")[[1]][1],"*",scenAvail$period[c],"*")))#by default recursive=F
       }
-      if(type=="sect"){
-        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/sect/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
-      }
-      if(type=="dep"){
-        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/dep/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
-      }
-      if(type=="bv"){
-        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/bv/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+      if(type=="bas"){
+        pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/bas/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c][[1]],"_")[[1]][1],"*",scenAvail$period[c],"*")))
       }
       nc=load_nc(pth_tmp)
       res=ncvar_get(nc,varid=scenAvail$var[c])
@@ -685,8 +680,9 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
       for (j in 1 :nrow(ref_cities)){
         if(type=="cities"){
           res2[,j+1]=res[ref_cities$row[j],ref_cities$col[j],]
-        }else{
-          res2[,j+1]=res[ref_cities$id[j],]
+        }
+        if(type=="bas"){
+          res2[,j+1]=res[ref_cities$X[j],]
         }
       }
       colnames(res2)[1]="year"
@@ -741,9 +737,10 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   X=Y[1,]
   if(pred=="temp"){
     vec_years=X
-    X=globaltas[["mat_Globaltas"]][,globaltas[["gcm_years"]] %in% vec_years]
-    X=X[scen_rcp,]
-    Xfut=c(global_tas[["warming_1990"]],seq(0.7,5,0.1))
+    X=globaltas[["mat_Globaltas"]][globaltas[["gcm_years"]] %in% vec_years,]
+    X=t(X[,scen_rcp])
+    Xfut=seq(0,6,0.1)
+    Y=Y[,vec_years %in% globaltas[["gcm_years"]]]
   }else{
     Xfut=seq(centr_ref_year,X[length(X)])
     if(!any(X==2005)){
