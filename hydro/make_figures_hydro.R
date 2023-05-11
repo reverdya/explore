@@ -21,7 +21,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-hydro/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/hydro/Qualypso/"
-path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
@@ -35,7 +35,7 @@ labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualyp
 nbcores=detectCores()-2
 ref_year=1990
 
-bv_sample=c("K010002010","K055001010","K118001010","K206401002","L541181001")
+bv_sample=c("K337301001","K221084201","K118001010")
 
 ######
 #MAIN#
