@@ -35,6 +35,8 @@ library(plotwidgets)#hsl colors (would be better to use hsluv model but not avai
 library(abind)#abind
 library(gridExtra)#grid.arrange
 library(rstudioapi)#restartSession
+library(stringr)#str_replace
+library(onewaytests)#bf.test
 
 
 #############################################################
@@ -342,7 +344,6 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
     # fit a smooth signal
     zz = !is.na(Ys)
     phiY=Xs
-
     
     if(type=="spline"){
       smooth.spline.out<-stats::smooth.spline(Xs[zz],Ys[zz],spar=spar[iS])
@@ -411,13 +412,68 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       stop("fit.climate.response: argument type.change.var must be equal to 'abs' (absolute changes) or 'rel' (relative changes)")
     }
   }
+  
+  if(typeChangeVariable=='rel'& any(phiStar<(-1))){
+    warning_store="logSpline"
+    for(iS in 1:nS){
+      # projection for this simulation chain
+      Ys = Y[iS,]
+      Xs = Xmat[iS,]
+      Xrefs = Xref[iS]
+      # fit a smooth signal
+      zz = !is.na(Ys)
+      phiY=Xs
+      Yslog10=log10(Ys)
+      smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
+      # store spline object
+      climateResponse[[iS]] = smooth.spline.out
+      # fitted responses at the points of the fit (for etaStar)
+      phiY[zz] = 10^predict(smooth.spline.out, Xs[zz])$y
+      # fitted responses at unknown points ("Xfut")
+      phiS = 10^predict(smooth.spline.out, Xfut)$y
+      # climate response of the reference/control time/global tas
+      phiC = 10^predict(smooth.spline.out, Xrefs)$y
+      phi[iS,] = phiS
+      phiStar[iS,] = phiS/phiC-1
+      etaStar[iS,] = (Ys-phiY)/phiC
+      YStar[iS,] = (Ys-phiC)/phiC
+      phi[iS,] = phiS
+      # Climate change response: phiStar, and internal variability expressed as a change: etaStar
+      phiStar[iS,] = phiS/phiC-1
+      etaStar[iS,] = (Ys-phiY)/phiC
+      YStar[iS,] = (Ys-phiC)/phiC
+    }
+  }else{
+    warning_store="NA"
+  }
+  
+  tmp=toto=pivot_longer(data.frame(etaStar),cols=everything(),names_to = "rhs",values_to = "lhs")
+  pval=bf.test(lhs ~ rhs,tmp,na.rm=T,verbose = F)$p.value
+  if(pval<=0.05){
+    warning_store=paste0(warning_store,"_interchain-p:",pval)
+  }
+  
+  if(any(Xmat==2045,na.rm = T)){
+    pval=vector(mode="numeric",length=nS)
+    for(iS in 1:nS){
+      tmp=data.frame(X=Xmat[iS,],etaS=etaStar[iS,])
+      tmp=tmp[tmp$X>=1990,]
+      tmp[tmp$X>=2045,]$X="B"
+      tmp[tmp$X!="B",]$X="A"
+      pval[iS]=bf.test(etaS ~ X,tmp,na.rm=T,verbose = F)$p.value
+    }
+    if(any(pval<=0.05)){
+      warning_store=paste0(warning_store,"_intrachain-p:",pval)
+    }
+  }
+  
   # Variance related to the internal variability: considered constant over the time period
   # (see Eq. 22 and 23 in Hingray and Said, 2014). We use a direct empirical estimate
   # of the variance of eta for each simulation chain and take the mean, see Eq. 19
   varInterVariability = mean(apply(etaStar,2,function(x) var(x)),na.rm=T)
   
   # return objects
-  return(list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability))
+  return(list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability,warning_store=warning_store))
   
 }
 
@@ -511,8 +567,9 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
       varInterVariability[g] = climResponse[[g]]$varInterVariability
       YStar[g,,] = climResponse[[g]]$YStar
       climateResponse[[g]]=climResponse[[g]]$climateResponse
+      warning_store[[g]]=climResponse[[g]]$warning_store
     }
-    out=list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability)
+    out=list(phiStar=phiStar,etaStar=etaStar,YStar=YStar,phi=phi,climateResponse=climateResponse,varInterVariability=varInterVariability,warning_store=warning_store)
   }
   
   # return objects
@@ -569,9 +626,11 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
 ##simu_lst the list of simulations
 
 
-prep_global_tas=function(path_temp,simu_lst){
+prep_global_tas=function(path_temp,simu_lst,cat="meteo"){
   load(file=paste0(path_temp,"pred_temp.Rdata"))
   chains_pred=names(pred_temp)
+  chains_pred=str_replace(chains_pred,"CNRM-CM5-LR","CNRM-CM5")
+  chains_pred=str_replace(chains_pred,"HadREM3-GA7-05","HadREM3-GA7")
   chains_var=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm,"_",simu_lst$bc)
   mat_Globaltas=vector(mode="list",length=length(chains_var))
   for (j in 1:length(chains_var)){
@@ -580,7 +639,11 @@ prep_global_tas=function(path_temp,simu_lst){
   mat_Globaltas=Reduce(function(...) merge(...,by="year", all=T), mat_Globaltas)
   gcm_years=mat_Globaltas[,1]
   mat_Globaltas=mat_Globaltas[,-1]
-  colnames(mat_Globaltas)=chains_var
+  if(cat=="hydro"){
+    colnames(mat_Globaltas)=paste0(chains_var,"_",simu_lst$hm)
+  }else{
+    colnames(mat_Globaltas)=chains_var
+  }
   return(list(mat_Globaltas=mat_Globaltas,gcm_years=gcm_years))
 }
 
@@ -704,22 +767,11 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
       res=RES[!is.na(RES$indic),]
       res$year=year(res$year)
       res=res[,c("year","code","indic")]
-      res=distinct(res)#to remove
       res=pivot_wider(res,names_from = code,values_from = indic)
-      if(scenAvail$rcp[c]=="historical"){#to remove
-        res=res[res$year<2005,]## to remove
-      }
       all_chain[[c]]=res
     }
     rm(res)
     gc()
-    for(c in 1:nrow(scenAvail)){
-      if(scenAvail$rcp[c]!="historical"){
-        hist_idx=which(scenAvail$rcp=="historical"&scenAvail$gcm==scenAvail$gcm[c]&scenAvail$rcm==scenAvail$rcm[c]&scenAvail$bc==scenAvail$bc[c]&scenAvail$hm==scenAvail$hm[c])
-        all_chain[[c]]=rbind(all_chain[[hist_idx]],all_chain[[c]])
-      }
-    }
-    all_chain=all_chain[which(scenAvail$rcp!="historical")]
   }
   
   return(all_chain)
@@ -727,7 +779,7 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
 }
 
 
-plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name,place="cities",idx,cat="meteo",cut_ymax=F){
+plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spline_type="spline",city_name,place="cities",idx,cat="meteo",cut_ymax=F,print_warning=T){
   
   scen_rcp=which(scenAvail$rcp==rcp)
   chains_rcp=all_chains[scen_rcp]
@@ -743,9 +795,6 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
     Y=Y[,vec_years %in% globaltas[["gcm_years"]]]
   }else{
     Xfut=seq(centr_ref_year,X[length(X)])
-    if(!any(X==2005)){
-      Xfut=Xfut[Xfut!=2005]## to remove
-    }
   }
   Y=Y[-1,]
   nS=nrow(scenAvail)
@@ -819,6 +868,7 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   raw$type="raw"
   spline$type="spline"
   data=rbind(raw,spline)
+  warn=clim_resp$warning_store
   rm(chains_rcp,ClimateProjections,clim_resp,raw,spline,Y)
   gc()
   data$rcp=unlist(lapply(strsplit(data$model,"_"),function(x) x[1]))
@@ -883,6 +933,11 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       facet_grid(gcm~bc)+
       theme(panel.spacing.x = unit(0.5, "lines"))+
       theme(strip.text.y = element_text(size = 9))
+    if(print_warning & warn!="NA"){
+      plt=plt+
+        ggtitle(warn)+
+        theme(plot.title = element_text( face="bold",  size=8,hjust=0.5))
+    }
     if(place=="cities"){
       if(SPAR==1){
         save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
@@ -926,6 +981,11 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       }else{
         plt=plt+
           scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))
+      }
+      if(print_warning & warn!="NA"){
+        plt=plt+
+          ggtitle(warn)+
+          theme(plot.title = element_text( face="bold",  size=8,hjust=0.5))
       }
       if(SPAR==1){
         save.plot(plt,Filename = paste0(scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_",h,"_spar1.0"),Folder = paste0(path_fig,scenAvail$indic[1],"/"),Format = "jpeg")
