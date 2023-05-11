@@ -22,7 +22,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 ####################
 
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/"
-path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
 nbcore=detectCores()-4 #Number of cores for parallelization
 
 load(file=paste0(path_data,"simu_lst.Rdata"))

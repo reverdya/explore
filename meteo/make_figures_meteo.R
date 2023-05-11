@@ -22,7 +22,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/Qualypso/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
-path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
