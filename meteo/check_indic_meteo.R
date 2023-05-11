@@ -172,7 +172,35 @@ for (i in 1:nrow(ref_snow)){
 # type : raw_spline, raw, diff, diff_spline
 
 ##Merge data frame warnings are okay
-## Sometimes problem with too many connections opened requires running step by step (v by v)
+
+
+memory_saving_function=function(cpt){
+  tic()
+  dir.create(paste0(path_fig,v,"/",indic[cpt]))
+  
+  scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==indic[cpt],]
+  global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
+  assign("global_tas",global_tas,envir = globalenv())
+  all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c)
+  for(c in 1:nrow(ref_c)){
+    for(R in c("rcp26","rcp45","rcp85")){
+      for(S in c(0.8,0.9,1,1.1,1.2)){
+        plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c)
+      }
+    }
+    for(R in c("rcp85")){
+      for(S in c(1.2,1.3,1.4,1.5,1.6)){
+        plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c)
+      }
+    }
+  }
+  rm(all_chains,global_tas)
+  closeAllConnections()
+  gc()
+  print(indic[cpt])
+  toc()
+}
+
 
 
 for(v in unique(simu_lst$var)){
@@ -182,55 +210,50 @@ for(v in unique(simu_lst$var)){
   }else{
     ref_c=ref_cities
   }
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-    closeAllConnections()
-    gc()
-    dir.create(paste0(path_fig,v,"/",i))
-    
-    scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
-    global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
-    all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c)
-    for(c in 1:nrow(ref_c)){
-      for(R in c("rcp26","rcp45","rcp85")){
-        for(S in c(0.8,0.9,1,1.1,1.2)){
-          plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c)
-        }
-      }
-      for(R in c("rcp85")){
-        for(S in c(1.2,1.3,1.4,1.5,1.6)){
-          plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c)
-        }
-      }
-    }
-  }
+  indic=unique(simu_lst[simu_lst$var==v,]$indic)
+  
+  restart_loop(fct=memory_saving_function,last=length(indic),step=1)
+  
+  
 }
   
 ################################################
 ## Idem for basins hydro
 
 
-for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
-  dir.create(paste0(path_fig,v,"/"))
-  for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-    closeAllConnections()
-    gc()
-    dir.create(paste0(path_fig,v,"/",i))
-    dir.create(paste0(path_fig,v,"/",i,"/bas/"))
-    
-    scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
-    global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
-    all_chains_bas=extract_chains(scenAvail,ref_cities = basHy,type = "bas")
-    for(c in 1:nrow(basHy)){
-      for(R in c("rcp26","rcp45","rcp85")){
-        for(S in c(0.8,0.9,1,1.1,1.2)){
-          plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = basHy$name[c],cat="meteo",idx=c,place="bas")
-        }
+memory_saving_function=function(cpt){
+  tic()
+  dir.create(paste0(path_fig,v,"/",indic[cpt]))
+  dir.create(paste0(path_fig,v,"/",indic[cpt],"/bas/"))
+  
+  scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==indic[cpt],]
+  global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
+  assign("global_tas",global_tas,envir = globalenv())
+  all_chains_bas=extract_chains(scenAvail,ref_cities = basHy,type = "bas")
+  for(c in 1:nrow(basHy)){
+    for(R in c("rcp26","rcp45","rcp85")){
+      for(S in c(1,1.1)){
+        plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = basHy$name[c],cat="meteo",idx=c,place="bas")
       }
-      for(R in c("rcp85")){
-        for(S in c(1.2,1.3,1.4,1.5,1.6)){
-          plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = basHy$name[c],globaltas = global_tas,cat="meteo",idx=c,place="bas")
-        }
+    }
+    for(R in c("rcp85")){
+      for(S in c(1.2,1.3,1.4,1.5,1.6)){
+        plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = basHy$name[c],globaltas = global_tas,cat="meteo",idx=c,place="bas")
       }
     }
   }
+  rm(all_chains_bas,global_tas)
+  closeAllConnections()
+  gc()
+  print(indic[cpt])
+  toc()
+}
+
+
+for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
+  dir.create(paste0(path_fig,v,"/"))
+  indic=unique(simu_lst[simu_lst$var==v,]$indic)
+  
+  restart_loop(fct=memory_saving_function,last=length(indic),step=1)
+  
 }
