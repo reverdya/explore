@@ -16,17 +16,17 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 ->prep_temp/prep_temp_pred.R				||||
 ->prep_temp/understandXfut_mat.R			|||	figures checked? NO														Waiting on T_global
 
-->meteo/check_indic_meteo.R				| |	figures checked? NO														Optimize memory, log and warning if spline<0, warning if brown-forsythe fails between chains or between periods
-->meteo/run_Qualypso.R					| |	before that visually determine best spar											Without IPSL/WRF, new T_FR function, remove bv..., add basins new mask, change Xfut, add mensual, log and warning if spline<0, warning if brown-forsythe fails between chains or between periods
-->meteo/make_figures_meteo.R				| |	figures checked? NO														Without IPSL/WRF, new T_FR function,  remove bv..., add basins new mask, change Xfut, log and warning if spline<0, warning if brown-forsythe fails between chains or between periods, visual, safran data, Waiting on T_global, add mensual
+->meteo/check_indic_meteo.R				|||	figures checked? NO
+->meteo/run_Qualypso.R					| |	before that visually determine best spar											new T_FR function, remove bv..., add basins, change Xfut, spar
+->meteo/make_figures_meteo.R				| |	figures checked? NO														new T_FR function,  remove bv..., add basins, new mask, change Xfut, log and warning if spline<0, warning if brown-forsythe fails between chains or between periods, visual, safran data, Waiting on T_global
 
 
 
 Order hydro:
 from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 
-->hydro/preprocess/clean_files_indic.R			|||																	Waiting for SIM2 and GRSD_final, Waiting 2005 bug, Waiting code MORDOR-SD
+->hydro/preprocess/clean_files_indic.R			||||																	
 
-->hydro/check_indic_hydro.R				| |	figures checked? NO														Waiting for SIM2 and GRSD_final, Waiting 2005 bug, Waiting code MORDOR-SD
-->hydro/run_Qualypso.R					| |	before that visually determine best spar											Waiting for SIM2 and GRSD_final, Waiting 2005 bug, Waiting code MORDOR-SD, choice on runs
-->hydro/make_figures_hydro.R				| |	figures checked? NO														Waiting for SIM2 and GRSD_final, Waiting 2005 bug, Waiting code MORDOR-SD, choice on runs, visual, mesures hydro, Waiting on T_global
+->hydro/check_indic_hydro.R				||||	figures checked? NO
+->hydro/run_Qualypso.R					| |	before that visually determine best spar											new T_FR function,choice on runs, spar, change Xfut
+->hydro/make_figures_hydro.R				| |	figures checked? NO														new T_FR function,choice on runs, change Xfut, visual, mesures hydro, Waiting on T_global, change Xfut, log and warning if spline<0, warning if brown-forsythe fails between chains or between periods, visual, safran data, Waiting on T_global
