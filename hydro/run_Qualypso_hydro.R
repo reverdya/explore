@@ -24,11 +24,8 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 ####################
 
 path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-hydro/"
-path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
 nbcore=detectCores()-2 #Number of cores for parallelization
-
-
-
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"ref.Rdata"))
@@ -62,7 +59,6 @@ for(i in unique(simu_lst$indic)){
     res$year=year(res$year)
     res=res[!is.na(res$indic),]
     res=res[,c("year","code","indic")]
-    res=distinct(res)## to remove
     res=pivot_wider(res,names_from = code,values_from = indic)
     all_chains[[c]]=res
   }
@@ -82,15 +78,6 @@ for(i in unique(simu_lst$indic)){
   all_chains=all_chains[scenAvail$hm %in% hm_sample]
   scenAvail=scenAvail[scenAvail$hm %in% hm_sample,]
   all_chains=lapply(all_chains,function(x) x[,c("year",basin_sample)])
-
-  for(c in 1:nrow(scenAvail)){
-    if(scenAvail$rcp[c]!="historical"){
-      hist_idx=which(scenAvail$rcp=="historical"&scenAvail$gcm==scenAvail$gcm[c]&scenAvail$rcm==scenAvail$rcm[c]&scenAvail$bc==scenAvail$bc[c]&scenAvail$hm==scenAvail$hm[c])
-      all_chains[[c]]=rbind(all_chains[[hist_idx]],all_chains[[c]])
-    }
-  }
-  all_chains=all_chains[which(scenAvail$rcp!="historical")]
-  scenAvail=scenAvail[scenAvail$rcp!="historical",]
   
   ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
   Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_bv) ), along=3)
@@ -135,7 +122,7 @@ for(i in unique(simu_lst$indic)){
   
   ## Temperature
   vec_years=X
-  global_tas=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=scenAvail,var="hydro")
+  global_tas=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=scenAvail,cat="hydro")
   X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
   Xfut=c(global_tas[["warming_1990"]],seq(1,4,0.5))
   idx_rcp=which(scenAvail$rcp=="rcp85")
