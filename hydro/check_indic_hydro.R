@@ -22,18 +22,18 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/hydro/analyse-indic/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
-path_temp="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
 
 indic=c("QA","QA_DJF","QA_MAM","QA_JJA","QA_SON","QA_janv","QA_fevr","QA_mars","QA_avr","QA_mai","QA_juin","QA_juill","QA_aout","QA_sept","QA_oct","QA_nov","QA_dec","QA05","QA10","QA50","QA90","QA95","QJXA","QMNA","VCN3","VCN10","VCX3")
-rcp=c("historical","rcp26","rcp45","rcp85")
+rcp=c("rcp26","rcp45","rcp85")
 bc=c("ADAMONT","CDFt")
-hm=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","MORDOR-SD","SMASH","ORCHIDEE")
-hm_domain=c("FR","Lo-Br","FR","Lo-Rh","FR","Lo","FR","FR")
-hm_NBbc=c(1,2,2,2,2,2,2,1)
+hm=c("CTRIP","EROS","GRSD","J2000","MORDOR-SD","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
+hm_domain=c("FR","Lo-Br","FR","Lo-Rh","Lo","FR","FR","FR","FR")
+hm_NBbc=c(1,2,2,2,2,2,1,1,2)
 
 centr_ref_year=1990# central year of 1975-2005 reference period
 
-bv_sample=c("K002000101","K206401002","K118001010")
+bv_sample=c("K337301001","K221084201","K118001010")
 
 ###########
 #FUNCTIONS#
@@ -77,9 +77,9 @@ hm=unique(simu_lst$hm)
 codes=vector(length=length(hm),mode="list")
 for(c in 1:length(hm)){# for each chain
   if(hm[c]!="SMASH"){#because some station not simulated for SMASH
-    dir_tmp <- list.files(paste0(path_data,"indic"), recursive = TRUE, include.dirs = TRUE,full.names = T,pattern =glob2rx(paste0("*CNRM-CM5*historical*ALADIN*ADAMONT*",hm[c],"*")))
+    dir_tmp <- list.files(paste0(path_data,"indic"), recursive = TRUE, include.dirs = TRUE,full.names = T,pattern =glob2rx(paste0("*CNRM-CM5*rcp85*ALADIN*ADAMONT*",hm[c],"*")))
   }else{
-    dir_tmp <- list.files(paste0(path_data,"indic"), recursive = TRUE, include.dirs = TRUE,full.names = T,pattern =glob2rx(paste0("*CNRM-CM5*historical*ALADIN*CDFt*",hm[c],"*")))
+    dir_tmp <- list.files(paste0(path_data,"indic"), recursive = TRUE, include.dirs = TRUE,full.names = T,pattern =glob2rx(paste0("*CNRM-CM5*rcp85*ALADIN*CDFt*",hm[c],"*")))
   }
   pth_tmp=list.files(dir_tmp,full.names=T,recursive = T,include.dirs = F,pattern=glob2rx(paste0("*QA.f*")))
   res=read_fst(pth_tmp)
@@ -108,6 +108,7 @@ print(any(is.na(ref$ref)))#check if all simulated points have coordinates
 bv_selec_idx=which(ref$code %in% bv_sample)
 print(ref[bv_selec_idx,])
 save(ref,file=paste0(path_data,"ref.Rdata"))
+print(dim(ref))
 
 ###############################################################################################
 ## Plot raw indicator , and its spline for all models and selection of watersheds by RCP for time
@@ -125,11 +126,10 @@ memory_saving_function=function(cpt){
   dir.create(paste0(path_fig,indic[cpt]))
 
   scenAvail=simu_lst[simu_lst$indic==indic[cpt],]
-  global_tas=prep_global_tas(path_temp,ref_year=centr_ref_year,simu_lst=scenAvail[scenAvail$rcp!="historical",],var = "hydro")
+  global_tas=prep_global_tas(path_temp,simu_lst=scenAvail,cat="hydro")
   assign("global_tas",global_tas,envir = globalenv())
 
   all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c,cat="hydro")
-  scenAvail=scenAvail[scenAvail$rcp!="historical",]
 
   for(c in 1:nrow(ref_c)){
     for(R in c("rcp26","rcp85")){
@@ -138,7 +138,7 @@ memory_saving_function=function(cpt){
       }
     }
     for(R in c("rcp85")){
-      for(S in c(1.4)){
+      for(S in c(1,1.1,1.2,1.3,1.4,1.5)){
         plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c,cat="hydro",cut_ymax=T)
       }
     }
