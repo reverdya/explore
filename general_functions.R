@@ -342,7 +342,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
     Xs = Xmat[iS,]
     Xrefs = Xref[iS]
     # fit a smooth signal
-    zz = !is.na(Ys)
+    zz = (!is.na(Ys))&(!is.na(Xs)) #!is.na(Xs) because for HadGEM2-ES tasAdjust_yearmean cannot be calculated in 2099
     phiY=Xs
     
     if(type=="spline"){
@@ -447,7 +447,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
     warning_store="NA"
   }
   
-  tmp=toto=pivot_longer(data.frame(etaStar),cols=everything(),names_to = "rhs",values_to = "lhs")
+  tmp=pivot_longer(data.frame(t(etaStar)),cols=everything(),names_to = "rhs",values_to = "lhs")
   pval=bf.test(lhs ~ rhs,tmp,na.rm=T,verbose = F)$p.value
   if(pval<=0.05){
     warning_store=paste0(warning_store,"_interchain-p:",pval)
@@ -656,59 +656,59 @@ prep_global_tas=function(path_temp,simu_lst,cat="meteo"){
 #first_data_year and last_data_year the first an last years with data for simu all year round
 
 ## This is outdated by prep_global_tas that uses Meteo France methodology
-
-prep_global_tas_old=function(path_temp,ref_year=1990,simu_lst,var="meteo"){
-  ## Prepare temperatures RCP/GCM
-  paths=list.files(path_temp,pattern=glob2rx("global_tas*"),full.names = T)
-  for ( i in 1:length(paths)){
-    tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
-    if(grepl("HadGEM2-ES",paths[i],fixed=T)){# -999 values in 1859
-      tas_glob=tas_glob[-1,]
-    }
-    tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-    colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
-    tas_glob=tas_glob[tas_glob$year>=1860&tas_glob$year<=2100,]
-    if(i==1){
-      mat_Globaltas_gcm=tas_glob
-    }else{
-      mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
-    }
-  }
-  mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) smooth.spline(mat_Globaltas_gcm[,1],x,spar=1)$y)
-  mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) x-x[mat_Globaltas_gcm[,1]==ref_year])
-  
-  gcm_years=mat_Globaltas_gcm$year
-  
-  ## Format global temperature for Qualypso
-  if(var=="hydro"){
-    colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp85_CNRM-CM5-LR"]="rcp85_CNRM-CM5"
-    colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp45_CNRM-CM5-LR"]="rcp45_CNRM-CM5"
-    colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp26_CNRM-CM5-LR"]="rcp26_CNRM-CM5"
-  }
-  mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
-  vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
-  vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
-  for (i in 1:nrow(simu_lst)){
-    mat_Globaltas[[i]]= mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))+1]
-  }
-  mat_Globaltas=t(do.call(cbind,mat_Globaltas))
-  
-  ## Calculate 1860-1990 warming from HADCRUT5 with spline
-  nc=load_nc(paste0(path_temp,"HadCRUT.5.0.1.0.analysis.summary_series.global.annual.nc"))
-  res=ncvar_get(nc,varid="tas_mean")
-  full_years=nc$dim$time$vals
-  full_years=year(as.Date(full_years,origin="1850-01-01"))
-  nc_close(nc)#for some reason stays opened otherwise
-  rm(nc)
-  gc()
-  
-  tas_obs=smooth.spline(x=full_years,y=res,spar=1)$y
-  warming_1990=tas_obs[full_years==1990]-tas_obs[full_years==1875]
-  mat_Globaltas=mat_Globaltas+warming_1990
-  mat_Globaltas_gcm[,-1]=mat_Globaltas_gcm[,-1]+warming_1990
-  
-  return(list(mat_Globaltas=mat_Globaltas,mat_Globaltas_gcm=mat_Globaltas_gcm,gcm_years=gcm_years,warming_1990=warming_1990))
-}
+# 
+# prep_global_tas_old=function(path_temp,ref_year=1990,simu_lst,var="meteo"){
+#   ## Prepare temperatures RCP/GCM
+#   paths=list.files(path_temp,pattern=glob2rx("global_tas*"),full.names = T)
+#   for ( i in 1:length(paths)){
+#     tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
+#     if(grepl("HadGEM2-ES",paths[i],fixed=T)){# -999 values in 1859
+#       tas_glob=tas_glob[-1,]
+#     }
+#     tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
+#     colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
+#     tas_glob=tas_glob[tas_glob$year>=1860&tas_glob$year<=2100,]
+#     if(i==1){
+#       mat_Globaltas_gcm=tas_glob
+#     }else{
+#       mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
+#     }
+#   }
+#   mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) smooth.spline(mat_Globaltas_gcm[,1],x,spar=1)$y)
+#   mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) x-x[mat_Globaltas_gcm[,1]==ref_year])
+#   
+#   gcm_years=mat_Globaltas_gcm$year
+#   
+#   ## Format global temperature for Qualypso
+#   if(var=="hydro"){
+#     colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp85_CNRM-CM5-LR"]="rcp85_CNRM-CM5"
+#     colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp45_CNRM-CM5-LR"]="rcp45_CNRM-CM5"
+#     colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp26_CNRM-CM5-LR"]="rcp26_CNRM-CM5"
+#   }
+#   mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
+#   vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
+#   vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
+#   for (i in 1:nrow(simu_lst)){
+#     mat_Globaltas[[i]]= mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))+1]
+#   }
+#   mat_Globaltas=t(do.call(cbind,mat_Globaltas))
+#   
+#   ## Calculate 1860-1990 warming from HADCRUT5 with spline
+#   nc=load_nc(paste0(path_temp,"HadCRUT.5.0.1.0.analysis.summary_series.global.annual.nc"))
+#   res=ncvar_get(nc,varid="tas_mean")
+#   full_years=nc$dim$time$vals
+#   full_years=year(as.Date(full_years,origin="1850-01-01"))
+#   nc_close(nc)#for some reason stays opened otherwise
+#   rm(nc)
+#   gc()
+#   
+#   tas_obs=smooth.spline(x=full_years,y=res,spar=1)$y
+#   warming_1990=tas_obs[full_years==1990]-tas_obs[full_years==1875]
+#   mat_Globaltas=mat_Globaltas+warming_1990
+#   mat_Globaltas_gcm[,-1]=mat_Globaltas_gcm[,-1]+warming_1990
+#   
+#   return(list(mat_Globaltas=mat_Globaltas,mat_Globaltas_gcm=mat_Globaltas_gcm,gcm_years=gcm_years,warming_1990=warming_1990))
+# }
 
 
 ###########################################################
@@ -790,8 +790,9 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   if(pred=="temp"){
     vec_years=X
     X=globaltas[["mat_Globaltas"]][globaltas[["gcm_years"]] %in% vec_years,]
+    Xmax=round(max(X,na.rm=T),1)+0.1
     X=t(X[,scen_rcp])
-    Xfut=seq(0,6,0.1)
+    Xfut=seq(0,Xmax,0.1)
     Y=Y[,vec_years %in% globaltas[["gcm_years"]]]
   }else{
     Xfut=seq(centr_ref_year,X[length(X)])
