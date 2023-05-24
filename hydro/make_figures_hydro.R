@@ -35,7 +35,7 @@ labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualyp
 nbcores=detectCores()-2
 ref_year=1990
 
-bv_sample=c("K337301001","K221084201","K118001010")
+bv_sample=c("K337301001","K259301001","K118001010")
 
 ######
 #MAIN#
