@@ -33,7 +33,7 @@ hm_NBbc=c(1,2,2,2,2,2,1,1,2)
 
 centr_ref_year=1990# central year of 1975-2005 reference period
 
-bv_sample=c("K337301001","K221084201","K118001010")
+bv_sample=c("K337301001","K259301001","K118001010")
 
 ###########
 #FUNCTIONS#
@@ -97,7 +97,7 @@ for(c in 1:length(hm)){# for each chain
   dir_tmp <- list.files(paste0(path_data,"indic"), recursive = TRUE, include.dirs = TRUE,full.names = T,pattern =glob2rx(paste0("*",hm[c],"*")))
   pth_tmp=list.files(dir_tmp,full.names=T,recursive = T,include.dirs = F,pattern=glob2rx(paste0("*meta*")))
   res=read_fst(pth_tmp)
-  colnames(res)=c("code","name","regionHydro","source","ref","x_l93","y_l93","area","gestion","alti")
+  colnames(res)=c("code","name","regionHydro","source","ref","x_l93","y_l93","area1","area2","gestion","alti")
   coord[[c]]=res
 }
 coord=do.call("rbind",coord)
