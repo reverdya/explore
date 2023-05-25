@@ -32,21 +32,27 @@ load(file=paste0(path_data,"ref.Rdata"))
 
 ref_year=1990# central year of 1975-2005 reference period
 horiz=c(2030,2050,2085)
-final_year=2100
+final_year=2099
+
+typechangeVar="rel"
+SPAR_time=1.1
+SPAR_temp=1.2
+basin_sample=ref[ref$n==9,]$code
+n_bv=length(basin_sample)
+bc_sample=c("ADAMONT","CDFt")
+hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-SD","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
+
 
 ######
 #MAIN#
 ######
 
 
-####################################################################
-## Run for all steps and all models hydro for biggest common sample
+###########################################################################################
+## Run for all steps and all models hydro for biggest common sample (Loire SIM2 stations)
 
 for(i in unique(simu_lst$indic)){
   dir.create(paste0(path_data,"Qualypso/",i,"/"))
-  typechangeVar="rel"
-  SPAR=1.1
-  
   
   tic()
   scenAvail=simu_lst[simu_lst$indic==i,]
@@ -62,16 +68,6 @@ for(i in unique(simu_lst$indic)){
     res=pivot_wider(res,names_from = code,values_from = indic)
     all_chains[[c]]=res
   }
-
-  #################
-  ##To be adjusted
-  ## After that need to adjust scenAvail in run QUALYPSO to include or not bc
-  basin_sample=ref[ref$n==8,]$code
-  n_bv=length(basin_sample)
-  # bc_sample="ADAMONT"
-  bc_sample=c("ADAMONT","CDFt")
-  hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","MORDOR-SD","SMASH","ORCHIDEE")
-  ################
   
   all_chains=all_chains[scenAvail$bc %in% bc_sample]
   scenAvail=scenAvail[scenAvail$bc %in% bc_sample,]
@@ -83,19 +79,18 @@ for(i in unique(simu_lst$indic)){
   Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_bv) ), along=3)
   Y=aperm(Y,c(1,3,2))
   X=unique(ClimateProjections$year)
-  Xfut=seq(ref_year,final_year)
+  Xfut=c(seq(ref_year,final_year,10),final_year)
   rm(ClimateProjections,all_chains)
   gc()
   
   ## Time
-  tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(SPAR,nrow(scenAvail)),type="spline",nbcores = nbcore)
-  listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
+  tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(SPAR_time,nrow(scenAvail)),type="spline",nbcores = nbcore)
+  listOption = list(spar=SPAR_time,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
   rm(tmp)
   gc()
   
   lst.QUALYPSOOUT_time=vector(mode="list",length=length((Xfut)))
   for(cpt in 1:length(Xfut)){
-    # for(x in c(2030,2050,2085)){
     lst.QUALYPSOOUT_time[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
                                            scenAvail=scenAvail[,c("rcp","gcm","rcm","bc","hm")],
                                            X=X,
@@ -110,27 +105,38 @@ for(i in unique(simu_lst$indic)){
       lst.QUALYPSOOUT_time[[cpt]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
       lst.QUALYPSOOUT_time[[cpt]]$Y=NA #to not store 9892 times the same information, stored only the first time
     }
-    if(((cpt) %% 10)==0){print(cpt)}
+    if(((cpt) %% 2)==0){print(cpt)}
   }
   rm(listOption)
   closeAllConnections()
   gc()
   save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time.RData"))
-  # rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
+  rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
   closeAllConnections()
   gc()
   
   ## Temperature
   vec_years=X
-  global_tas=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=scenAvail,cat="hydro")
-  X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
-  Xfut=c(global_tas[["warming_1990"]],seq(1,4,0.5))
+  global_tas=prep_global_tas(path_temp,simu_lst=scenAvail,cat="hydro")
+  X=as.matrix(t(global_tas[["mat_Globaltas"]][global_tas[["gcm_years"]] %in% vec_years[vec_years!=2099],]))#have to remove 2099/2100, because Tyear_FR is not available for HadGEM2
+  Xmax=round(max(X,na.rm=T),1)-0.1#goes far to be able to make the correspondance with global temperature
+  Xfut=c(seq(0,Xmax,0.1))
   idx_rcp=which(scenAvail$rcp=="rcp85")
   scenAvail=scenAvail[idx_rcp,]
   X=X[idx_rcp,]
-  Y=Y[,idx_rcp,]
-  tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(1.4,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
-  listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
+  if(any(vec_years==2099)){
+    if(any(vec_years==2100)){
+      Y=Y[,idx_rcp,-c(dim(Y)[3],dim(Y)[3]-1)]#have to remove 2099 and 2100, because Tyear_FR is not available for HadGEM2
+    }else{
+      Y=Y[,idx_rcp,-(dim(Y)[3])]#have to remove 2099, because Tyear_FR is not available for HadGEM2
+    }
+  }else{
+    Y=Y[,idx_rcp,]
+  }
+  
+  
+  tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(SPAR_temp,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
+  listOption = list(spar=SPAR_temp,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
   rm(tmp)
   gc()
   
