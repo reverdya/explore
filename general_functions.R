@@ -421,7 +421,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       Xs = Xmat[iS,]
       Xrefs = Xref[iS]
       # fit a smooth signal
-      zz = !is.na(Ys)
+      zz = (!is.na(Ys))&(!is.na(Xs))
       phiY=Xs
       Yslog10=log10(Ys)
       smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
@@ -463,7 +463,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       pval[iS]=bf.test(etaS ~ X,tmp,na.rm=T,verbose = F)$p.value
     }
     if(any(pval<=0.05)){
-      warning_store=paste0(warning_store,"_intrachain-p:",pval)
+      warning_store=paste0(warning_store,"_intrachain-p:",min(pval))
     }
   }
   
@@ -544,6 +544,7 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
     varInterVariability = vector(length=nG)
     climateResponse=vector(mode="list",length=nG)
     climResponse=vector(mode="list",length=nG)
+    warning_store=vector(mode="list",length=nG)
 
     gc()
     # no parallelisation because memory issue in loading Y on each core (and parallelisation on lower level function would require too much core communication)
@@ -789,8 +790,8 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   X=Y[1,]
   if(pred=="temp"){
     vec_years=X
-    X=globaltas[["mat_Globaltas"]][globaltas[["gcm_years"]] %in% vec_years,]
-    Xmax=round(max(X,na.rm=T),1)+0.1
+    X=as.matrix(t(global_tas[["mat_Globaltas"]][global_tas[["gcm_years"]] %in% vec_years,]))
+    Xmax=round(max(X,na.rm=T),1)-0.1#goes far to be able to make the correspondance with global temperature
     X=t(X[,scen_rcp])
     Xfut=seq(0,Xmax,0.1)
     Y=Y[,vec_years %in% globaltas[["gcm_years"]]]
@@ -2828,7 +2829,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
 ## Emergence dates for reference in predictor temperature maps
 
 plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4)){
-  data=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=simu_lst)[["mat_Globaltas_gcm"]]
+  data=prep_global_tas(path_temp,simu_lst=simu_lst)[["mat_Globaltas_gcm"]]
   idx=vector(mode = "list")
   for(temp in temp_ref){
     idx[[as.character(temp)]]=apply(data[,-1],MARGIN=2,function(x) min(which(x>=temp)))
@@ -2839,7 +2840,7 @@ plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4)){
   years=seq(1861,2100)
   idx=data.frame(apply(idx,MARGIN=2,function(x) years[x]))
   idx$temp=temp_ref
-  colnames(idx)[-ncol(idx)]=colnames(prep_global_tas(path_temp,ref_year=ref_year,simu_lst=simu_lst)[["mat_Globaltas_gcm"]][,-1])
+  colnames(idx)[-ncol(idx)]=colnames(prep_global_tas(path_temp,simu_lst=simu_lst)[["mat_Globaltas_gcm"]][,-1])
   data=pivot_longer(data=idx,cols=!temp,names_to = "chain",values_to = "val")
   data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
   data=data[data$rcp=="rcp85",]
