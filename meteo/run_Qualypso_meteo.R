@@ -52,7 +52,7 @@ for(v in unique(simu_lst$var)){
     tic()
     dir.create(paste0(path_data,"Qualypso/",v,"/",i))
     scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
-    global_tas=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=scenAvail)
+    global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
     all_chains=vector(length=nrow(scenAvail),mode="list")
     for(c in 1:nrow(scenAvail)){# for each chain
       pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
@@ -126,8 +126,9 @@ for(v in unique(simu_lst$var)){
     
     ## Temperature
     vec_years=X
-    X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
-    Xfut=c(global_tas[["warming_1990"]],seq(1,4,0.5))
+    X=as.matrix(t(global_tas[["mat_Globaltas"]][global_tas[["gcm_years"]] %in% vec_years,]))
+    Xmax=round(max(X,na.rm=T),1)+0.1
+    Xfut=seq(0,Xmax,0.1)
     idx_rcp=which(scenAvail$rcp=="rcp85")
     scenAvail=scenAvail[idx_rcp,]
     X=X[idx_rcp,]
@@ -184,7 +185,7 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       tic()
       dir.create(paste0(path_data,"Qualypso/",v,"/",i))
       scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
-      global_tas=prep_global_tas(path_temp,ref_year=ref_year,simu_lst=scenAvail)
+      global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
       all_chains=vector(length=nrow(scenAvail),mode="list")
       for(c in 1:nrow(scenAvail)){# for each chain
         pth_tmp=list.files(paste0(path_data,"indic/",v,"/",type_reg,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
@@ -252,7 +253,8 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       ## Temperature
       vec_years=X
       X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
-      Xfut=c(global_tas[["warming_1990"]],seq(0.7,4,0.1))
+      Xmax=round(max(X,na.rm=T),1)-0.1#goes far to be able to make the correspondance with global temperature
+      Xfut=seq(0,Xmax,0.1)
       idx_rcp=which(scenAvail$rcp=="rcp85")
       scenAvail=scenAvail[idx_rcp,]
       X=X[idx_rcp,]
