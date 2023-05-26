@@ -28,5 +28,5 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 ->hydro/preprocess/clean_files_indic.R			||||																	
 
 ->hydro/check_indic_hydro.R				||||	figures checked? YES
-->hydro/run_Qualypso.R					||||	before that visually determine best spar														restart_loop?
-->hydro/make_figures_hydro.R				| |	figures checked? NO																	new T_FR function,choice on runs, change Xfut, visual, mesures hydro, Waiting on T_global, change Xfut, log and warning if spline<0, warning if brown-forsythe fails between chains or between periods, visual, safran data, Waiting on T_global
+->hydro/run_Qualypso.R					||||	before that visually determine best spar														
+->hydro/make_figures_hydro.R				| |	figures checked? NO																	new T_FR function, change Xfut, visual, Waiting on T_global, log and warning if spline<0, warning if brown-forsythe fails between chains or between periods
