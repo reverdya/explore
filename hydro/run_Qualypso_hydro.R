@@ -79,7 +79,7 @@ for(i in unique(simu_lst$indic)){
   Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_bv) ), along=3)
   Y=aperm(Y,c(1,3,2))
   X=unique(ClimateProjections$year)
-  Xfut=c(seq(ref_year,final_year,10),final_year)
+  Xfut=sort(c(seq(ref_year,final_year,10),final_year,2085))
   rm(ClimateProjections,all_chains)
   gc()
   
@@ -165,5 +165,6 @@ for(i in unique(simu_lst$indic)){
   rm(Y,X)
   closeAllConnections()
   gc()
+  print(i)
   toc()
 }

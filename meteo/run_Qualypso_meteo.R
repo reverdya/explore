@@ -164,6 +164,7 @@ for(v in unique(simu_lst$var)){
     closeAllConnections()
     gc()
     toc()
+    print(i)
   }
 }
 
@@ -212,7 +213,7 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
       Y=aperm(Y,c(1,3,2))
       X=unique(ClimateProjections$year)
-      Xfut=seq(ref_year,final_year)
+      Xfut=sort(c(seq(ref_year,final_year,10),final_year,2085))
       rm(ClimateProjections,all_chains)
       gc()
       
@@ -290,6 +291,7 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       closeAllConnections()
       gc()
       toc()
+      print(i)
     }
     
   }
