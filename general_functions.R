@@ -1274,6 +1274,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   colnames(chains)=c("pred","val","eff","chain")
   data=data[data$pred>=xlim[1],]
   
+
   if(pred=="time"){
     chains=chains[chains$pred>=xlim[1] & chains$pred<=2098,]
     xlim2=c(1950,xlim[2])
@@ -1291,27 +1292,45 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         }else if(var=="prsnAdjust"){
           res=ncvar_get(nc,varid="Snow")
         }
-        fake_obs=res[idx_pix,]
+        Obs=res[idx_pix,]
       }
       if(var=="evspsblpotAdjust"){
         full_years=nc$dim$time$vals
         full_years=year(as.Date(full_years,origin="1975-01-01"))
         res=ncvar_get(nc,varid="etp")
-        fake_obs=res[idx_row,idx_col,]
+        Obs=res[idx_row,idx_col,]
       }
       rm(nc)
       gc()
-      if(var!="tasAdjust"){
-        fake_obs=data.frame(full_years,(fake_obs-fake_obs[full_years==1990])/fake_obs[full_years==1990]*100)
-      }else{
-        fake_obs=data.frame(full_years,fake_obs-fake_obs[full_years==1990])
-      }
-      colnames(fake_obs)=c("pred","val")
     }else{
-      fake_obs=data.frame(lst.QUALYPSOOUT[[1]]$Xmat[2,],Ystar[2,])
-      colnames(fake_obs)=c("pred","val")
-      fake_obs=fake_obs[!is.na(fake_obs$val),]
-      fake_obs=fake_obs[fake_obs$pred<=2005,]
+      Obs=read_fst(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/Diagnostic/diag/",i,".fst"))
+      Obs=Obs[Obs$Code==bv_name,]
+      colnames(Obs)=c("hm","code","year","val")
+      Obs$year=year(Obs$year)
+      full_years=Obs$year
+    }
+    if(var!="tasAdjust"){
+      if(var=="Q"){
+        # hms=unique(Obs$hm)
+        # obs_hm=Obs[Obs$hm==hms[1],]
+        # tmp=data.frame(obs_hm$year,(obs_hm$val-obs_hm$val[obs_hm$year==1990])/obs_hm$val[obs_hm$year==1990]*100,hms[1])
+        # colnames(tmp)=c("pred","val","hm")
+        # for(j in 2:length(hms)){
+        #   obs_hm=Obs[Obs$hm==hms[j],]
+        #   tmp2=data.frame(obs_hm$year,(obs_hm$val-obs_hm$val[obs_hm$year==1990])/obs_hm$val[obs_hm$year==1990]*100,hms[j])
+        #   colnames(tmp2)=c("pred","val","hm")
+        #   tmp=rbind(tmp,tmp2)
+        # }
+        # Obs=tmp
+        Obs=data.frame(full_years,(Obs$val-Obs$val[full_years==1990])/Obs$val[full_years==1990]*100)
+        colnames(Obs)=c("pred","val")
+      }else{
+        Obs=data.frame(full_years,(Obs-Obs[full_years==1990])/Obs[full_years==1990]*100)
+        colnames(Obs)=c("pred","val")
+      }
+    }else{
+      Obs=data.frame(full_years,Obs-Obs[full_years==1990])
+      colnames(Obs)=c("pred","val")
     }
   }
   if(pred=="temp"){
@@ -1331,41 +1350,62 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         }else if(var=="prsnAdjust"){
           res=ncvar_get(nc,varid="Snow")
         }
-        fake_obs=res[idx_pix,]
+        Obs=res[idx_pix,]
       }
       if(var=="evspsblpotAdjust"){
         full_years=nc$dim$time$vals
         full_years=year(as.Date(full_years,origin="1975-01-01"))
         res=ncvar_get(nc,varid="etp")
-        fake_obs=res[idx_row,idx_col,]
+        Obs=res[idx_row,idx_col,]
       }
       rm(nc)
       gc()
-      
-      ## Calculate 1860-1990 warming from HADCRUT5 with spline
-      nc=load_nc(paste0(path_temp,"HadCRUT.5.0.1.0.analysis.summary_series.global.annual.nc"))
-      res2=ncvar_get(nc,varid="tas_mean")
-      full_years2=nc$dim$time$vals
-      full_years2=year(as.Date(full_years2,origin="1850-01-01"))
-      nc_close(nc)#for some reason stays opened otherwise
-      rm(nc)
-      gc()
-      tas_obs=smooth.spline(x=full_years2,y=res2,spar=1)$y
-      tas_obs=tas_obs-tas_obs[full_years2==1875]
-      tas_obs=tas_obs[which(full_years2 %in% full_years)]
-      
-      if(var!="tasAdjust"){
-        fake_obs=data.frame(tas_obs,(fake_obs-fake_obs[full_years==1990])/fake_obs[full_years==1990]*100)
-      }else{
-        fake_obs=data.frame(tas_obs,fake_obs-fake_obs[full_years==1990])
-      }
-      colnames(fake_obs)=c("pred","val")
     }else{
-      fake_obs=data.frame(lst.QUALYPSOOUT[[1]]$Xmat[2,],Ystar[2,])
-      colnames(fake_obs)=c("pred","val")
-      fake_obs=fake_obs[!is.na(fake_obs$val),]
-      fake_obs=fake_obs[fake_obs$pred<=0.9,]
+      Obs=read_fst(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/Diagnostic/diag/",i,".fst"))
+      Obs=Obs[Obs$Code==bv_name,]
+      colnames(Obs)=c("hm","code","year","val")
+      Obs$year=year(Obs$year)
+      Obs=Obs[Obs$hm=="SIM2",]#same for all models
+      full_years=Obs$year
     }
+    # Calculate 1860-1990 warming from HADCRUT5 with spline
+    nc=load_nc(paste0(path_temp,"HadCRUT.5.0.1.0.analysis.summary_series.global.annual.nc"))
+    res2=ncvar_get(nc,varid="tas_mean")
+    full_years2=nc$dim$time$vals
+    full_years2=year(as.Date(full_years2,origin="1850-01-01"))
+    nc_close(nc)#for some reason stays opened otherwise
+    rm(nc)
+    gc()
+    tas_obs=smooth.spline(x=full_years2,y=res2,spar=1)$y
+    tas_obs=tas_obs-tas_obs[full_years2==1875]
+    
+    if(var!="tasAdjust"){
+      if(var=="Q"){
+        # hms=unique(Obs$hm)
+        # obs_hm=Obs[Obs$hm==hms[1],]
+        # tmp=data.frame(tas_obs[which(full_years2 %in% obs_hm$year)],(obs_hm$val-obs_hm$val[obs_hm$year==1990])/obs_hm$val[obs_hm$year==1990]*100,hms[1])
+        # colnames(tmp)=c("pred","val","hm")
+        # for(j in 2:length(hms)){
+        #   obs_hm=Obs[Obs$hm==hms[j],]
+        #   tmp2=data.frame(tas_obs[which(full_years2 %in% obs_hm$year)],(obs_hm$val-obs_hm$val[obs_hm$year==1990])/obs_hm$val[obs_hm$year==1990]*100,hms[j])
+        #   colnames(tmp2)=c("pred","val","hm")
+        #   tmp=rbind(tmp,tmp2)
+        # }
+        # Obs=tmp
+        tas_obs=tas_obs[which(full_years2 %in% full_years)]
+        Obs=data.frame(tas_obs,(Obs$val-Obs$val[full_years==1990])/Obs$val[full_years==1990]*100)
+        colnames(Obs)=c("pred","val")
+      }else{
+        tas_obs=tas_obs[which(full_years2 %in% full_years)]
+        Obs=data.frame(tas_obs,(Obs-Obs[full_years==1990])/Obs[full_years==1990]*100)
+        colnames(Obs)=c("pred","val")
+      }
+    }else{
+      tas_obs=tas_obs[which(full_years2 %in% full_years)]
+      Obs=data.frame(tas_obs,Obs-Obs[full_years==1990])
+      colnames(Obs)=c("pred","val")
+    }
+    
   }
   
   if(pred=="time"){
@@ -1419,9 +1459,16 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     plt1=plt1+
       scale_y_continuous(paste0("Changement moyen (°C)"),expand=c(0,0))
   }
-  plt1=plt1+
-    geom_line(data=fake_obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+#raw obs
-    scale_size_manual("",values = c("aa"=1),labels=c("Observations"))
+  # if(var!="Q"){
+    plt1=plt1+
+      geom_line(data=Obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+
+      scale_size_manual("",values = c("aa"=1),labels=c("Observations"))
+  # }else{
+  #   plt1=plt1+
+  #     geom_line(data=Obs,aes(x=pred,y=val,size="aa",group=hm),alpha=0.7,color="gray50")+
+  #     scale_size_manual("",values = c("aa"=1),labels=c("Observations"))
+  # }
+  
   if(pred=="temp"){
     plt1=plt1+
       scale_x_continuous("Niveau de réchauffement planétaire (°C)",limits=xlim2,expand=c(0,0))
@@ -1523,7 +1570,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("summary_change_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+    save.plot(plt,Filename = paste0("summary_change_",ind_name,"_",pred,"_",bv_full_name),Folder = folder_out,Format = "jpeg")
   }
   
 }
@@ -1670,12 +1717,13 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     geom_text(aes(x=1.05,y=0,label="Projection\nminimale"),fontface = "bold",size=5)+
     scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
     theme_void()+
-    theme(panel.background = element_rect(colour="black"))
+    theme(panel.background = element_rect(colour="black",fill="transparent"))
   
   plt=ggarrange(plt1,plt2,widths=c(0.8,0.2),nrow=1,ncol=2,align="h")+
     theme(plot.margin = unit(c(0,0.5,0,0), "cm"))
   if(title==T){
-    plt=annotate_figure(plt, top = text_grob(paste0("Distribution de l'ensemble balancé pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full,"\n(",bv_full_name,", référence 1990)"), face = "bold", size = 20,hjust=0.5))
+    plt=annotate_figure(plt, top = text_grob(paste0("Distribution de l'ensemble balancé pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full,"\n(",bv_full_name,", référence 1990)"), face = "bold", size = 20,hjust=0.5))+
+      theme(panel.background = element_rect(fill="white"))
   }
     
   if (is.na(folder_out)){
