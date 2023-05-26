@@ -23,6 +23,7 @@ path_data="C:/Users/reverdya/Documents/Docs/2_Data/processed/Explore2-meteo/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/Qualypso/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
+path_hadcrut="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
@@ -140,11 +141,9 @@ for(v in unique(simu_lst$var)){
         plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
         
         if(v=="evspsblpotAdjust"){
-          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = T,idx_row = ref_cities$row[c],idx_col = ref_cities$col[c],path_temp=path_temp)
-          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = F,idx_row = ref_cities$row[c],idx_col = ref_cities$col[c],path_temp=path_temp)
+          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,idx_row = ref_cities$row[c],idx_col = ref_cities$col[c],path_temp=path_hadcrut)
         }else{
-          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = T,idx_pix = idx,path_temp=path_temp)
-          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,simpler = F,idx_pix = idx,path_temp=path_temp)
+          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,idx_pix = idx,path_temp=path_hadcrut)
         }
         plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,var=v,indic=i,horiz = horiz3,title=T)
       }
