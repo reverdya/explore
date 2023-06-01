@@ -63,7 +63,7 @@ for(i in unique(simu_lst$indic)){
     res=read_fst(pth_tmp)
     colnames(res)=c("gcm","rcp","rcm","bc","hm","code","year","indic")
     res$year=year(res$year)
-    res=res[!is.na(res$indic),]
+    #res=res[!is.na(res$indic),]
     res=res[,c("year","code","indic")]
     res=pivot_wider(res,names_from = code,values_from = indic)
     all_chains[[c]]=res
