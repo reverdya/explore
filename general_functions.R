@@ -1790,9 +1790,9 @@ background_for_maps=function(path_river,path_fr){
   wrld <- fortify(wrld_simpl)
   options(warn=0)
   assign("river",river,envir = globalenv())
-  assign("river_L2",river,envir = globalenv())
-  assign("fr",river,envir = globalenv())
-  assign("fr_L2",river,envir = globalenv())
+  assign("river_L2",river_L2,envir = globalenv())
+  assign("fr",fr,envir = globalenv())
+  assign("fr_L2",fr_L2,envir = globalenv())
 }
 
 
@@ -1941,7 +1941,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
-    phiStar.corr = phiStar*replicate(dim(phiStar)[1],sd.corr)
+    phiStar.corr = phiStar*replicate(dim(phiStar)[2],sd.corr)
     chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2)
     chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2)
     
@@ -2057,7 +2057,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
 ## rcp_name the name of the wanted rcp
 ## folder_out the saving folder
 
-map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6,path_temp=NULL){
+map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6,path_temp=NULL,cat="meteo"){
   
   if(pred=="time"){
     ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
@@ -2128,7 +2128,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
-    phiStar.corr = phiStar*replicate(dim(phiStar)[1],sd.corr)
+    phiStar.corr = phiStar*replicate(dim(phiStar)[2],sd.corr)
     chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2)
     chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2)
     
@@ -2228,7 +2228,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     }
   }
   if(pred=="temp"){
-    emerg=plot_emergence(path_temp = path_temp,temp_ref = horiz,simu_lst = scenAvail)
+    emerg=plot_emergence(path_temp = path_temp,temp_ref = horiz,simu_lst =lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail,cat=cat)
     lay <- rbind(c(1,NA,NA,NA),
                  c(1,2,NA,NA),
                  c(1,2,3,NA),
@@ -2884,7 +2884,8 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   # plt=ggarrange(plt1,plt2,ncol=2,widths=c(0.68,0.32))
   plt=ggarrange(plt1,plt2,nrow=2,heights=c(0.6,0.4))
   if(title==T){
-    plt=annotate_figure(plt, top = text_grob(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz,pred_unit,")"), face = "bold", size = 18,hjust=0.5))
+    plt=annotate_figure(plt, top = text_grob(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz,pred_unit,")"), face = "bold", size = 18,hjust=0.5))+
+      theme(panel.background = element_rect(fill="white"))
   }
   
   
@@ -2900,19 +2901,20 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
 ##################################################################
 ## Emergence dates for reference in predictor temperature maps
 
-plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4)){
-  data=prep_global_tas(path_temp,simu_lst=simu_lst)[["mat_Globaltas_gcm"]]
+plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4),cat){
+  simu_lst$rcp="rcp85"
+  data=prep_global_tas(path_temp,simu_lst=simu_lst,cat=cat)[["mat_Globaltas"]]
   idx=vector(mode = "list")
   for(temp in temp_ref){
-    idx[[as.character(temp)]]=apply(data[,-1],MARGIN=2,function(x) min(which(x>=temp)))
+    idx[[as.character(temp)]]=apply(data,MARGIN=2,function(x) min(which(x>=temp)))
   }
   
   idx=data.frame(do.call(rbind, idx))
   idx[idx==Inf]=NA
-  years=seq(1861,2100)
+  years=prep_global_tas(path_temp,simu_lst=simu_lst,cat=cat)[["gcm_years"]]
   idx=data.frame(apply(idx,MARGIN=2,function(x) years[x]))
   idx$temp=temp_ref
-  colnames(idx)[-ncol(idx)]=colnames(prep_global_tas(path_temp,simu_lst=simu_lst)[["mat_Globaltas_gcm"]][,-1])
+  colnames(idx)[-ncol(idx)]=colnames(data)
   data=pivot_longer(data=idx,cols=!temp,names_to = "chain",values_to = "val")
   data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
   data=data[data$rcp=="rcp85",]
