@@ -71,7 +71,6 @@ for (i in unique(simu_lst$indic)){
       predict="time"
       pred_unit=""
       xlim=c(1990,2100)
-      # horiz3=c(2030,2050,2085)
       horiz3=c(2030,2050,2085)
     }
     if (preds == "temp"){
@@ -81,7 +80,8 @@ for (i in unique(simu_lst$indic)){
       pred_name="température"
       predict="temp"
       pred_unit="°C"
-      xlim=c(min(lst.QUALYPSOOUT[[1]]$Xfut),max(lst.QUALYPSOOUT[[1]]$Xfut))
+      # xlim=c(min(lst.QUALYPSOOUT[[1]]$Xfut),max(lst.QUALYPSOOUT[[1]]$Xfut))
+      xlim=c(min(lst.QUALYPSOOUT[[1]]$Xfut),4)
       horiz3=c(1.5,2,3,4)
     }
     
@@ -114,7 +114,7 @@ for (i in unique(simu_lst$indic)){
       plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,var="Q",indic=i,horiz = horiz3,title=T)
     }
   }
-  
+  print(i)
 }
 
 
@@ -181,8 +181,8 @@ for (i in unique(simu_lst$indic)){
     map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col)
     map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col)
     map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col)
-    
   }
+  print(i)
 }
 
 
