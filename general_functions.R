@@ -765,7 +765,7 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
       colnames(res)=c("gcm","rcp","rcm","bc","hm","code","year","indic")
       RES=res[res$code %in% ref_cities$code,]
       rm(res);gc()
-      res=RES[!is.na(RES$indic),]
+      res=RES
       res$year=year(res$year)
       res=res[,c("year","code","indic")]
       res=pivot_wider(res,names_from = code,values_from = indic)
@@ -790,9 +790,9 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   X=Y[1,]
   if(pred=="temp"){
     vec_years=X
-    X=as.matrix(t(global_tas[["mat_Globaltas"]][global_tas[["gcm_years"]] %in% vec_years,]))
+    X=as.matrix(t(globaltas[["mat_Globaltas"]][globaltas[["gcm_years"]] %in% vec_years,]))
     Xmax=round(max(X,na.rm=T),1)-0.1#goes far to be able to make the correspondance with global temperature
-    X=t(X[,scen_rcp])
+    X=X[scen_rcp,]
     Xfut=seq(0,Xmax,0.1)
     Y=Y[,vec_years %in% globaltas[["gcm_years"]]]
   }else{
@@ -1222,7 +1222,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
-    phiStar.corr = chains*t(replicate(nrow(chains),sd.corr))
+    phiStar.corr = phiStar*t(replicate(dim(phiStar)[1],sd.corr))
     # compute the lower bound if the distribution is gaussian
     binf = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
     bsup = apply(phiStar.corr,2,quantile,probs = 0.5+probCI/2)
@@ -1307,8 +1307,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       Obs=Obs[Obs$Code==bv_name,]
       colnames(Obs)=c("hm","code","year","val")
       Obs$year=year(Obs$year)
+      Obs=Obs[Obs$hm=="GRSD",]
       full_years=Obs$year
+      idx_na=which(!is.na(Obs$val))
     }
+    sp=lst.QUALYPSOOUT[[1]]$listOption$spar
     if(var!="tasAdjust"){
       if(var=="Q"){
         # hms=unique(Obs$hm)
@@ -1322,14 +1325,18 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         #   tmp=rbind(tmp,tmp2)
         # }
         # Obs=tmp
-        Obs=data.frame(full_years,(Obs$val-Obs$val[full_years==1990])/Obs$val[full_years==1990]*100)
+        tmp=smooth.spline(full_years[idx_na],Obs$val[idx_na],spar = sp)
+        obs1990=predict(tmp, 1990)$y
+        Obs=data.frame(full_years,(Obs$val-obs1990)/obs1990*100)
         colnames(Obs)=c("pred","val")
       }else{
-        Obs=data.frame(full_years,(Obs-Obs[full_years==1990])/Obs[full_years==1990]*100)
+        tmp=smooth.spline(full_years,Obs,spar = sp)$y
+        Obs=data.frame(full_years,(Obs-tmp[full_years==1990])/tmp[full_years==1990]*100)
         colnames(Obs)=c("pred","val")
       }
     }else{
-      Obs=data.frame(full_years,Obs-Obs[full_years==1990])
+      tmp=smooth.spline(full_years,Obs,spar = sp)$y
+      Obs=data.frame(full_years,Obs-tmp[full_years==1990])
       colnames(Obs)=c("pred","val")
     }
   }
@@ -1365,7 +1372,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       Obs=Obs[Obs$Code==bv_name,]
       colnames(Obs)=c("hm","code","year","val")
       Obs$year=year(Obs$year)
-      Obs=Obs[Obs$hm=="SIM2",]#same for all models
+      Obs=Obs[Obs$hm=="GRSD",]#same for all models
       full_years=Obs$year
     }
     # Calculate 1860-1990 warming from HADCRUT5 with spline
@@ -1379,6 +1386,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     tas_obs=smooth.spline(x=full_years2,y=res2,spar=1)$y
     tas_obs=tas_obs-tas_obs[full_years2==1875]
     
+    sp=lst.QUALYPSOOUT[[1]]$listOption$spar
     if(var!="tasAdjust"){
       if(var=="Q"){
         # hms=unique(Obs$hm)
@@ -1392,17 +1400,24 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         #   tmp=rbind(tmp,tmp2)
         # }
         # Obs=tmp
+        
+        
+        idx_na=which(!is.na(Obs$val))
         tas_obs=tas_obs[which(full_years2 %in% full_years)]
-        Obs=data.frame(tas_obs,(Obs$val-Obs$val[full_years==1990])/Obs$val[full_years==1990]*100)
+        tmp=smooth.spline(tas_obs[idx_na],Obs$val[idx_na],spar = sp)
+        obs1990=predict(tmp, tas_obs[full_years==1990])$y
+        Obs=data.frame(tas_obs,(Obs$val-obs1990)/obs1990*100)
         colnames(Obs)=c("pred","val")
       }else{
         tas_obs=tas_obs[which(full_years2 %in% full_years)]
-        Obs=data.frame(tas_obs,(Obs-Obs[full_years==1990])/Obs[full_years==1990]*100)
+        tmp=smooth.spline(tas_obs,Obs,spar = sp)$y
+        Obs=data.frame(tas_obs,(Obs-tmp[full_years==1990])/tmp[full_years==1990]*100)
         colnames(Obs)=c("pred","val")
       }
     }else{
       tas_obs=tas_obs[which(full_years2 %in% full_years)]
-      Obs=data.frame(tas_obs,Obs-Obs[full_years==1990])
+      tmp=smooth.spline(tas_obs,Obs,spar = sp)$y
+      Obs=data.frame(tas_obs,Obs-tmp[full_years==1990])
       colnames(Obs)=c("pred","val")
     }
     
@@ -1432,14 +1447,22 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     idx_label=3
   }
   
-  plt1=ggplot(data)+
-    geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
-    scale_fill_discrete("Dispersion des expériences\nclimatiques",type= as.vector(col_3rcp_shade[color_select]),labels=NULL)+
-    guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
-    new_scale_fill()+
-    geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.4)+#uncertainty band
-    scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
-    guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+  if(pred=="time"){
+    plt1=ggplot(data)+
+      geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
+      scale_fill_discrete("Dispersion des expériences\nclimatiques",type= as.vector(col_3rcp_shade[color_select]),labels=NULL)+
+      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+      new_scale_fill()+
+      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.4)+#uncertainty band
+      scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
+      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))
+  }else{
+    plt1=ggplot(data)+
+      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.4)+#uncertainty band
+      scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
+      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))
+  }
+  plt1=plt1+
     geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.5,lty="21")+#RCP mean
     scale_x_continuous("",limits=xlim2,expand=c(0,0))+
     scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=labels_rcp[idx_label])+
@@ -1452,6 +1475,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     facet_wrap(vars(eff),nrow = length(unique(data$eff)))+
     theme(strip.background = element_blank(),strip.text.x = element_blank())+
     geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=12)
+  
   if(var!="tasAdjust"){
     plt1=plt1+
       scale_y_continuous(paste0("Changement relatif moyen (%)"),expand=c(0,0))
@@ -1643,7 +1667,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
       i0=i0+1
     }
     sd.corr = sd.qua/sd.emp
-    phiStar.corr[[r]] = data.frame(chains*t(replicate(nrow(chains),sd.corr)))
+    phiStar.corr[[r]] = data.frame(phiStar*t(replicate(dim(phiStar)[1],sd.corr)))
     colnames(phiStar.corr[[r]])=paste0("h_",horiz)
     if(predict=="time"){
       phiStar.corr[[r]]$rcp=unique(scenAvail$rcp)[r]
@@ -1917,7 +1941,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
-    phiStar.corr = phiStar*replicate(dim(phiStar)[2],sd.corr)
+    phiStar.corr = phiStar*replicate(dim(phiStar)[1],sd.corr)
     chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2)
     chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2)
     
@@ -2104,7 +2128,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
-    phiStar.corr = phiStar*replicate(dim(phiStar)[2],sd.corr)
+    phiStar.corr = phiStar*replicate(dim(phiStar)[1],sd.corr)
     chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2)
     chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2)
     
