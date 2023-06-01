@@ -193,8 +193,9 @@ for (i in unique(simu_lst$indic)){
 ## Plot map of reference (1990) value of indicator mean response
 
 
-for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
+for (i in unique(simu_lst$indic)){
   folder_out=paste0(path_fig,i,"/maps/")
+  dir.create(folder_out)
   load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time.RData"))
   lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
   exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
@@ -214,6 +215,7 @@ for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
     binned_scale(aesthetics = "fill",scale_name = "toto",name = "",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),limits=lim_col,oob=squish,show.limits = T,breaks=br,labels= c(paste0(">",br[1]),br[2:5],paste0("<",br[6])) )+#that way because stepsn deforms colors
   ggtitle(paste0("Valeurs de référence (1990) du ",i,"\n(moyenne des fonctions de réponse disponibles)"))
   save.plot(plt,Filename = paste0("ref1990_mean-response_",i),Folder = folder_out,Format = "jpeg")
+  print(i)
 }
 
 
