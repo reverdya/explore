@@ -37,6 +37,7 @@ library(gridExtra)#grid.arrange
 library(rstudioapi)#restartSession
 library(stringr)#str_replace
 library(onewaytests)#bf.test
+library(forcats)#fct_rev
 
 
 #############################################################
@@ -1438,43 +1439,61 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   chain_band=aggregate(chains$val,by=list(chains$pred,chains$eff),max)
   colnames(chain_band)=c('pred',"eff","max")
   chain_band$min=aggregate(chains$val,by=list(chains$pred,chains$eff),min)[,3]
+  a_label=data.frame(lab="a",eff="rcp85")
+  
   if(pred=="time"){
-    a_label=data.frame(lab="a",eff="rcp26")
-    idx_label=seq(1,3)
+    rcp.labs <- c("RCP 2.6","RCP4.5","RCP 8.5")
+    names(rcp.labs) <- lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]
+  }else{
+    rcp.labs <- c("RCP 8.5")
+    names(rcp.labs) <- "rcp85"
   }
-  if(pred=="temp"){
-    a_label=data.frame(lab="a",eff="rcp85")
-    idx_label=3
-  }
+  
   
   if(pred=="time"){
     plt1=ggplot(data)+
+      geom_hline(yintercept = 0)+
       geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
-      scale_fill_discrete("Dispersion des expériences\nclimatiques",type= as.vector(col_3rcp_shade[color_select]),labels=NULL)+
-      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+      scale_fill_discrete("Dispersion liée à la variabilité naturelle",type= as.vector(col_3rcp_shade[color_select]))+
+      guides(fill=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
       new_scale_fill()+
-      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.4)+#uncertainty band
-      scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
-      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))
+      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.55)+#uncertainty band
+      scale_fill_discrete("Dispersion liée aux modèles",type= as.vector(col_3rcp[color_select]))+
+      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
+      # geom_line(aes(x=pred,y=med,group=eff,color=eff),size=0.8,alpha=0.8,lty="21")+#RCP mean
+      scale_x_continuous("",limits=xlim2,expand=c(0,0))+
+      # scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=NULL)+
+      # guides(color=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+      theme_bw(base_size = 16)+
+      theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+      theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+      theme(legend.key.width = unit(1.5,"cm"))+
+      theme(legend.title = element_text(size=13))+
+      theme( legend.margin = margin(-2, 0, -2, 0))+
+      facet_wrap(~factor(eff,levels=c(rev(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]))),nrow = length(unique(data$eff)),strip.position = "right",labeller = as_labeller(rcp.labs))+
+      # theme(strip.background = element_blank(),strip.text.x = element_blank())+
+      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=12)
   }else{
     plt1=ggplot(data)+
-      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.4)+#uncertainty band
-      scale_fill_discrete("Incertitude liée aux modèles\n(intervalle 5-95%)",type= as.vector(col_3rcp[color_select]),labels=NULL)+
-      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))
+      geom_hline(yintercept = 0)+
+      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.55)+#uncertainty band
+      scale_fill_discrete("Dispersion liée aux modèles",type= as.vector(col_3rcp[color_select]))+
+      guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
+      # geom_line(aes(x=pred,y=med,group=eff,color=eff),size=0.8,alpha=0.8,lty="21")+#RCP mean
+      scale_x_continuous("",limits=xlim2,expand=c(0,0))+
+      # scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=NULL)+
+      # guides(color=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+      theme_bw(base_size = 16)+
+      theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+      theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+      theme(legend.key.width = unit(1.5,"cm"))+
+      theme(legend.title = element_text(size=13))+
+      theme( legend.margin = margin(-2, 0, -2, 0))+
+      facet_wrap(~factor(eff,levels="rcp85"),nrow = length(unique(data$eff)),strip.position = "right",labeller = as_labeller(rcp.labs))+
+      # theme(strip.background = element_blank(),strip.text.x = element_blank())+
+      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=12)
   }
-  plt1=plt1+
-    geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.5,lty="21")+#RCP mean
-    scale_x_continuous("",limits=xlim2,expand=c(0,0))+
-    scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=labels_rcp[idx_label])+
-    theme_bw(base_size = 16)+
-    theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-    theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-    theme(legend.key.width = unit(1.5,"cm"))+
-    theme(legend.title = element_text(size=13))+
-    theme( legend.margin = margin(-2, 0, -2, 0))+
-    facet_wrap(vars(eff),nrow = length(unique(data$eff)))+
-    theme(strip.background = element_blank(),strip.text.x = element_blank())+
-    geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=12)
+    
   
   if(var!="tasAdjust"){
     plt1=plt1+
@@ -1483,23 +1502,14 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     plt1=plt1+
       scale_y_continuous(paste0("Changement moyen (°C)"),expand=c(0,0))
   }
-  # if(var!="Q"){
-    plt1=plt1+
-      geom_line(data=Obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+
-      scale_size_manual("",values = c("aa"=1),labels=c("Observations"))
-  # }else{
-  #   plt1=plt1+
-  #     geom_line(data=Obs,aes(x=pred,y=val,size="aa",group=hm),alpha=0.7,color="gray50")+
-  #     scale_size_manual("",values = c("aa"=1),labels=c("Observations"))
-  # }
-  
+  plt1=plt1+
+    geom_line(data=Obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+
+    scale_size_manual("Observations",values = c("aa"=1))+
+    guides(size=guide_legend(order=1,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),label=F))
   if(pred=="temp"){
     plt1=plt1+
       scale_x_continuous("Niveau de réchauffement planétaire (°C)",limits=xlim2,expand=c(0,0))
   }
-
-  
-  
   
   
   
@@ -1525,15 +1535,20 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   }
   data=pivot_longer(data,cols=!pred,names_to = "rcp",values_to = "val")
   if(pred=="time"){
-    rcp.labs <- c("RCP 2.6", "RCP 4.5", "RCP 8.5")
+    rcp.labs <- rev(c("RCP 2.6", "RCP 4.5", "RCP 8.5"))
   }
   if(pred=="temp"){
     rcp.labs <- c("RCP 8.5")
   }
+  data$cat="Pas d'accord"
+  data$cat[data$val>=80]="Positif"
+  data$cat[data$val<=20]="Négatif"
+  data$cat=factor(data$cat,levels=c("Positif","Pas d'accord","Négatif"))
   
   plt2=ggplot(data)+
-    geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=val),color="transparent",size=5,shape=21)+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les chaînes sur\nle signe de la tendance",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T,oob=squish,limits=c(0,100),breaks=c(20,40,60,80),labels=~ if(length(.x) == 2) {c("- à 100%","+ à 100%")} else {c("- à 80%","- à 60%","+ à 60%","+ à 80%")})+#that way because stepsn deforms colors
+    geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=cat),color="transparent",size=5,shape=21)+
+    # binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les chaînes sur\nle signe de la tendance",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T,oob=squish,limits=c(0,100),breaks=c(20,40,60,80),labels=~ if(length(.x) == 2) {c("- à 100%","+ à 100%")} else {c("- à 80%","- à 60%","+ à 60%","+ à 80%")})+#that way because stepsn deforms colors
+    scale_fill_manual("Accord entre projections\nsur le signe du changement",values = c("Négatif"=precip_5[1],"Pas d'accord"="grey85","Positif"=precip_5[5]))+
     scale_y_discrete("",labels=rev(rcp.labs))+
     theme_bw(base_size = 16)+
     theme(legend.title = element_text(size=13))+
@@ -1543,7 +1558,6 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     scale_x_continuous("",limits=xlim2,expand=c(0,0))+
     ylab("")+
     annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=8)
-  
   
   
   nFut = length(Xfut)
@@ -2848,7 +2862,10 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   
   lim_col1=as.numeric(round(quantile((exut[exut$source!="iv",]$val),probs=0.99),-1))
+  if(lim_col1==0){lim_col1=10}
   lim_col2=as.numeric(round(quantile((exut[exut$source=="iv",]$val),probs=c(0.01,0.99)),-1))
+  if(lim_col2[1]==100){lim_col2[1]=90}
+  if(lim_col2[2]==lim_col2[1]){lim_col2[2]=lim_col2[1]+10}
   
   if(!pix){
     plt1=base_map_outlets(data = exut[exut$source!="iv",],val_name = "val")+
