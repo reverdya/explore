@@ -2286,12 +2286,12 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   for(r in rcp_names){
     
     idx_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r)
-    ref0=apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_ref0-15):(idx_ref0+15)],MARGIN=1,mean,na.rm=T)
+    ref0=apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_ref0-15):min(c(idx_ref0+15,dim(lst.QUALYPSOOUT[[1]]$Y)[3]))],MARGIN=1,mean,na.rm=T)
     
     if(var!="tasAdjust"){
-      rel_chg=(apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_Xfut-15):(idx_Xfut+15)],MARGIN=c(1,2),mean,na.rm=T)-ref0)/ref0*100
+      rel_chg=(apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_Xfut-15):min(c(idx_ref0+15,dim(lst.QUALYPSOOUT[[1]]$Y)[3]))],MARGIN=c(1,2),mean,na.rm=T)-ref0)/ref0*100
     }else{
-      rel_chg=apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_Xfut-15):(idx_Xfut+15)],MARGIN=c(1,2),mean,na.rm=T)-ref0
+      rel_chg=apply(lst.QUALYPSOOUT[[1]]$Y[,idx_rcp,(idx_Xfut-15):min(c(idx_ref0+15,dim(lst.QUALYPSOOUT[[1]]$Y)[3]))],MARGIN=c(1,2),mean,na.rm=T)-ref0
     }
     exut$val[exut$rcp==r & exut$quant==quant[2]]=apply(rel_chg,1,mean)
     exut$val[exut$rcp==r & exut$quant==quant[1]]=apply(rel_chg,1,quantile,probs=0.05)
