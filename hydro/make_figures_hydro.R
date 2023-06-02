@@ -111,7 +111,7 @@ for (i in unique(simu_lst$indic)){
       
 
       plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$code[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q",indic = i,idx_pix = idx,path_temp=path_hadcrut)
-      plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,var="Q",indic=i,horiz = horiz3,title=T)
+      plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,var="Q",indic=i,horiz = horiz3,title=T)
     }
   }
   print(i)
@@ -184,6 +184,8 @@ for (i in unique(simu_lst$indic)){
     map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col)
   }
   print(i)
+  try(dev.off(dev.list()["RStudioGD"]), silent=TRUE)#otherwise "depth" error linked to plots after some time, maybe not solved because could be linked to resizing Rstudio window and/or plot window
+  gc()
 }
 
 
