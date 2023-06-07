@@ -45,19 +45,19 @@ library(forcats)#fct_rev
 #object ggplot : object in "plot.object"
 #function plot base (ou multiplot): plot.object=NULL , Type="plot" , plot.function=plot(x,y)... , Format = "pdf" (ou "svg" ou "jpeg")
 #If jpeg and "plot" size in pixels
-save.plot=function(plot.object,Filename,Folder,Type="ggplot",plot.function=NULL,Format=NULL,Width=30,Height=20){
+save.plot=function(plot.object,Filename,Folder,Type="ggplot",plot.function=NULL,Format=NULL,Width=30,Height=20,dpi=150){
   if(Type=="ggplot"){
     if(Format=="svg"){
       fnsave=paste(Folder,Filename,".svg",sep="")
-      ggsave(filename = fnsave,plot=plot.object,device = "svg")
+      ggsave(filename = fnsave,plot=plot.object,device = "svg",dpi=dpi)
     }
     if(Format=="pdf"){
       fnsave=paste(Folder,Filename,".pdf",sep="")
-      ggsave(filename = fnsave,plot=plot.object,device = "pdf",units="cm",height=Height,width=Width)
+      ggsave(filename = fnsave,plot=plot.object,device = "pdf",units="cm",height=Height,width=Width,dpi=dpi)
     }
     if(Format=="jpeg"){
       fnsave=paste(Folder,Filename,".jpg",sep="")
-      ggsave(filename = fnsave,plot=plot.object,device = "jpeg",units="cm",height=Height,width=Width)
+      ggsave(filename = fnsave,plot=plot.object,device = "jpeg",units="cm",height=Height,width=Width,dpi=dpi)
     }
   }
   if(Type=="plot"){
@@ -930,12 +930,15 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
       theme_bw(base_size = 18)+
       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-      scale_x_continuous("")+
-      scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))+
+      scale_x_continuous("",sec.axis = sec_axis( trans=~.*1, name="BC"))+
+      scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0),sec.axis = sec_axis( trans=~.*1, name="GCM"))+
       guides(color = guide_legend(override.aes = list(size = 1.7)))+
       facet_grid(gcm~bc)+
       theme(panel.spacing.x = unit(0.5, "lines"))+
-      theme(strip.text.y = element_text(size = 9))
+      theme(strip.text.y = element_text(size = 9))+
+      theme(axis.line.y.right = element_blank(),axis.ticks.y.right = element_blank(),axis.text.y.right = element_blank(),axis.title.y.right = element_text(face="bold",size=18))+
+      theme(axis.line.x.top = element_blank(),axis.ticks.x.top = element_blank(),axis.text.x.top = element_blank(),axis.title.x.top = element_text(face="bold",size=18))+
+      theme(legend.title = element_text(face="bold",size=18))
     if(print_warning & warn!="NA"){
       plt=plt+
         ggtitle(warn)+
@@ -943,15 +946,15 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
     }
     if(place=="cities"){
       if(SPAR==1){
-        save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+        save.plot(dpi=300,dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
       }else{
-        save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+        save.plot(dpi=300,dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
       }
     }else{
       if(SPAR==1){
-        save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
+        save.plot(dpi=300,dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
       }else{
-        save.plot(plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
       }
     }
   }
@@ -973,27 +976,32 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
         theme_bw(base_size = 18)+
         theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
         theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-        scale_x_continuous("")+
+        scale_x_continuous("",sec.axis = sec_axis( trans=~.*1, name="BC"))+
         guides(color = guide_legend(override.aes = list(size = 1.7)))+
         facet_grid(gcm~bc)+
         theme(panel.spacing.x = unit(0.5, "lines"))+
         theme(strip.text.y = element_text(size = 9))
       if(cut_ymax==T){
         plt=plt+
-          scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),quantile(data$val,probs=0.99,na.rm=T)),n.breaks=4,expand = c(0,0))
+          scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),quantile(data$val,probs=0.99,na.rm=T)),n.breaks=4,expand = c(0,0),sec.axis = sec_axis( trans=~.*1, name="GCM"))
+          
       }else{
         plt=plt+
-          scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0))
+          scale_y_continuous(paste0(ylabel,unit),limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),n.breaks=4,expand = c(0,0),sec.axis = sec_axis( trans=~.*1, name="GCM"))
       }
       if(print_warning & warn!="NA"){
         plt=plt+
           ggtitle(warn)+
           theme(plot.title = element_text( face="bold",  size=8,hjust=0.5))
       }
+      plt=plt+
+        theme(axis.line.y.right = element_blank(),axis.ticks.y.right = element_blank(),axis.text.y.right = element_blank(),axis.title.y.right = element_text(face="bold",size=18))+
+        theme(axis.line.x.top = element_blank(),axis.ticks.x.top = element_blank(),axis.text.x.top = element_blank(),axis.title.x.top = element_text(face="bold",size=18))+
+        theme(legend.title = element_text(face="bold",size=18))
       if(SPAR==1){
-        save.plot(plt,Filename = paste0(scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_",h,"_spar1.0"),Folder = paste0(path_fig,scenAvail$indic[1],"/"),Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0(scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_",h,"_spar1.0"),Folder = paste0(path_fig,scenAvail$indic[1],"/"),Format = "jpeg")
       }else{
-        save.plot(plt,Filename = paste0(scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_",h,"_spar",SPAR),Folder = paste0(path_fig,scenAvail$indic[1],"/"),Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0(scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_",h,"_spar",SPAR),Folder = paste0(path_fig,scenAvail$indic[1],"/"),Format = "jpeg")
       }
     }
   }
@@ -1069,6 +1077,7 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
   }
   
   plt=ggplot(data)+
+    geom_hline(yintercept = 0)+
     geom_line(aes(x=pred,y=med,group=eff,color=eff),size=1.2)+
     scale_x_continuous(paste0(pred_name," (",pred_unit,")"),limits=xlim,expand=c(0,0))+
     theme_bw(base_size = 18)+
@@ -1077,12 +1086,12 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
   
   if(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)[iEff]=="rcp"){
     plt=plt+
-      scale_color_discrete("",type = as.vector(col_3rcp[color_select]),labels=labels_rcp[which(names(col_3rcp)%in%color_select)])+
-      scale_fill_discrete("",type= as.vector(col_3rcp[color_select]),labels=labels_rcp[which(names(col_3rcp)%in%color_select)])
+      scale_color_discrete(plain_nameEff,type = as.vector(col_3rcp[color_select]),labels=labels_rcp[which(names(col_3rcp)%in%color_select)])+
+      scale_fill_discrete(plain_nameEff,type= as.vector(col_3rcp[color_select]),labels=labels_rcp[which(names(col_3rcp)%in%color_select)])
   }else{
     plt=plt+
-      scale_color_discrete("",type = viridis(nEff))+
-      scale_fill_discrete("",type=viridis(nEff))
+      scale_color_discrete(plain_nameEff,type = viridis(nEff))+
+      scale_fill_discrete(plain_nameEff,type=viridis(nEff))
   }
   
   if(includeMean){
@@ -1098,7 +1107,7 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
     if (is.na(folder_out)){
       return(plt)
     }else{
-      save.plot(plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+      save.plot(dpi=300,plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
     }
   }else{
     if(is.null(includeRCP)){
@@ -1114,7 +1123,7 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
       if (is.na(folder_out)){
         return(plt)
       }else{
-        save.plot(plt,Filename = paste0("effect_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0("effect_",ind_name,"_",nameEff,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
       }
     }else{
       if(var!="tasAdjust"){
@@ -1135,7 +1144,7 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
       if (is.na(folder_out)){
         return(plt)
       }else{
-        save.plot(plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",includeRCP,"_",bv_name),Folder = folder_out,Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0("change_",ind_name,"_",nameEff,"_",pred,"_",includeRCP,"_",bv_name),Folder = folder_out,Format = "jpeg")
       }
     }
   }
@@ -1449,55 +1458,61 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     names(rcp.labs) <- "rcp85"
   }
   
+  ylims=c(quantile(chain_band$min,probs=0.05),quantile(chain_band$max,probs=0.95))
   
   if(pred=="time"){
     plt1=ggplot(data)+
       geom_hline(yintercept = 0)+
       geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
-      scale_fill_discrete("Dispersion liée à la variabilité naturelle",type= as.vector(col_3rcp_shade[color_select]))+
+      scale_fill_discrete("Dispersion liée à la\nvariabilité naturelle",type= as.vector(col_3rcp_shade[color_select]))+
       guides(fill=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
       new_scale_fill()+
       geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.55)+#uncertainty band
       scale_fill_discrete("Dispersion liée aux modèles",type= as.vector(col_3rcp[color_select]))+
       guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
-      # geom_line(aes(x=pred,y=med,group=eff,color=eff),size=0.8,alpha=0.8,lty="21")+#RCP mean
-      scale_x_continuous("",limits=xlim2,expand=c(0,0))+
-      # scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=NULL)+
-      # guides(color=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+      geom_line(aes(x=pred,y=med,group=eff,color=eff),size=0.8)+#RCP mean
+      scale_x_continuous("",limits=xlim2,expand=c(0,0),minor_breaks = seq(xlim2[1],xlim2[2],10))+
+      scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=NULL)+
+      guides(color=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
       theme_bw(base_size = 16)+
       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
       theme(legend.key.width = unit(1.5,"cm"))+
       theme(legend.title = element_text(size=13))+
       theme( legend.margin = margin(-2, 0, -2, 0))+
-      facet_wrap(~factor(eff,levels=c(rev(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]))),nrow = length(unique(data$eff)),strip.position = "right",labeller = as_labeller(rcp.labs))+
-      # theme(strip.background = element_blank(),strip.text.x = element_blank())+
-      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=12)
+      facet_wrap(~factor(eff,levels=c(rev(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]))),nrow = length(unique(data$eff)),strip.position = "top",labeller = as_labeller(rcp.labs))+#has to be top, otherwise cannot vertically align
+      theme(strip.text = element_text(face="bold", size=8,margin = margin(0.1,0.1,0.1,0.1, "cm")))+
+      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=10)
   }else{
     plt1=ggplot(data)+
       geom_hline(yintercept = 0)+
       geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.55)+#uncertainty band
       scale_fill_discrete("Dispersion liée aux modèles",type= as.vector(col_3rcp[color_select]))+
       guides(fill=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
-      # geom_line(aes(x=pred,y=med,group=eff,color=eff),size=0.8,alpha=0.8,lty="21")+#RCP mean
+      geom_line(aes(x=pred,y=med,group=eff,color=eff),size=0.8)+#RCP mean
       scale_x_continuous("",limits=xlim2,expand=c(0,0))+
-      # scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=NULL)+
-      # guides(color=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
+      scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=NULL)+
+      guides(color=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))+
       theme_bw(base_size = 16)+
       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
       theme(legend.key.width = unit(1.5,"cm"))+
       theme(legend.title = element_text(size=13))+
       theme( legend.margin = margin(-2, 0, -2, 0))+
-      facet_wrap(~factor(eff,levels="rcp85"),nrow = length(unique(data$eff)),strip.position = "right",labeller = as_labeller(rcp.labs))+
-      # theme(strip.background = element_blank(),strip.text.x = element_blank())+
-      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=12)
+      facet_wrap(~factor(eff,levels="rcp85"),nrow = length(unique(data$eff)),strip.position = "top",labeller = as_labeller(rcp.labs))+
+      theme(strip.text = element_text(face="bold", size=8,margin = margin(0.1,0.1,0.1,0.1, "cm")))+
+      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=10)
   }
     
   
   if(var!="tasAdjust"){
-    plt1=plt1+
-      scale_y_continuous(paste0("Changement relatif moyen (%)"),expand=c(0,0))
+    if(pred=="time"){
+      plt1=plt1+
+        scale_y_continuous(paste0("Changement relatif moyen (%)"),limits = ylims,expand=c(0,0),oob=squish)
+    }else{
+      plt1=plt1+
+        scale_y_continuous(paste0("Changement relatif moyen (%)"),expand=c(0,0))
+    }
   }else{
     plt1=plt1+
       scale_y_continuous(paste0("Changement moyen (°C)"),expand=c(0,0))
@@ -1544,6 +1559,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   data$cat[data$val>=80]="Positif"
   data$cat[data$val<=20]="Négatif"
   data$cat=factor(data$cat,levels=c("Positif","Pas d'accord","Négatif"))
+  data=data[data$pred!=2085,]
   
   plt2=ggplot(data)+
     geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=cat),color="transparent",size=5,shape=21)+
@@ -1552,13 +1568,17 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     scale_y_discrete("",labels=rev(rcp.labs))+
     theme_bw(base_size = 16)+
     theme(legend.title = element_text(size=13))+
-    theme(panel.grid.major = element_blank(),panel.grid.minor = element_blank(),panel.border = element_blank(),axis.ticks = element_blank(),axis.text.x = element_blank())+
+    theme(panel.grid.major.y = element_blank(),panel.grid.minor.y = element_blank(),panel.border = element_blank(),axis.ticks = element_blank(),axis.text.x = element_blank())+
     theme(axis.text.y = element_text(face="bold"))+
     theme(legend.key.height = unit(0.5,"cm"))+
     scale_x_continuous("",limits=xlim2,expand=c(0,0))+
     ylab("")+
     annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=8)
   
+  if(pred=="time"){
+    plt2=plt2+
+      scale_x_continuous("",limits=xlim2,expand=c(0,0),minor_breaks = seq(xlim2[1],xlim2[2],10))
+  }
   
   nFut = length(Xfut)
   nEff = lst.QUALYPSOOUT[[1]]$listScenarioInput$nEff
@@ -1588,16 +1608,21 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
   
   plt3=ggplot(data)+
-    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var))+
+    geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var,alpha=var))+
     # geom_line(data=data[data$var!="int",],aes(x=Xfut,y=val,group=var),color="black",linetype="dashed",size=0.5)+
     scale_fill_discrete("",type = vec_color,labels=labels_var)+
+    scale_alpha_manual("",values=c(0.7,rep(1,length(vec_color)-1)),labels=labels_var)+
     scale_x_continuous("",limits = xlim2,expand=c(0,0))+
     scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
     theme_bw(base_size = 16)+
     theme(legend.title = element_text(size=13))+
-    theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank(),panel.border = element_blank(),axis.ticks.x = element_blank(),axis.text.x = element_blank(),axis.line.y = element_line(colour = "black"),axis.line.x=element_blank())+
+    theme(panel.border = element_blank(),axis.ticks.x = element_blank(),axis.text.x = element_blank(),axis.line.y = element_line(colour = "black"),axis.line.x=element_blank())+
     annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=8)+
     theme(legend.position="right",legend.justification="left", legend.box.spacing = unit(0, "pt"))
+  if(pred=="time"){
+    plt3=plt3+
+      scale_x_continuous("",limits=xlim2,expand=c(0,0),minor_breaks = seq(xlim2[1],xlim2[2],10))
+  }
   
   if(var!="tasAdjust"){
     plt=ggarrange(plt1,plt2,plt3,heights=c(2,0.6,1),nrow=3,ncol=1,align="v")
@@ -1608,7 +1633,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("summary_change_",ind_name,"_",pred,"_",bv_full_name),Folder = folder_out,Format = "jpeg")
+    save.plot(dpi=300,plt,Filename = paste0("summary_change_",ind_name,"_",pred,"_",bv_full_name),Folder = folder_out,Format = "jpeg")
   }
   
 }
@@ -1640,6 +1665,32 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   }
   h=which(Xfut %in% horiz)
   
+  
+  if(pred=="time"){
+    iEff = which(lst.QUALYPSOOUT[[1]]$namesEff == "rcp")
+    EffHat=do.call(rbind,lapply(lst.QUALYPSOOUT,function(x) x$MAINEFFECT[["rcp"]]$MEAN[idx,]+x$GRANDMEAN$MEAN[idx]))
+    nEff = dim(EffHat)[2]
+  }
+  if(pred=="temp"){
+    EffHat=do.call(rbind,lapply(lst.QUALYPSOOUT,function(x) x$GRANDMEAN$MEAN[idx]))
+    nEff = dim(EffHat)[2]
+  }
+  meanPred = EffHat
+  if(var!="tasAdjust"){
+    med=data.frame(meanPred)*100
+  }else{
+    med=data.frame(meanPred)
+  }
+  if(pred=="time"){
+    colnames(med)=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]
+  }
+  if(pred=="temp"){
+    colnames(med)="rcp85"
+  }
+  med$horiz=Xfut
+  med=pivot_longer(data=med,cols=!horiz,names_to = "rcp",values_to = "val")
+  med=med[med$horiz %in% horiz,]
+  med$horiz=paste0("h_",med$horiz)
   
   phiStar.corr=list()
   for (r in 1:nrcp){
@@ -1687,7 +1738,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
       phiStar.corr[[r]]$rcp=unique(scenAvail$rcp)[r]
     }
     if(predict=="temp"){
-      phiStar.corr[[r]]$rcp="rp8.5"
+      phiStar.corr[[r]]$rcp="rcp85"
     }
     
   }
@@ -1716,15 +1767,37 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     label_rcp=c("RCP 8.5")
   }
   
-  custom_boxplot=function(x){
-    return(data.frame(ymin=min(x), ymax=max(x), upper=quantile(x,probs=0.95), lower=quantile(x,probs=0.05), middle=mean(x)))
-  }
+  data1=aggregate(phiStar.corr$val,by=list(phiStar.corr$rcp,phiStar.corr$horiz), quantile,probs=0.05)
+  data2=aggregate(phiStar.corr$val,by=list(phiStar.corr$rcp,phiStar.corr$horiz), quantile,probs=0.95)
+  colnames(data1)=c("rcp","horiz","lower")
+  colnames(data2)=c("rcp","horiz","upper")
+  colnames(med)=c("horiz","rcp","mean")
+  data=merge(data1,data2,by=c("rcp","horiz"))
+  data=merge(data,med,by.x=c("rcp","horiz"))
   
-  plt1=ggplot(phiStar.corr)+
-    stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=horiz,y=val,fill=rcp),lwd=2,position="dodge")+
-    geom_point(aes(x=horiz,y=val,color=rcp),alpha=0)+#just for legend
+  if(var!="tasAdjust"){
+    IV_sd=sqrt(lst.QUALYPSOOUT[[1]]$INTERNALVAR[idx])*100
+  }else{
+    IV_sd=sqrt(lst.QUALYPSOOUT[[1]]$INTERNALVAR[idx])*100
+  }
+
+  data$ymin=data$lower-IV_sd
+  data$ymax=data$upper+IV_sd
+  
+
+  
+  plt1=ggplot(data)+
+    geom_hline(yintercept = 0)+
+    geom_boxplot(stat = "identity",aes(x=horiz,fill=rcp,lower=ymin,upper=ymax,middle=mean,ymin=ymin,ymax= ymax),width=0.5,position=position_dodge(0.75),color="transparent")+
     scale_fill_discrete("",type=as.vector(col_3rcp_shade[color_select]))+
-    scale_color_discrete("",type=as.vector(col_3rcp_shade[color_select]),labels=label_rcp)+
+    guides(fill="none")+
+    new_scale_fill()+
+    geom_boxplot(stat = "identity",aes(x=horiz,fill=rcp,lower=lower,upper=upper,middle=mean,ymin=lower,ymax= upper),width=0.5,position=position_dodge(0.75),color="transparent")+
+    geom_point(aes(x=horiz,y=mean,group=rcp),position = position_dodge(0.75),color="gray90",size=2,shape=15)+
+    # stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=horiz,y=val,fill=rcp),lwd=2,position="dodge")+
+    geom_point(aes(x=horiz,y=mean,color=rcp),alpha=0)+#just for legend
+    scale_fill_discrete("",type=as.vector(col_3rcp[color_select]))+
+    scale_color_discrete("",type=as.vector(col_3rcp[color_select]),labels=label_rcp)+
     scale_x_discrete("",labels = horiz)+
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
@@ -1744,18 +1817,24 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   }
   
   custom_boxplot2=function(x){
-    return(data.frame(ymin=min(x), ymax=max(x), upper=quantile(x,probs=0.75), lower=quantile(x,probs=0.25), middle=mean(x)))
+    return(data.frame(ymin=quantile(x,probs=0.25), ymax=quantile(x,probs=0.75), upper=quantile(x,probs=0.75), lower=quantile(x,probs=0.25), middle=mean(x)))#75 and 25 just to ease representation
+  }
+  custom_boxplot3=function(x){
+    return(data.frame(ymin=min(x), ymax=max(x), upper=max(x), lower=min(x), middle=min(x)))#75 and 25 just to ease representation
   }
   plt2=ggplot(data.frame(x=rep(1,100),y=c(1:100)))+
-    stat_summary(fun.data = custom_boxplot2,geom = "boxplot",aes(x=x,y=y),lwd=2,width=0.02)+
-    geom_text(aes(x=1.05,y=50,label="Moyenne\nd'ensemble"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=75,label="Incertitude\nmodèle (95%)"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=25,label="Incertitude\nmodèle (5%)"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=100,label="Projection\nmaximale"),fontface = "bold",size=5)+
-    geom_text(aes(x=1.05,y=0,label="Projection\nminimale"),fontface = "bold",size=5)+
+    stat_summary(fun.data = custom_boxplot3,geom = "boxplot",aes(x=x,y=y),color="transparent",width=0.02,fill="grey60")+
+    stat_summary(fun.data = custom_boxplot2,geom = "boxplot",aes(x=x,y=y),color="transparent",width=0.02,fill="grey40")+
+    geom_point(aes(x=x,y=mean(y)),color="gray90",size=2,shape=15)+
+    geom_text(aes(x=1.05,y=50,label="Moyenne\nd'ensemble"),size=5)+
+    geom_text(aes(x=1.05,y=70,label="Dispersion liée\naux modèles"),size=5)+
+    geom_text(aes(x=1.05,y=30,label="Dispersion liée\naux modèles"),size=5)+
+    geom_text(aes(x=1.05,y=95,label="Dispersion liée\nà la variabilité\nnaturelle"),size=5)+
+    geom_text(aes(x=1.05,y=5,label="Dispersion liée\nà la variabilité\nnaturelle"),size=5)+
     scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
     theme_void()+
     theme(panel.background = element_rect(colour="black",fill="transparent"))
+  plt2
   
   plt=ggarrange(plt1,plt2,widths=c(0.8,0.2),nrow=1,ncol=2,align="h")+
     theme(plot.margin = unit(c(0,0.5,0,0), "cm"))
@@ -1767,7 +1846,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("boxplot_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
+    save.plot(dpi=300,plt,Filename = paste0("boxplot_",ind_name,"_",pred,"_",bv_name),Folder = folder_out,Format = "jpeg")
   }
   
 }
@@ -1815,7 +1894,7 @@ background_for_maps=function(path_river,path_fr){
 ## Data has at least longitude in x, latitude in y and a numeric filling value in val_name
 
 
-base_map_outlets=function(data,val_name,alpha_name=NULL){
+base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL){
   plt=ggplot(data=data)+
     geom_polygon(data=fr,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)+
     geom_path(data=river,aes(x=long,y=lat,group=group),colour="gray80",size=0.1)+
@@ -1827,12 +1906,16 @@ base_map_outlets=function(data,val_name,alpha_name=NULL){
     theme(axis.ticks =element_blank(),axis.text = element_blank() )+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
     theme(strip.text = element_text(size = 12, face = "bold"))#+
+  if(zoom=="Loire"){
+    plt=plt+
+      coord_equal(ratio=111/78,xlim = c(-2.5, 4.75),ylim = c(44.25,48.75),expand=F)## ratio of 1lat by 1long at 45N
+  }
   if(!is.null(alpha_name)){
     plt=plt+
-      geom_point(aes(x=x,y=y,fill=get(val_name),alpha=get(alpha_name)),size=3,shape=21,stroke=0.1)
+      geom_point(aes(x=x,y=y,fill=get(val_name),shape=get(alpha_name)),size=3)
   }else{
     plt=plt+
-      geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21,stroke=0.1)
+      geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21,stroke=0.2)
   }
   return(plt)
 }
@@ -1910,7 +1993,7 @@ base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,face
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
 
-map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6){
+map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6,zoom=NULL){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -1935,7 +2018,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
   exut$val=0
   exut$sign=0
-  exut$sign_agree="<80%"
+  exut$sign_agree="Pas d'accord"
 
   for(r in rcp_names){
     ieff_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]==r)
@@ -1978,11 +2061,13 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   }
   
   for(i in 1:nrow(exut)){
-    if(exut$sign[i]>80|exut$sign[i]<20){
-      exut$sign_agree[i]=">80%"
+    if(exut$sign[i]>=80){
+      exut$sign_agree[i]="Positif"
+    }
+    if(exut$sign[i]<=20){
+      exut$sign_agree[i]="Négatif"
     }
   }
-  
   
   exut$quant=factor(exut$quant,levels=quant)
   colnames(exut)=c("x","y","idx","rcp","quant","val","sign","sign_agree")
@@ -2009,22 +2094,14 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   
   if(!pix){
-    plt=base_map_outlets(data = exut[exut$sign_agree=="<80%",],val_name = "val",alpha_name = "sign_agree")+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Pas d'accord [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
-      guides(fill = guide_bins(override.aes=list(alpha=0.2,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
-    plt$layers[[3]]$aes_params$alpha= 0.2
-    plt=plt+
-      new_scale_fill()+
-      geom_point(data=exut[exut$sign_agree==">80%",],aes(x=x,y=y,fill=val),size=3,shape=21,stroke=0.1)+
-      binned_scale(aesthetics = "fill",scale_name = "toto2",name="Accord [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
-      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
-      theme(legend.box = "horizontal")
-    plt=plt+
+    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
+      guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
+      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21))+
+      guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       facet_grid(rcp ~ quant,labeller = labeller(rcp=rcp.labs, quant = quant.labs))+
-      ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCP et le prédicteur ",pred_name,"\n(Horizon ",horiz," avec référence 1990)"))+
+      ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCPs et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
-    plt$layers[[3]]$aes_params$size= 3
-    plt$layers[[4]]$aes_params$size= 3
   }else{
     if(var!="tasAdjust"){
       plt=base_map_grid(data = exut,val_name = "val",pattern_name = "sign_agree",facet_vert_name ="rcp",threshold="<80%",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
@@ -2054,7 +2131,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+    save.plot(dpi=300,plt,Filename = paste0("map_3rcp_3quant_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
   }
 }
 
@@ -2071,7 +2148,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
 ## rcp_name the name of the wanted rcp
 ## folder_out the saving folder
 
-map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6,path_temp=NULL,cat="meteo"){
+map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6,path_temp=NULL,cat="meteo",zoom=NULL){
   
   if(pred=="time"){
     ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
@@ -2107,7 +2184,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   exut$val=0
   exut$sign=0
   
-  exut$sign_agree="<80%"
+  exut$sign_agree="Pas d'accord"
   
   for(h in horiz){
     idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==h)
@@ -2169,8 +2246,11 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   }
   
   for(i in 1:nrow(exut)){
-    if(exut$sign[i]>80|exut$sign[i]<20){
-      exut$sign_agree[i]=">80%"
+    if(exut$sign[i]>=80){
+      exut$sign_agree[i]="Positif"
+    }
+    if(exut$sign[i]<=20){
+      exut$sign_agree[i]="Négatif"
     }
   }
   
@@ -2200,22 +2280,14 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   
   if(!pix){
-    plt=base_map_outlets(data = exut[exut$sign_agree=="<80%",],val_name = "val",alpha_name = "sign_agree")+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Pas d'accord [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
-      guides(fill = guide_bins(override.aes=list(alpha=0.2,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
-    plt$layers[[3]]$aes_params$alpha= 0.2
-    plt=plt+
-      new_scale_fill()+
-      geom_point(data=exut[exut$sign_agree==">80%",],aes(x=x,y=y,fill=val),size=3,shape=21,stroke=0.1)+
-      binned_scale(aesthetics = "fill",scale_name = "toto2",name="Accord [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
-      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
-      theme(legend.box = "horizontal")
-    plt=plt+
+    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
+      guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
+      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21))+
+      guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
-      ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname," avec référence 1990)"))+
+      ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname,", référence 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
-    plt$layers[[3]]$aes_params$size= 3
-    plt$layers[[4]]$aes_params$size= 3
   }else{
     if(var!="tasAdjust"){
       plt=base_map_grid(data = exut,val_name = "val",pattern_name="sign_agree",facet_vert_name ="horiz",threshold="<80%",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
@@ -2253,7 +2325,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name),Folder = folder_out,Format = "jpeg")
+    save.plot(dpi=300,plt,Filename = paste0("map_3quant_3horiz_",ind_name,"_",pred,"_",rcp_name),Folder = folder_out,Format = "jpeg")
   }
   
   
@@ -2270,7 +2342,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 
 ## Will not work for predictor temperature (cannot do average +- 30 years)
 
-map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",ref0=1990){
+map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",ref0=1990,zoom=NULL){
 
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -2295,7 +2367,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
   exut$val=0
   exut$sign=0
-  exut$sign_agree="<80%"
+  exut$sign_agree="Pas d'accord"
   
   for(r in rcp_names){
     
@@ -2316,8 +2388,11 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   
   
   for(i in 1:nrow(exut)){
-    if(exut$sign[i]>80|exut$sign[i]<20){
-      exut$sign_agree[i]=">80%"
+    if(exut$sign[i]>=80){
+      exut$sign_agree[i]="Positif"
+    }
+    if(exut$sign[i]<=20){
+      exut$sign_agree[i]="Négatif"
     }
   }
   
@@ -2345,22 +2420,14 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   }
   
   if(!pix){
-    plt=base_map_outlets(data = exut[exut$sign_agree=="<80%",],val_name = "val",alpha_name = "sign_agree")+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Pas d'accord [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
-      guides(fill = guide_bins(override.aes=list(alpha=0.2,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
-    plt$layers[[3]]$aes_params$alpha= 0.2
-    plt=plt+
-      new_scale_fill()+
-      geom_point(data=exut[exut$sign_agree==">80%",],aes(x=x,y=y,fill=val),size=3,shape=21,stroke=0.1)+
-      binned_scale(aesthetics = "fill",scale_name = "toto2",name="Accord [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
-      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
-      theme(legend.box = "horizontal")
-    plt=plt+
+    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
+      guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
+      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21))+
+      guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       facet_grid(rcp ~ quant,labeller = labeller(rcp=rcp.labs, quant = quant.labs))+
       ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCPs et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990),\n ensemble non balancé"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
-    plt$layers[[3]]$aes_params$size= 3
-    plt$layers[[4]]$aes_params$size= 3
   }else{
     if(var!="tasAdjust"){
       plt=base_map_grid(data = exut,val_name = "val",pattern_name = "sign_agree",facet_vert_name ="rcp",threshold="<80%",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
@@ -2389,7 +2456,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz),Folder = folder_out,Format = "jpeg")
+    save.plot(dpi=300,plt,Filename = paste0("basic_meth_map_3rcp_3quant_",ind_name,"_time_",horiz),Folder = folder_out,Format = "jpeg")
   }
 }
 
@@ -2408,7 +2475,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
 ## horiz he horizon of predictor wanted
 ## name_eff_plain plain langauge name of principal effects
 
-map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto"){
+map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz,name_eff,name_eff_plain,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",zoom=NULL){
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
@@ -2496,7 +2563,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   }
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val")+
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt=base_map_grid(data = exut,val_name = "val")+
@@ -2527,7 +2594,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     if (is.na(folder_out)){
       return(plt)
     }else{
-      save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+      save.plot(dpi=300,plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
     }
     
   }else{
@@ -2551,7 +2618,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
       if (is.na(folder_out)){
         return(plt)
       }else{
-        save.plot(plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0("map_effect_",name_eff,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
       }
       
     }else{
@@ -2578,7 +2645,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
       if (is.na(folder_out)){
         return(plt)
       }else{
-        save.plot(plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",includeRCP,"_",horiz),Folder = folder_out,Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",includeRCP,"_",horiz),Folder = folder_out,Format = "jpeg")
       }
       
     }
@@ -2600,7 +2667,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
 ## horiz he horizon of predictor wanted
 ## name_eff_plain plain langauge name of principal effects
 
-map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto"){
+map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",zoom=NULL){
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
@@ -2670,7 +2737,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   ## We show uncertainties not variances
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val")+
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt=base_map_grid(data = exut,val_name = "val")+
@@ -2800,7 +2867,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+    save.plot(dpi=300,plt,Filename = paste0("map_total_change_",vartype,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
   }
   
 }
@@ -2817,7 +2884,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
 ## folder_out the saving folder
 ## horiz he horizon of predictor wanted
 
-map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,pix=F,var="toto",title=T){
+map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,pix=F,var="toto",title=T,zoom=NULL){
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
@@ -2868,14 +2935,14 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   if(lim_col2[2]==lim_col2[1]){lim_col2[2]=lim_col2[1]+10}
   
   if(!pix){
-    plt1=base_map_outlets(data = exut[exut$source!="iv",],val_name = "val")+
+    plt1=base_map_outlets(data = exut[exut$source!="iv",],val_name = "val",zoom=zoom)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt1=base_map_grid(data = exut[exut$source!="iv",],val_name = "val")+
       guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   plt1=plt1+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col1),breaks=seq(0,lim_col1,length.out=6),show.limits = T,labels= c(0,round(seq(0+(lim_col1-0)/6,0+(lim_col1-0)/6*4,length.out=4),1),paste0("> ",lim_col1)),oob=squish)+#that way because stepsn deforms colors
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale (100%)\npour chaque source\nde dispersion (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col1),breaks=seq(0,lim_col1,length.out=6),show.limits = T,labels= c(0,round(seq(0+(lim_col1-0)/6,0+(lim_col1-0)/6*4,length.out=4),1),paste0("> ",lim_col1)),oob=squish)+#that way because stepsn deforms colors
     facet_wrap(vars(factor(source,levels=c("rv","rcp","gcm","rcm","bc","hm"))),labeller=labs_part_labeller )
   if(!pix){
     plt1$layers[[3]]$aes_params$size=3
@@ -2883,14 +2950,14 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   
   exut$cat="Variabilité interne"
   if(!pix){
-    plt2=base_map_outlets(data = exut[exut$source=="iv",],val_name = "val")+
+    plt2=base_map_outlets(data = exut[exut$source=="iv",],val_name = "val",zoom=zoom)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt2=base_map_grid(data = exut[exut$source=="iv",],val_name = "val")+
       guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   plt2=plt2+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Partition de variance (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale (100%)\npour chaque source\n'de dispersion'incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
     facet_grid(. ~ cat)
   if(!pix){
     plt2$layers[[3]]$aes_params$size=3
@@ -2899,7 +2966,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   
   # plt=ggarrange(plt1,ggarrange(ggplot()+theme_void(),plt2,ggplot()+theme_void(),heights=c(0.25,0.5,0.25),nrow=3),widths=c(0.6,0.4),ncol=2)
   # plt=ggarrange(plt1,plt2,ncol=2,widths=c(0.68,0.32))
-  plt=ggarrange(plt1,plt2,nrow=2,heights=c(0.6,0.4))
+  plt=ggarrange(plt1,plt2,nrow=2,heights=c(0.61,0.39))
   if(title==T){
     plt=annotate_figure(plt, top = text_grob(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz,pred_unit,")"), face = "bold", size = 18,hjust=0.5))+
       theme(panel.background = element_rect(fill="white"))
@@ -2909,7 +2976,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   if (is.na(folder_out)){
     return(plt)
   }else{
-    save.plot(plt,Filename = paste0("map_var_part_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+    save.plot(dpi=300,plt,Filename = paste0("map_var_part_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
   }
   
 }
