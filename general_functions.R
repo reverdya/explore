@@ -1906,9 +1906,11 @@ base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL){
     theme(axis.ticks =element_blank(),axis.text = element_blank() )+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
     theme(strip.text = element_text(size = 12, face = "bold"))#+
-  if(zoom=="Loire"){
-    plt=plt+
-      coord_equal(ratio=111/78,xlim = c(-2.5, 4.75),ylim = c(44.25,48.75),expand=F)## ratio of 1lat by 1long at 45N
+  if(!is.null(zoom=)){
+    if(zoom=="Loire"){
+      plt=plt+
+        coord_equal(ratio=111/78,xlim = c(-2.5, 4.75),ylim = c(44.25,48.75),expand=F)## ratio of 1lat by 1long at 45N
+    }
   }
   if(!is.null(alpha_name)){
     plt=plt+
