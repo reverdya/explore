@@ -37,6 +37,7 @@ nbcores=detectCores()-2
 ref_year=1990
 
 bv_sample=c("K337301001","K259301001","K118001010")
+storylines=data.frame(gcm=c("HadGEM2-ES","HadGEM2-ES","CNRM-CM5","EC-EARTH"),rcm=c("ALADIN63","CCLM4-8-17","ALADIN63","HadREM3-GA7"),bc=rep("ADAMONT",4),type=c("Sec en été et chaud","Sec","Faibles changements","Chaud et humide"))
 
 ######
 #MAIN#
@@ -109,14 +110,50 @@ for (i in unique(simu_lst$indic)){
       plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q")
       plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="hm",plain_nameEff = "HM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q")
       
-
-      plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$code[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q",indic = i,idx_pix = idx,path_temp=path_hadcrut)
-      plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,var="Q",indic=i,horiz = horiz3,title=T)
+      for(storyl in c(T,F)){
+        plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$code[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q",indic = i,idx_pix = idx,path_temp=path_hadcrut,storyl=storyl)
+        plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,var="Q",indic=i,horiz = horiz3,title=T,storyl=storyl)
+      }
     }
   }
   print(i)
 }
 
+
+## Regime
+months=c("janv","fevr","mars","avr","mai","juin","juill","aout","sept","oct","nov","dec")
+folder_out=paste0(path_fig,"regime/")
+for (preds in c("time","temp")){
+  lst_lst.QUALYPSOOUT=vector(mode="list")
+  for(mth in months){
+    if (preds == "time"){
+      load(file=paste0(path_data,"Qualypso/QA_",mth,"/QA_",mth,"_list_QUALYPSOOUT_time.RData"))
+      lst_lst.QUALYPSOOUT[[mth]]=lst.QUALYPSOOUT_time
+    }
+    if (preds == "temp"){
+      load(file=paste0(path_data,"Qualypso/QA_",mth,"/QA_",mth,"_list_QUALYPSOOUT_temp.RData"))
+      lst_lst.QUALYPSOOUT[[mth]]=lst.QUALYPSOOUT_temp
+    }
+  }
+  if (preds == "time"){
+    pred_name="temps"
+    predict="time"
+    pred_unit=""
+    horiz=c(2085)
+  }
+  if (preds == "temp"){
+    pred_name="température"
+    predict="temp"
+    pred_unit="°C"
+    horiz=c("1.5","2",3,"4")
+  }
+  for(c in 1:nrow(bv_selec)){
+    idx=bv_selec$idx[c]
+    for(storyl in c(T,F)){
+      plotQUALYPSO_regime(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,horiz=horiz,var="Q",title=T,storyl=storyl)
+    }
+  }
+}
 
 ##############################################
 ## Maps
