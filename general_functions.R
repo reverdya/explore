@@ -1490,7 +1490,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     names(rcp.labs) <- "rcp85"
   }
   
-  ylims=c(quantile(chain_band$min,probs=0.05),quantile(chain_band$max,probs=0.95))
+  ylims=c(quantile(chain_band$min,probs=0.05,na.rm=T),quantile(chain_band$max,probs=0.95,na.rm=T)) #na.rm because of NA in 2006 for MORDOR
   
   if(pred=="time"){
     plt1=ggplot(data)+
@@ -1781,9 +1781,9 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   
   phiStar.corr=bind_rows(phiStar.corr)
   if(var!="tasAdjust"){
-    if(any(phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]<(-1))){
+    if(any(apply(phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]<(-1),1,function(x) any(x<(-1))))){
       warning("Lower bound forced to -100%")
-      phiStar.corr[phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]<(-1),c(1:(ncol(phiStar.corr)-1))]=(-1)
+      phiStar.corr[apply(phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]<(-1),1,function(x) any(x<(-1))),c(1:(ncol(phiStar.corr)-1))]=(-1)
     }
     phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]=phiStar.corr[,c(1:(ncol(phiStar.corr)-1))]*100
   }
@@ -1871,7 +1871,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(legend.text = element_text(size=12,face="bold"))+
-    theme(strip.background = element_blank(),strip.text.x = element_blank(),legend.key.height =unit(5, "lines"))+
+    theme(strip.background = element_blank(),strip.text.x = element_blank(),legend.key.height =unit(0.5, "cm"))+
     guides(fill="none",color=guide_legend(override.aes = list(alpha=1,shape=15,size=15)))
   if(var!="tasAdjust"){
     plt1=plt1+
@@ -2187,7 +2187,7 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
     theme_bw(base_size = 18)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
     theme(legend.title=element_text(size=14,face="bold"),legend.text = element_text(size=12,face="bold"))+
-    theme(strip.background = element_blank(),strip.text.x = element_blank(),legend.key.height =unit(5, "lines"))+
+    theme(strip.background = element_blank(),strip.text.x = element_blank(),legend.key.height =unit(0.5, "cm"))+
     guides(fill="none",color=guide_legend(override.aes = list(alpha=1,shape=15,size=15)))+
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
   if(var!="tasAdjust"){
@@ -2688,7 +2688,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
       scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21))+
       guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
-      ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents horizons et le prédicteur ",pred_name,"\n(",rcp_plainname,", référence 1990)"))+
+      ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents horizons et\nle prédicteur ",pred_name,"(",rcp_plainname,", référence 1990)"))+
       theme(panel.border = element_rect(colour = "black",fill=NA))
   }else{
     if(var!="tasAdjust"){
@@ -3049,9 +3049,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
       }else{
         save.plot(dpi=300,plt,Filename = paste0("map_change_",name_eff,"_",ind_name,"_",pred,"_",includeRCP,"_",horiz),Folder = folder_out,Format = "jpeg")
       }
-      
     }
-    
   }
 }
 
@@ -3152,7 +3150,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
       lim_col=max(q99pos,q99neg,na.rm=T)
       lim_col=round(lim_col/5)*5#arrondi au 5 le plus proche
       plt=plt+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Changement relatif moyen du ",ind_name_full,"\npour le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))#+
       if(var=="evspsblpotAdjust"){
         plt=plt+
@@ -3451,3 +3449,106 @@ plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4),c
   return(list(plt1,plt2))
 }
 
+##########################################################
+## Map of storylines
+
+map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col,pix,var,zoom,storylines){
+  
+  if(pix){
+    exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
+    exut=exut[as.logical(refs$mask),]
+  }else{
+    exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
+  }
+  exut$idx=seq(1:nrow(exut))
+  
+  tmp=exut
+  for (i in 1:(nrow(storylines)-1)){
+    exut=rbind(exut,tmp)
+  }
+  exut$type=rep(storylines$type,each=nrow(exut)/nrow(storylines))
+  exut$val=0
+  
+  scenAvail=lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail
+  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  
+  for (j in 1:nrow(storylines)){
+    if(pred=="time"){
+      scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==RCP)
+    }
+    if(pred=="temp"){
+      scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+    }
+    if(var=="Q"){
+      scen_rep=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,scen_idx,idx_Xfut],1,mean)
+    }else{
+      scen_rep=lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,scen_idx,idx_Xfut]
+    }
+    if(var!="tasAdjust"){
+      scen_rep=scen_rep*100
+    }
+    exut[exut$type==storylines$type[j],]$val=scen_rep
+  }
+
+  
+  #Setting limits for color scale
+  if(var!="tasAdjust"){
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    lim_col=max(q99pos,q99neg,na.rm=T)
+    lim_col=round(lim_col/10)*10#arrondi au 10 le plus proche
+  }else{
+    q99=quantile(exut$val,probs=freq_col)
+    q01=quantile(exut$val,probs=(1-freq_col))
+    lim_col=as.numeric(c(q01,q99))
+    lim_col=round(lim_col)#arrondi au 1 le plus proche
+    br=seq(lim_col[1],lim_col[2],0.25)
+  }
+  
+  if(!pix){
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom)+
+      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
+  }else{
+    plt=base_map_grid(data = exut,val_name = "val")+
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+  }
+  
+  if(pred=="time"){
+    plt=plt+
+      facet_wrap(~type,ncol=2,nrow=2)+
+      ggtitle(paste0("Storylines du ",RCP_plainname," pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+      theme(panel.border = element_rect(colour = "black",fill=NA))
+  }
+  if(pred=="temp"){
+    plt=plt+
+      facet_wrap(~type,ncol=2,nrow=2)+
+      ggtitle(paste0("Storylines pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
+      theme(panel.border = element_rect(colour = "black",fill=NA))
+  }
+  if(var!="tasAdjust"){
+    plt=plt+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels= c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))#that way because stepsn deforms colors
+    if(var=="evspsblpotAdjust"){
+      plt=plt+
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
+    }
+  }else{
+    plt=plt+
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C))",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))#that way because stepsn deforms colors
+  }
+  
+  if(!pix){
+    plt$layers[[3]]$aes_params$size= 3
+  }
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    if(pred=="time"){
+      save.plot(dpi=300,plt,Filename = paste0("map_storyline_",RCP,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+    }
+    if(pred=="time"){
+      save.plot(dpi=300,plt,Filename = paste0("map_storyline_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
+    }
+  }
+    
+}
