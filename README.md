@@ -29,4 +29,4 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 
 ->hydro/check_indic_hydro.R				||||	figures checked? YES
 ->hydro/run_Qualypso.R					||||	before that visually determine best spar														
-->hydro/make_figures_hydro.R				||||	figures checked? NO																	visual, Waiting on T_global, log and warning if spline<0, warning if brown-forsythe fails between chains or between periods
+->hydro/make_figures_hydro.R				||||	figures checked? NO																	Waiting on T_global
