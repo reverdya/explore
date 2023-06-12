@@ -8,7 +8,7 @@ Order climat:
 from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 
 ->scripts/dwnld_meteo_all_local.sh			||||
-->meteo/preprocess/shp_to_nc.R				| |	after that manually moved SAFRAN_mask_sect-hydro_bv_deptmt.nc from SIG/processed/ to raw/meteo/ and processed/Explore2-meteo/indic/masks/		bv...			
+->meteo/preprocess/shp_to_nc.R				||||	after that manually moved SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc from SIG/processed/ to raw/meteo/ and processed/Explore2-meteo/indic/masks/				
 ->scripts/calc_indic_meteo_local.sh			| |	after that manually moved calculated indic and masks from raw/ to processed/										bv..., version could be still optimized for calculation time				
 ->meteo/preprocess/regrid_safran.R			||||	after that manually moved and renamed raw/meteo/safran/safran_new_ETP.nc raw/meteo/safran/regridded/safran_new_ETP_grid.nc
 ->scripts/calc_indic_safran.sh				| |																				bv..., version could be still optimized for calculation time
