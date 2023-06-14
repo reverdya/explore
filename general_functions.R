@@ -589,32 +589,32 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
 ## line 4= mean+eff_rcp1+eff_gcm2+eff_rcm1...
 ## line 5= mean+eff_rcp2+eff_gcm2+eff_rcm1...
 
-reconstruct_chains=function(lst.QUALYPSOOUT,idx_space=NULL,idx_pred=NULL){
+reconstruct_chains=function(lst.QUALYPSOOUT,idx_Pred=NULL,idx_Space=NULL){
   neff=length(lst.QUALYPSOOUT[[1]]$namesEff)
   n_eachEff=vector()
-  for(i in 1:neff){
-    n_eachEff[i]=ncol(lst.QUALYPSOOUT[[1]]$MAINEFFECT[[i]]$MEAN)
+  for(j in 1:neff){
+    n_eachEff[j]=ncol(lst.QUALYPSOOUT[[1]]$MAINEFFECT[[j]]$MEAN)
   }
-  if(!is.null(idx_pred)){
-    chains=data.frame(do.call("rbind", replicate(prod(n_eachEff),lapply(lst.QUALYPSOOUT,function(x) x$GRANDMEAN$MEAN[idx_pred]), simplify = FALSE)))
+  if(!is.null(idx_Space)){
+    chains=data.frame(do.call("rbind", replicate(prod(n_eachEff),lapply(lst.QUALYPSOOUT,function(x) x$GRANDMEAN$MEAN[idx_Space]), simplify = FALSE)))
   }
-  if(!is.null(idx_space)){
-    chains=data.frame(do.call("rbind", replicate(prod(n_eachEff),lst.QUALYPSOOUT[[idx_space]]$GRANDMEAN$MEAN, simplify = FALSE)))
+  if(!is.null(idx_Pred)){
+    chains=data.frame(do.call("rbind", replicate(prod(n_eachEff),lst.QUALYPSOOUT[[idx_Pred]]$GRANDMEAN$MEAN, simplify = FALSE)))
   }
   lst_eff=vector(mode = "list",length=neff)
   
-  if(!is.null(idx_pred)){
+  if(!is.null(idx_Space)){
     for (j in 1:length(lst.QUALYPSOOUT[[1]]$Xfut)){
-      for(i in 1:neff){
-        lst_eff[[i]]=lapply(lst.QUALYPSOOUT,function(x) x$MAINEFFECT[[i]]$MEAN[idx,])[[j]]
+      for(k in 1:neff){
+        lst_eff[[k]]=lapply(lst.QUALYPSOOUT,function(x) x$MAINEFFECT[[k]]$MEAN[idx_Space,])[[j]]
       }
       chains[,j]=unlist(chains[,j])+rowSums(expand.grid(lst_eff))
     }
   }
-  if(!is.null(idx_space)){
-    for (j in 1:length(lst.QUALYPSOOUT[[idx_space]]$GRANDMEAN$MEAN)){
-      for(i in 1:neff){
-        lst_eff[[i]]=lst.QUALYPSOOUT[[idx_space]]$MAINEFFECT[[i]]$MEAN[j,]
+  if(!is.null(idx_Pred)){
+    for (j in 1:length(lst.QUALYPSOOUT[[idx_Pred]]$GRANDMEAN$MEAN)){
+      for(k in 1:neff){
+        lst_eff[[k]]=lst.QUALYPSOOUT[[idx_Pred]]$MAINEFFECT[[k]]$MEAN[j,]
       }
       chains[,j]=chains[,j]+rowSums(expand.grid(lst_eff))
     }
@@ -1215,7 +1215,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       idx_phistar_rcp=which(!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
     }
     #Reconstructed chains
-    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_pred = idx)
+    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_Space = idx)
     #Replace for this rcp the reconstructed values by the true values
     chains[idx_phistar_rcp,]=phiStar
     if(pred=="time"){
@@ -1313,7 +1313,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       rm(nc)
       gc()
     }else{
-      Obs=read_fst(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/Diagnostic/diag/",i,".fst"))
+      Obs=read_fst(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/Diagnostic/diag/",ind_name,".fst"))
       Obs=Obs[Obs$Code==bv_name,]
       colnames(Obs)=c("hm","code","year","val")
       Obs$year=year(Obs$year)
@@ -1378,7 +1378,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       rm(nc)
       gc()
     }else{
-      Obs=read_fst(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/Diagnostic/diag/",i,".fst"))
+      Obs=read_fst(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/Diagnostic/diag/",ind_name,".fst"))
       Obs=Obs[Obs$Code==bv_name,]
       colnames(Obs)=c("hm","code","year","val")
       Obs$year=year(Obs$year)
@@ -1623,13 +1623,13 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   VARDECOMP[, 1:nEff] = VARDECOMP[, vecEff]
   cum = cum.smooth = rep(0, nFut)
   data=VARDECOMP
-  for (i in 1:(nEff + 2)) {
+  for (j in 1:(nEff + 2)) {
     cumPrevious = cum.smooth
-    cum = cum + VARDECOMP[, i]
+    cum = cum + VARDECOMP[, j]
     cum.smooth = cum
     cum.smooth[cum.smooth < 0] = 0
     cum.smooth[cum.smooth > 1] = 1
-    data[,i]=cum.smooth
+    data[,j]=cum.smooth
   }
   data=data.frame(cbind(Xfut,data))
   data=data[data$Xfut>=xlim[1],]
@@ -1740,7 +1740,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
       phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,,h]
     }
     #Reconstructed chains
-    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_pred = idx)[h]
+    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_Space = idx)[h]
     #Replace for this rcp the reconstructed values by the true values
     if (pred=="time"){
       idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
@@ -1758,12 +1758,12 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.qua=sd.emp
     i0=1
-    for (i in h){
+    for (j in h){
       if(pred=="time"){
-        sd.qua[i0] = sqrt(unlist(lapply(lst.QUALYPSOOUT[i],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx]-x$EFFECTVAR[idx,iEff])))
+        sd.qua[i0] = sqrt(unlist(lapply(lst.QUALYPSOOUT[j],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx]-x$EFFECTVAR[idx,iEff])))
       }
       if(pred=="temp"){
-        sd.qua[i0] = sqrt(unlist(lapply(lst.QUALYPSOOUT[i],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx])))
+        sd.qua[i0] = sqrt(unlist(lapply(lst.QUALYPSOOUT[j],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx])))
       }
       i0=i0+1
     }
@@ -1995,7 +1995,7 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
         phiStar = lst_lst.QUALYPSOOUT[[m]][[1]]$CLIMATEESPONSE$phiStar[idx,,h]
       }
       #Reconstructed chains
-      chains=reconstruct_chains(lst_lst.QUALYPSOOUT[[m]],idx_pred = idx)[h]
+      chains=reconstruct_chains(lst_lst.QUALYPSOOUT[[m]],idx_Space = idx)[h]
       #Replace for this rcp the reconstructed values by the true values
       if (pred=="time"){
         idx_phistar_rcp=which(lst_lst.QUALYPSOOUT[[m]][[1]]$listScenarioInput$scenComp==lst_lst.QUALYPSOOUT[[m]][[1]]$listScenarioInput$listEff[[iEff]][r]&!lst_lst.QUALYPSOOUT[[m]][[1]]$listScenarioInput$isMissing)
@@ -2018,12 +2018,12 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
       sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
       sd.qua=sd.emp
       i0=1
-      for (i in h){
+      for (j in h){
         if(pred=="time"){
-          sd.qua[i0] = sqrt(unlist(lapply(lst_lst.QUALYPSOOUT[[m]][i],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx]-x$EFFECTVAR[idx,iEff])))
+          sd.qua[i0] = sqrt(unlist(lapply(lst_lst.QUALYPSOOUT[[m]][j],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx]-x$EFFECTVAR[idx,iEff])))
         }
         if(pred=="temp"){
-          sd.qua[i0] = sqrt(unlist(lapply(lst_lst.QUALYPSOOUT[[m]][i],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx])))
+          sd.qua[i0] = sqrt(unlist(lapply(lst_lst.QUALYPSOOUT[[m]][j],function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx])))
         }
         i0=i0+1
       }
@@ -2338,16 +2338,16 @@ base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,face
     data$sign_bin[data[,pattern_name]==threshold]=0
     data$sign_bin[data$sign_bin!=0]=1
     data$sign_bin[data[,facet_horizontal_name] %in% exclude_horizontal]=1 
-    for(i in unique(data[,facet_vert_name])){
+    for(k in unique(data[,facet_vert_name])){
       for(j in unique(data[,facet_horizontal_name])){
-        data_raster=rasterFromXYZ(data[data[,facet_vert_name]==i&data[,facet_horizontal_name]==j,c("x","y","sign_bin")])
+        data_raster=rasterFromXYZ(data[data[,facet_vert_name]==k&data[,facet_horizontal_name]==j,c("x","y","sign_bin")])
         data_polygon=rasterToPolygons(data_raster==1,dissolve=T)
         data_polygon$id <- row.names(data_polygon)
         data_polygon_fort=fortify(data_polygon)
         data_polygon_fort <- left_join(data_polygon_fort, data_polygon@data, by="id")
-        data_polygon_fort[,facet_vert_name]=i
+        data_polygon_fort[,facet_vert_name]=k
         data_polygon_fort[,facet_horizontal_name]=j
-        if(i!=unique(data[,facet_vert_name])[1]|j!=unique(data[,facet_horizontal_name])[1]){
+        if(k!=unique(data[,facet_vert_name])[1]|j!=unique(data[,facet_horizontal_name])[1]){
           mask_polygon=rbind(mask_polygon,data_polygon_fort)
         }else{
           mask_polygon=data_polygon_fort
@@ -2413,7 +2413,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   exut$idx=seq(1:nrow(exut))
   
   tmp=exut
-  for (i in 1:8){
+  for (j in 1:8){
     exut=rbind(exut,tmp)
   }
   exut$rcp=rep(rcp_names,each=nrow(exut)/3)
@@ -2429,7 +2429,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     idx_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r)
     # phiStar
     phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,idx_this_rcp,idx_Xfut]
-    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_space = idx_Xfut)
+    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_Pred = idx_Xfut)
     #Replace for this rcp the reconstructed values by the true values
     idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]][ieff_this_rcp]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
     chains[idx_phistar_rcp,]=t(phiStar)
@@ -2462,12 +2462,12 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     exut$sign[exut$rcp==r ]=apply(resp,1,function(x) sum(x>0))/ncol(resp)*100
   }
   
-  for(i in 1:nrow(exut)){
-    if(exut$sign[i]>=80){
-      exut$sign_agree[i]="Positif"
+  for(j in 1:nrow(exut)){
+    if(exut$sign[j]>=80){
+      exut$sign_agree[j]="Positif"
     }
-    if(exut$sign[i]<=20){
-      exut$sign_agree[i]="Négatif"
+    if(exut$sign[j]<=20){
+      exut$sign_agree[j]="Négatif"
     }
   }
   
@@ -2570,14 +2570,14 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   tmp=exut
   if(pred=="time"){
-    for (i in 1:8){
+    for (j in 1:8){
       exut=rbind(exut,tmp)
     }
     exut$horiz=rep(horiz,each=nrow(exut)/3)
     exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
   }
   if(pred=="temp"){
-    for (i in 1:11){
+    for (j in 1:11){
       exut=rbind(exut,tmp)
     }
     exut$horiz=rep(horiz,each=nrow(exut)/4)
@@ -2604,7 +2604,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
       phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,,idx_Xfut]
       idx_phistar_rcp=which(!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
     }
-    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_space = idx_Xfut)
+    chains=reconstruct_chains(lst.QUALYPSOOUT,idx_Pred = idx_Xfut)
     #Replace for this rcp the reconstructed values by the true values
     chains[idx_phistar_rcp,]=t(phiStar)
     if(pred=="time"){
@@ -2647,12 +2647,12 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     exut$sign[exut$horiz==h ]=apply(resp,1,function(x) sum(x>0))/ncol(resp)*100
   }
   
-  for(i in 1:nrow(exut)){
-    if(exut$sign[i]>=80){
-      exut$sign_agree[i]="Positif"
+  for(j in 1:nrow(exut)){
+    if(exut$sign[j]>=80){
+      exut$sign_agree[j]="Positif"
     }
-    if(exut$sign[i]<=20){
-      exut$sign_agree[i]="Négatif"
+    if(exut$sign[j]<=20){
+      exut$sign_agree[j]="Négatif"
     }
   }
   
@@ -2762,7 +2762,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   exut$idx=seq(1:nrow(exut))
   
   tmp=exut
-  for (i in 1:8){
+  for (j in 1:8){
     exut=rbind(exut,tmp)
   }
   exut$rcp=rep(rcp_names,each=nrow(exut)/3)
@@ -2789,12 +2789,12 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   }
   
   
-  for(i in 1:nrow(exut)){
-    if(exut$sign[i]>=80){
-      exut$sign_agree[i]="Positif"
+  for(j in 1:nrow(exut)){
+    if(exut$sign[j]>=80){
+      exut$sign_agree[j]="Positif"
     }
-    if(exut$sign[i]<=20){
-      exut$sign_agree[i]="Négatif"
+    if(exut$sign[j]<=20){
+      exut$sign_agree[j]="Négatif"
     }
   }
   
@@ -2894,7 +2894,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   
   
   tmp=exut
-  for (i in 1:(length(effs)-1)){
+  for (j in 1:(length(effs)-1)){
     exut=rbind(exut,tmp)
   }
   exut$effs=rep(effs,each=nrow(exut)/length(effs))
@@ -3463,7 +3463,7 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
   exut$idx=seq(1:nrow(exut))
   
   tmp=exut
-  for (i in 1:(nrow(storylines)-1)){
+  for (j in 1:(nrow(storylines)-1)){
     exut=rbind(exut,tmp)
   }
   exut$type=rep(storylines$type,each=nrow(exut)/nrow(storylines))
@@ -3546,9 +3546,130 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
     if(pred=="time"){
       save.plot(dpi=300,plt,Filename = paste0("map_storyline_",RCP,"_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
     }
-    if(pred=="time"){
+    if(pred=="temp"){
       save.plot(dpi=300,plt,Filename = paste0("map_storyline_",ind_name,"_",pred,"_",horiz),Folder = folder_out,Format = "jpeg")
     }
   }
     
 }
+
+
+
+################################################################
+## Map of spline log, variance problems and <100%
+
+map_limitations=function(lst.QUALYPSOOUT,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,pix,var,zoom=NULL){
+  
+  warn_store=lst.QUALYPSOOUT[[1]]$listOption$climResponse$warning_store
+  if(pix){
+    exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
+    exut=exut[as.logical(refs$mask),]
+  }else{
+    exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
+  }
+  exut$idx=seq(1:nrow(exut))
+  
+  tmp=exut
+  for (j in 1:(4-1)){
+    exut=rbind(exut,tmp)
+  }
+  exut$type=rep(c("Spline via logarithme","Problème variance intra-chaine","Problème variance inter-chaines","Somme effets < -100%"),each=length(warn_store))
+  exut$val="NA"
+  
+  for(j in 1:length(warn_store)){
+    if(grepl("logSpline",warn_store[[j]])){
+      exut[exut$type=="Spline via logarithme",]$val[j]="Oui"
+    }else{
+      exut[exut$type=="Spline via logarithme",]$val[j]="Non"
+    }
+    if(grepl("interchain",warn_store[[j]])){
+      exut[exut$type=="Problème variance inter-chaines",]$val[j]="Oui"
+    }else{
+      exut[exut$type=="Problème variance inter-chaines",]$val[j]="Non"
+    }
+    if(grepl("intrachain",warn_store[[j]])){
+      exut[exut$type=="Problème variance intra-chaine",]$val[j]="Oui"
+    }else{
+      exut[exut$type=="Problème variance intra-chaine",]$val[j]="Non"
+    }
+    if(var!="tasAdjust"){
+      if(pred=="time"){
+        chg_q5=list()
+        probCI=lst.QUALYPSOOUT[[1]]$listOption$probCI
+        ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
+        for(r in c("rcp26","rcp45","rcp85")){
+          ieff_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]==r)
+          idx_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r)
+          phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[j,idx_this_rcp,]
+          chains=reconstruct_chains(lst.QUALYPSOOUT,idx_Space =  j)
+          idx_phistar_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenComp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]][ieff_this_rcp]&!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
+          chains[idx_phistar_rcp,]=t(phiStar)
+          chains=chains[seq(ieff_this_rcp,dim(chains)[1],3),]
+          sd.qua = unlist(lapply(lst.QUALYPSOOUT,function(x) sqrt(x$TOTALVAR[j]-x$INTERNALVAR[j]-x$EFFECTVAR[j,ieff_rcp])))
+          sd.emp = apply(chains,2,sd)
+          sd.emp[sd.emp==0] = 1 
+          sd.corr = sd.qua/sd.emp
+          phiStar.corr = phiStar*t(replicate(dim(phiStar)[1],sd.corr))
+          chg_q5[[r]] = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
+        }
+        if(any(unlist(chg_q5)<(-1))){
+          exut[exut$type=="Somme effets < -100%",]$val[j]="Oui"
+        }else{
+          exut[exut$type=="Somme effets < -100%",]$val[j]="Non"
+        }
+      }
+      if(pred=="temp"){
+        phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[j,,]
+        chains=reconstruct_chains(lst.QUALYPSOOUT,idx_Space =  j)
+        idx_phistar_rcp=which(!lst.QUALYPSOOUT[[1]]$listScenarioInput$isMissing)
+        chains[idx_phistar_rcp,]=t(phiStar)
+        sd.qua = unlist(lapply(lst.QUALYPSOOUT,function(x) sqrt(x$TOTALVAR[j]-x$INTERNALVAR[j])))
+        sd.emp = apply(chains,2,sd)
+        sd.emp[sd.emp==0] = 1 
+        sd.corr = sd.qua/sd.emp
+        phiStar.corr = phiStar*t(replicate(dim(phiStar)[1],sd.corr))
+        chg_q5 = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
+        if(any(chg_q5<(-1))){
+          exut[exut$type=="Somme effets < -100%",]$val[j]="Oui"
+        }else{
+          exut[exut$type=="Somme effets < -100%",]$val[j]="Non"
+        }
+      }
+    }else{
+      exut[exut$type=="Spline via logarithme",]$val[j]="NA"
+    }
+  }
+  
+  
+  if(!pix){
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom)
+  }else{
+    plt=base_map_grid(data = exut,val_name = "val")
+  }
+  
+  if(pred=="time"){
+    plt=plt+
+      facet_wrap(~type,ncol=2,nrow=2)
+  }
+  if(pred=="temp"){
+    plt=plt+
+      facet_wrap(~type,ncol=2)
+  }
+  plt=plt+
+    ggtitle(paste0("Problèmes pour le ",ind_name_full,"\net le prédicteur ",pred_name))+
+    theme(panel.border = element_rect(colour = "black",fill=NA))+
+    scale_fill_manual("",values = c("Non"="blue","Oui"="red"))
+  
+  if(!pix){
+    plt$layers[[3]]$aes_params$size= 3
+  }
+  if (is.na(folder_out)){
+    return(plt)
+  }else{
+    save.plot(dpi=300,plt,Filename = paste0("map_problems_",ind_name,"_",pred),Folder = folder_out,Format = "jpeg")
+  }
+}
+  
+
+
+
