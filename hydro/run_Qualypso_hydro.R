@@ -39,8 +39,10 @@ SPAR_time=1.1
 SPAR_temp=1.2
 basin_sample=ref[ref$n==9,]$code
 n_bv=length(basin_sample)
-bc_sample=c("ADAMONT","CDFt")
+# bc_sample=c("ADAMONT","CDFt")
+bc_sample=c("ADAMONT")
 hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-SD","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
+
 
 
 ######
@@ -92,18 +94,24 @@ for(i in unique(simu_lst$indic)){
   lst.QUALYPSOOUT_time=vector(mode="list",length=length((Xfut)))
   for(cpt in 1:length(Xfut)){
     lst.QUALYPSOOUT_time[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                           scenAvail=scenAvail[,c("rcp","gcm","rcm","bc","hm")],
+                                           # scenAvail=scenAvail[,c("rcp","gcm","rcm","bc","hm")],
+                                           scenAvail=scenAvail[,c("rcp","gcm","rcm","hm")],
                                            X=X,
                                            Xfut=Xfut,
                                            iFut=cpt,
                                            listOption=listOption)
-    lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse=NA #to not store twice the same information
+    lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$climateResponse=NA #to not store twice the same information
+    lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$YStar=NA
+    lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$phiStar=NA
+    lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$etaStar=NA
+    lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$phi=NA
+    lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$varInterVariability=NA
     lst.QUALYPSOOUT_time[[cpt]]$RESERR=NA
     lst.QUALYPSOOUT_time[[cpt]]$CHANGEBYEFFECT=NA
     lst.QUALYPSOOUT_time[[cpt]]$CLIMATEESPONSE$YStar=NA
     if(cpt!=1){
-      lst.QUALYPSOOUT_time[[cpt]]$CLIMATEESPONSE=NA #to not store 9892 times the same information, stored only the first time
-      lst.QUALYPSOOUT_time[[cpt]]$Y=NA #to not store 9892 times the same information, stored only the first time
+      lst.QUALYPSOOUT_time[[cpt]]$CLIMATEESPONSE=NA #to not store 4000 times the same information, stored only the first time
+      lst.QUALYPSOOUT_time[[cpt]]$Y=NA #to not store 4000 times the same information, stored only the first time
     }
     if(((cpt) %% 2)==0){print(cpt)}
   }
@@ -143,12 +151,18 @@ for(i in unique(simu_lst$indic)){
   lst.QUALYPSOOUT_temp=vector(mode="list",length=length((Xfut)))
   for(cpt in 1:length(Xfut)){
     lst.QUALYPSOOUT_temp[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                           scenAvail=scenAvail[,c("gcm","rcm","bc","hm")],
+                                           # scenAvail=scenAvail[,c("gcm","rcm","bc","hm")],
+                                           scenAvail=scenAvail[,c("gcm","rcm","hm")],
                                            X=X,
                                            Xfut=Xfut,
                                            iFut=cpt,
                                            listOption=listOption)
-    lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse=NA #to not store twice the same information
+    lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$climateResponse=NA #to not store twice the same information
+    lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$YStar=NA
+    lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$phiStar=NA
+    lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$etaStar=NA
+    lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$phi=NA
+    lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$varInterVariability=NA
     lst.QUALYPSOOUT_temp[[cpt]]$RESERR=NA
     lst.QUALYPSOOUT_temp[[cpt]]$CHANGEBYEFFECT=NA
     lst.QUALYPSOOUT_temp[[cpt]]$CLIMATEESPONSE$YStar=NA

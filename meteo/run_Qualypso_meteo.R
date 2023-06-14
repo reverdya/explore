@@ -32,6 +32,8 @@ ref_year=1990# central year of 1975-2005 reference period
 horiz=c(2030,2050,2085)
 final_year=2100
 
+bc_sample=c("ADAMONT")
+
 ######
 #MAIN#
 ######
@@ -80,6 +82,10 @@ for(v in unique(simu_lst$var)){
       colnames(res)[1]="year"
       all_chains[[c]]=res
     }
+    
+    
+    all_chains=all_chains[scenAvail$bc %in% bc_sample]
+    scenAvail=scenAvail[scenAvail$bc %in% bc_sample,]
 
     n_pix=ncol(all_chains[[1]])-1
     ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
@@ -100,7 +106,8 @@ for(v in unique(simu_lst$var)){
     for(cpt in 1:length(Xfut)){
     # for(x in c(2030,2050,2085)){
       lst.QUALYPSOOUT_time[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                                            scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                                            # scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                                            scenAvail=scenAvail[,c("rcp","gcm","rcm")],
                                                             X=X,
                                                             Xfut=Xfut,
                                                             iFut=cpt,
@@ -141,7 +148,8 @@ for(v in unique(simu_lst$var)){
     lst.QUALYPSOOUT_temp=vector(mode="list",length=length((Xfut)))
     for(cpt in 1:length(Xfut)){
       lst.QUALYPSOOUT_temp[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                                  scenAvail=scenAvail[,c("gcm","rcm","bc")],
+                                                  # scenAvail=scenAvail[,c("gcm","rcm","bc")],
+                                                  scenAvail=scenAvail[,c("gcm","rcm")],
                                                   X=X,
                                                   Xfut=Xfut,
                                                   iFut=cpt,
@@ -208,6 +216,9 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
         all_chains[[c]]=res
       }
       
+      all_chains=all_chains[scenAvail$bc %in% bc_sample]
+      scenAvail=scenAvail[scenAvail$bc %in% bc_sample,]
+      
       n_pix=ncol(all_chains[[1]])-1
       ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
       Y=abind(split(data.frame(t(ClimateProjections[,-1])),rep(seq(1,length(all_chains)),each=n_pix) ), along=3)
@@ -227,12 +238,18 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       for(cpt in 1:length(Xfut)){
         # for(x in c(2030,2050,2085)){
         lst.QUALYPSOOUT_time[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                               scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                               # scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                               scenAvail=scenAvail[,c("rcp","gcm","rcm")],
                                                X=X,
                                                Xfut=Xfut,
                                                iFut=cpt,
                                                listOption=listOption)
-        lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse=NA #to not store twice the same information
+        lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$climateResponse=NA #to not store twice the same information
+        lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$YStar=NA
+        lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$phiStar=NA
+        lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$etaStar=NA
+        lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$phi=NA
+        lst.QUALYPSOOUT_time[[cpt]]$listOption$climResponse$varInterVariability=NA
         lst.QUALYPSOOUT_time[[cpt]]$RESERR=NA
         lst.QUALYPSOOUT_time[[cpt]]$CHANGEBYEFFECT=NA
         lst.QUALYPSOOUT_time[[cpt]]$CLIMATEESPONSE$YStar=NA
@@ -268,12 +285,18 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       lst.QUALYPSOOUT_temp=vector(mode="list",length=length((Xfut)))
       for(cpt in 1:length(Xfut)){
         lst.QUALYPSOOUT_temp[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
+                                               # scenAvail=scenAvail[,c("gcm","rcm","bc")],
                                                scenAvail=scenAvail[,c("gcm","rcm","bc")],
                                                X=X,
                                                Xfut=Xfut,
                                                iFut=cpt,
                                                listOption=listOption)
-        lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse=NA #to not store twice the same information
+        lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$climateResponse=NA #to not store twice the same information
+        lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$YStar=NA
+        lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$phiStar=NA
+        lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$etaStar=NA
+        lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$phi=NA
+        lst.QUALYPSOOUT_temp[[cpt]]$listOption$climResponse$varInterVariability=NA
         lst.QUALYPSOOUT_temp[[cpt]]$RESERR=NA
         lst.QUALYPSOOUT_temp[[cpt]]$CHANGEBYEFFECT=NA
         lst.QUALYPSOOUT_temp[[cpt]]$CLIMATEESPONSE$YStar=NA
