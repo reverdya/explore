@@ -53,7 +53,7 @@ f_rcp=${f_rcp}_day_2006-2100.nc
 fi
 fi
 
-#test if combination exists
+test if combination exists
 if test -f "$f_rcp"; then
 
 cdo mergetime "$f" "$f_rcp" tmp.nc
@@ -351,15 +351,12 @@ done
 
 
 #########################################################
-## Make masks regions
+## Make masks zones
 
-nb_bas=$(cdo -s -nlevel -selname,Basins_hydro ../SAFRAN_mask_basHy.nc)
-for i in $(seq 1 $nb_bas)
-do
-cdo sellevel,$i -selname,Basins_hydro ../SAFRAN_mask_basHy.nc mask_bas.nc
-cdo setgrid,./masks/mygrid mask_bas.nc ./masks/mask_bas${i}.nc
-rm mask_bas.nc
-done
+cdo selname,Basins_hydro ../SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc ./masks/mask_bas.nc
+cdo selname,Hydro_sectors ../SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc ./masks/mask_sect.nc
+cdo selname,Departments ../SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc ./masks/mask_deptmt.nc
+cdo selname,Watersheds ../SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc ./masks/mask_bv.nc
 
 
 ###################################################################################
@@ -372,6 +369,10 @@ do
 cd ${var[$V]}
 
 mkdir bas
+mkdir sect
+mkdir deptmt
+mkdir bv
+
 FILES="/mnt/c/Users/reverdya/Documents/Docs/2_Data/raw/meteo/indic/${var[$V]}/${var[$V]}*"
 for f in $FILES
 do
@@ -379,23 +380,30 @@ f_local=${f##*/}
 
 
 cd bas
-for i in $(seq 1 $nb_bas)
-do
-if [ ${var[$V]} != "evspsblpotAdjust" ]; then
-cdo -s selgrid,1 -setgrid,../../masks/mygrid "$f" tmp.nc
-else
-cdo -s selgridname,curvilinear -setgrid,../../masks/mygrid "$f" tmp.nc
-fi
-cdo -s -mul tmp.nc ../../masks/mask_bas${i}.nc tmp_masked.nc #Warnings okay
-rm tmp.nc
-cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_bas${i}.nc}" #Warnings okay
+cdo -s -mul $f ../../masks/mask_bas.nc tmp_masked.nc #Warnings okay
+cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_bas.nc}" #Warnings okay
 rm tmp_masked.nc
-done
+cd ..
 
-f_all="/mnt/c/Users/reverdya/Documents/Docs/2_Data/raw/meteo/indic/${var[$V]}/bas/*_bas*"
-f_all=$(ls $f_all -tr --time=ctime) #sort by reverse modification time
-cdo -s merge $f_all "${f_local/%.nc/_all-bas.nc}"
-rm *_bas*
+
+cd sect
+cdo -s -mul $f ../../masks/mask_sect.nc tmp_masked.nc #Warnings okay
+cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_sect.nc}" #Warnings okay
+rm tmp_masked.nc
+cd ..
+
+
+cd deptmt
+cdo -s -mul $f ../../masks/mask_deptmt.nc tmp_masked.nc #Warnings okay
+cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_deptmt.nc}" #Warnings okay
+rm tmp_masked.nc
+cd ..
+
+
+cd bv
+cdo -s -mul $f ../../masks/mask_bv.nc tmp_masked.nc #Warnings okay
+cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_bv.nc}" #Warnings okay
+rm tmp_masked.nc
 cd ..
 
 done
@@ -416,7 +424,5 @@ unset FILES
 unset f
 unset f_rcp
 unset f2
-unset f_local
-unset f_all
-unset nb_bas
+unset f_locals
 
