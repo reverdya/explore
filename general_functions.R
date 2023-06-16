@@ -358,6 +358,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       phiC = predict(smooth.spline.out, Xrefs)$y
     }
     if(type=="log_spline"){
+      Ys[Ys==0]=1e-50
       Yslog10=log10(Ys)
       smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
       # store spline object
@@ -424,6 +425,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       # fit a smooth signal
       zz = (!is.na(Ys))&(!is.na(Xs))
       phiY=Xs
+      Ys[Ys==0]=1e-50
       Yslog10=log10(Ys)
       smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
       # store spline object
@@ -1496,7 +1498,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     plt1=ggplot(data)+
       geom_hline(yintercept = 0)+
       geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
-      scale_fill_discrete("Dispersion liée à la\nvariabilité naturelle",type= as.vector(col_3rcp_shade[color_select]))+
+      scale_fill_discrete("Variabilité naturelle",type= as.vector(col_3rcp_shade[color_select]))+
       guides(fill=guide_legend(order=4,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
       new_scale_fill()+
       geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.55)+#uncertainty band
@@ -1600,7 +1602,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   plt2=ggplot(data)+
     geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=cat),color="transparent",size=5,shape=21)+
     # binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les chaînes sur\nle signe de la tendance",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T,oob=squish,limits=c(0,100),breaks=c(20,40,60,80),labels=~ if(length(.x) == 2) {c("- à 100%","+ à 100%")} else {c("- à 80%","- à 60%","+ à 60%","+ à 80%")})+#that way because stepsn deforms colors
-    scale_fill_manual("Accord entre projections\nsur le signe du changement",values = c("Négatif"=precip_5[1],"Pas d'accord"="grey85","Positif"=precip_5[5]))+
+    scale_fill_manual("Accord entre plus de 80% des\nprojections sur le signe du changement",values = c("Négatif"=precip_5[1],"Pas d'accord"="grey85","Positif"=precip_5[5]))+
     scale_y_discrete("",labels=rev(rcp.labs))+
     theme_bw(base_size = 16)+
     theme(legend.title = element_text(size=13))+
@@ -1905,8 +1907,8 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     stat_summary(fun.data = custom_boxplot2,geom = "boxplot",aes(x=x,y=y),color="transparent",width=0.02,fill="grey40")+
     geom_text(aes(x=1.05,y=70,label="Dispersion liée\naux modèles"),size=5)+
     geom_text(aes(x=1.05,y=30,label="Dispersion liée\naux modèles"),size=5)+
-    geom_text(aes(x=1.05,y=95,label="Dispersion liée\nà la variabilité\nnaturelle"),size=5)+
-    geom_text(aes(x=1.05,y=5,label="Dispersion liée\nà la variabilité\nnaturelle"),size=5)+
+    geom_text(aes(x=1.05,y=95,label="Variabilité naturelle"),size=5)+
+    geom_text(aes(x=1.05,y=5,label="Variabilité naturelle"),size=5)+
     scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
     theme_void()+
     theme(panel.background = element_rect(colour="black",fill="transparent"))
@@ -2211,8 +2213,8 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
     stat_summary(fun.data = custom_boxplot2,geom = "boxplot",aes(x=x,y=y),color="transparent",width=0.02,fill="grey40")+
     geom_text(aes(x=1.05,y=70,label="Dispersion liée\naux modèles"),size=5)+
     geom_text(aes(x=1.05,y=30,label="Dispersion liée\naux modèles"),size=5)+
-    geom_text(aes(x=1.05,y=95,label="Dispersion liée\nà la variabilité\nnaturelle"),size=5)+
-    geom_text(aes(x=1.05,y=5,label="Dispersion liée\nà la variabilité\nnaturelle"),size=5)+
+    geom_text(aes(x=1.05,y=95,label="Variabilité naturelle"),size=5)+
+    geom_text(aes(x=1.05,y=5,label="Variabilité naturelle"),size=5)+
     scale_x_continuous("",limits = c(0.98,1.08),expand=c(0,0))+
     theme_void()+
     theme(panel.background = element_rect(colour="black",fill="transparent"))
