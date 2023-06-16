@@ -28,5 +28,5 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 ->hydro/preprocess/clean_files_indic.R			||||																	
 
 ->hydro/check_indic_hydro.R				||||	figures checked? YES
-->hydro/run_Qualypso.R					|||	before that visually determine best spar														Waiting on Mordor 2006, waiting on bug february, run FR
-->hydro/make_figures_hydro.R				|||	figures checked? NO																	Waiting on T_global, waiting on Mordor 2006, waiting on bug february, run FR
+->hydro/run_Qualypso.R					|||	before that visually determine best spar														Waiting on Mordor 2006, waiting on bug february, run FR without SIM2?
+->hydro/make_figures_hydro.R				|||	figures checked? NO																	Waiting on T_global, waiting on Mordor 2006, waiting on bug february, run FR without SIM2?
