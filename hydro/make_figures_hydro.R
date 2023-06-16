@@ -66,17 +66,17 @@ for (i in unique(simu_lst$indic)){
   for (preds in c("time","temp")){
     if (preds == "time"){
       folder_out=paste0(path_fig,i,"/")
-      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time.RData"))
+      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time_FR.RData"))
       lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
       pred_name="temps"
       predict="time"
       pred_unit=""
-      xlim=c(1990,2100)
+      xlim=c(1990,2105)
       horiz3=c(2030,2050,2085)
     }
     if (preds == "temp"){
       folder_out=paste0(path_fig,i,"/temp/")
-      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_temp.RData"))
+      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_temp_FR.RData"))
       lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp
       pred_name="température"
       predict="temp"
@@ -127,11 +127,11 @@ for (preds in c("time","temp")){
   lst_lst.QUALYPSOOUT=vector(mode="list")
   for(mth in months){
     if (preds == "time"){
-      load(file=paste0(path_data,"Qualypso/QA_",mth,"/QA_",mth,"_list_QUALYPSOOUT_time.RData"))
+      load(file=paste0(path_data,"Qualypso/QA_",mth,"/QA_",mth,"_list_QUALYPSOOUT_time_FR.RData"))
       lst_lst.QUALYPSOOUT[[mth]]=lst.QUALYPSOOUT_time
     }
     if (preds == "temp"){
-      load(file=paste0(path_data,"Qualypso/QA_",mth,"/QA_",mth,"_list_QUALYPSOOUT_temp.RData"))
+      load(file=paste0(path_data,"Qualypso/QA_",mth,"/QA_",mth,"_list_QUALYPSOOUT_temp_FR.RData"))
       lst_lst.QUALYPSOOUT[[mth]]=lst.QUALYPSOOUT_temp
     }
   }
@@ -162,18 +162,18 @@ for (i in unique(simu_lst$indic)){
   for (preds in c("time","temp")){
     if (preds == "time"){
       folder_out=paste0(path_fig,i,"/maps/")
-      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time.RData"))
+      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time_FR.RData"))
       lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
       pred_name="temps"
       predict="time"
       pred_unit=""
-      xlim=c(1990,2100)
+      xlim=c(1990,2105)
       horiz=2085
       horiz3=c(2030,2050,2085)
     }
     if (preds == "temp"){
       folder_out=paste0(path_fig,i,"/temp/maps/")
-      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_temp.RData"))
+      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_temp_FR.RData"))
       lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp
       pred_name="température"
       predict="temp"
@@ -240,7 +240,7 @@ for (i in unique(simu_lst$indic)){
 for (i in unique(simu_lst$indic)){
   folder_out=paste0(path_fig,i,"/maps/")
   dir.create(folder_out)
-  load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time.RData"))
+  load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time_FR.RData"))
   lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
   exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   exut$idx=seq(1:nrow(exut))

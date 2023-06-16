@@ -105,7 +105,7 @@ for(v in unique(simu_lst$var)){
         pred_name="temps"
         predict="time"
         pred_unit=""
-        xlim=c(1990,2100)
+        xlim=c(1990,2105)
         horiz3=c(2030,2050,2085)
       }
       if (preds == "temp"){
@@ -168,7 +168,7 @@ for(v in unique(simu_lst$var)){
         pred_name="temps"
         predict="time"
         pred_unit=""
-        xlim=c(1990,2100)
+        xlim=c(1990,2105)
         horiz=2085
         horiz3=c(2030,2050,2085)
       }
