@@ -633,8 +633,10 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_Pred=NULL,idx_Space=NULL){
 prep_global_tas=function(path_temp,simu_lst,cat="meteo"){
   load(file=paste0(path_temp,"pred_temp.Rdata"))
   chains_pred=names(pred_temp)
-  chains_pred=str_replace(chains_pred,"CNRM-CM5-LR","CNRM-CM5")
-  chains_pred=str_replace(chains_pred,"HadREM3-GA7-05","HadREM3-GA7")
+  if(cat!="meteo"){
+    chains_pred=str_replace(chains_pred,"CNRM-CM5-LR","CNRM-CM5")
+    chains_pred=str_replace(chains_pred,"HadREM3-GA7-05","HadREM3-GA7")
+  }
   chains_var=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm,"_",simu_lst$bc)
   mat_Globaltas=vector(mode="list",length=length(chains_var))
   for (j in 1:length(chains_var)){
@@ -1821,6 +1823,13 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
 
   data$ymin=data$lower-IV_sd
   data$ymax=data$upper+IV_sd
+  
+  if(var!="tasAdjust"){
+    if(any(data$ymin<(-100))){
+      warning("Lower bound IV forced to -100%")
+      data$ymin[data$ymin<(-100)]=(-100)
+    }
+  }
   
 
   if(storyl){

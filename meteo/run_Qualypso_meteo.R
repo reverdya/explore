@@ -33,6 +33,7 @@ horiz=c(2030,2050,2085)
 final_year=2100
 
 bc_sample=c("ADAMONT")
+simu_lst=simu_lst[simu_lst$bc %in% bc_sample,]
 
 ######
 #MAIN#
@@ -83,9 +84,6 @@ for(v in unique(simu_lst$var)){
       all_chains[[c]]=res
     }
     
-    
-    all_chains=all_chains[scenAvail$bc %in% bc_sample]
-    scenAvail=scenAvail[scenAvail$bc %in% bc_sample,]
 
     n_pix=ncol(all_chains[[1]])-1
     ClimateProjections=Reduce(function(...) merge(...,by="year", all=T), all_chains)#allows for NA
@@ -133,14 +131,14 @@ for(v in unique(simu_lst$var)){
     
     ## Temperature
     vec_years=X
-    X=as.matrix(t(global_tas[["mat_Globaltas"]][global_tas[["gcm_years"]] %in% vec_years,]))
-    Xmax=round(max(X,na.rm=T),1)+0.1
+    X=as.matrix(t(global_tas[["mat_Globaltas"]][global_tas[["gcm_years"]] %in% vec_years[vec_years!=2099],]))
+    Xmax=round(max(X,na.rm=T),1)-0.1#goes far to be able to make the correspondance with global temperature
     Xfut=seq(0,Xmax,0.1)
     idx_rcp=which(scenAvail$rcp=="rcp85")
     scenAvail=scenAvail[idx_rcp,]
     X=X[idx_rcp,]
-    Y=Y[,idx_rcp,]
-    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(1.4,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
+    Y=Y[,idx_rcp,vec_years[vec_years!=2099] %in% global_tas[["gcm_years"]]]
+    tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(1.2,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
     listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
     rm(tmp)
     gc()
@@ -270,14 +268,14 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       
       ## Temperature
       vec_years=X
-      X=global_tas[["mat_Globaltas"]][,global_tas[["gcm_years"]] %in% vec_years]
+      X=as.matrix(t(global_tas[["mat_Globaltas"]][global_tas[["gcm_years"]] %in% vec_years[vec_years!=2099],]))
       Xmax=round(max(X,na.rm=T),1)-0.1#goes far to be able to make the correspondance with global temperature
       Xfut=seq(0,Xmax,0.1)
       idx_rcp=which(scenAvail$rcp=="rcp85")
       scenAvail=scenAvail[idx_rcp,]
       X=X[idx_rcp,]
-      Y=Y[,idx_rcp,]
-      tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(1.4,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
+      Y=Y[,idx_rcp,vec_years[vec_years!=2099] %in% global_tas[["gcm_years"]]]
+      tmp=prepare_clim_resp(Y=Y,X=X,Xfut = Xfut,typeChangeVariable = typechangeVar,spar = rep(1.2,nrow(scenAvail)),type="spline",nbcores = nbcore,scenAvail = scenAvail)
       listOption = list(spar=SPAR,typeChangeVariable=typechangeVar,ANOVAmethod="lm",nBurn=1000,nKeep=5000,nCluster=nbcore,probCI=0.9,quantilePosterior =0.5,climResponse=tmp)
       rm(tmp)
       gc()
