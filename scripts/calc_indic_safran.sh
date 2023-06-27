@@ -106,15 +106,15 @@ var=( tasAdjust prtotAdjust prsnAdjust evspsblpotAdjust )
 
 var=( tasAdjust prtotAdjust evspsblpotAdjust )
 
-
-
-for V in "${!var[@]}"
-do
-
 mkdir bas
 mkdir sect
 mkdir deptmt
 mkdir bv
+
+for V in "${!var[@]}"
+do
+
+
 
 FILES="/mnt/c/Users/reverdya/Documents/Docs/2_Data/processed/safran/indic/*${var[$V]}*"
 
@@ -124,28 +124,44 @@ f_local=${f##*/}
 
 
 cd bas
+if [[ "$V" == 2 ]];then
+cdo -s -mul -selname,etp $f ../../../Explore2-meteo/indic/masks/mask_bas.nc tmp_masked.nc #Warnings okay
+else
 cdo -s -mul $f ../../../Explore2-meteo/indic/masks/mask_bas.nc tmp_masked.nc #Warnings okay
+fi
 cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_bas.nc}" #Warnings okay
 rm tmp_masked.nc
 cd ..
 
 
 cd sect
+if [[ "$V" == 2 ]];then
+cdo -s -mul -selname,etp $f ../../../Explore2-meteo/indic/masks/mask_sect.nc tmp_masked.nc #Warnings okay
+else
 cdo -s -mul $f ../../../Explore2-meteo/indic/masks/mask_sect.nc tmp_masked.nc #Warnings okay
+fi
 cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_sect.nc}" #Warnings okay
 rm tmp_masked.nc
 cd ..
 
 
 cd deptmt
+if [[ "$V" == 2 ]];then
+cdo -s -mul -selname,etp $f ../../../Explore2-meteo/indic/masks/mask_deptmt.nc tmp_masked.nc #Warnings okay
+else
 cdo -s -mul $f ../../../Explore2-meteo/indic/masks/mask_deptmt.nc tmp_masked.nc #Warnings okay
+fi
 cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_deptmt.nc}" #Warnings okay
 rm tmp_masked.nc
 cd ..
 
 
 cd bv
+if [[ "$V" == 2 ]];then
+cdo -s -mul -selname,etp $f ../../../Explore2-meteo/indic/masks/mask_bv.nc tmp_masked.nc #Warnings okay
+else
 cdo -s -mul $f ../../../Explore2-meteo/indic/masks/mask_bv.nc tmp_masked.nc #Warnings okay
+fi
 cdo -s fldmean tmp_masked.nc "${f_local/%.nc/_bv.nc}" #Warnings okay
 rm tmp_masked.nc
 cd ..
