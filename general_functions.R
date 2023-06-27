@@ -93,6 +93,8 @@ save.plot=function(plot.object,Filename,Folder,Type="ggplot",plot.function=NULL,
 ## last the last iteration
 ## step the step to which have the restart launched
 
+#Does not work if inside a loop
+
 restart_loop=function(fct,cpt=1,last,step){
   fct(cpt) 
   print(cpt)
@@ -755,6 +757,9 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
         }
       }
       colnames(res2)[1]="year"
+      if(scenAvail$rcp=="rcp26"&scenAvail$gcm=="EC-EARTH"&scenAvail$rcm=="HadREM3-GA7-05"){
+        res2=res2[!nrow(res2),]
+      }
       all_chain[[c]]=res2
       rm(res)
       rm(res2)
@@ -773,6 +778,9 @@ extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
       res=RES
       res$year=year(res$year)
       res=res[,c("year","code","indic")]
+      if(scenAvail$rcp=="rcp26"&scenAvail$gcm=="EC-EARTH"&scenAvail$rcm=="HadREM3-GA7-05"){
+        res=res[!nrow(res),]
+      }
       res=pivot_wider(res,names_from = code,values_from = indic)
       all_chain[[c]]=res
     }
@@ -950,15 +958,15 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
     }
     if(place=="cities"){
       if(SPAR==1){
-        save.plot(dpi=300,dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,scenAvail$var[1],"/",scenAvail$indic[1],"/"),Format = "jpeg")
       }else{
-        save.plot(dpi=300,dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/"),Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,scenAvail$var[1],"/",scenAvail$indic[1],"/"),Format = "jpeg")
       }
     }else{
       if(SPAR==1){
-        save.plot(dpi=300,dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar1.0"),Folder = paste0(path_fig,scenAvail$var[1],"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
       }else{
-        save.plot(dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,v,"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
+        save.plot(dpi=300,plt,Filename = paste0(scenAvail$var[1],"_",scenAvail$indic[1],"_",type,"_chronique_",pred,"_",city_name,"_",rcp,"_spar",SPAR),Folder = paste0(path_fig,scenAvail$var[1],"/",scenAvail$indic[1],"/",place,"/"),Format = "jpeg")
       }
     }
   }
