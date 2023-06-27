@@ -35,6 +35,7 @@ final_year=2100
 bc_sample=c("ADAMONT")
 simu_lst=simu_lst[simu_lst$bc %in% bc_sample,]
 
+
 ######
 #MAIN#
 ######
@@ -81,6 +82,9 @@ for(v in unique(simu_lst$var)){
       res=res[vec_mask,]
       res=cbind(full_years,t(res))
       colnames(res)[1]="year"
+      if(scenAvail$rcp=="rcp26"&scenAvail$gcm=="EC-EARTH"&scenAvail$rcm=="HadREM3-GA7-05"){
+        res=res[!nrow(res),]
+      }
       all_chains[[c]]=res
     }
     
@@ -187,7 +191,7 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
     SPAR=1.1
   }
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-    for(type_reg in c("reg","dep")){
+    for(type_reg in c("bas","bv","deptmt","sect")){
       
       tic()
       dir.create(paste0(path_data,"Qualypso/",v,"/",i))
@@ -211,6 +215,9 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
 
         res=cbind(full_years,t(res))
         colnames(res)[1]="year"
+        if(scenAvail$rcp=="rcp26"&scenAvail$gcm=="EC-EARTH"&scenAvail$rcm=="HadREM3-GA7-05"){
+          res=res[!nrow(res),]
+        }
         all_chains[[c]]=res
       }
       

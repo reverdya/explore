@@ -67,6 +67,9 @@ for(i in unique(simu_lst$indic)){
     res$year=year(res$year)
     #res=res[!is.na(res$indic),]
     res=res[,c("year","code","indic")]
+    if(scenAvail$rcp=="rcp26"&scenAvail$gcm=="EC-EARTH"&scenAvail$rcm=="HadREM3-GA7-05"){
+      res=res[!nrow(res),]
+    }
     res=pivot_wider(res,names_from = code,values_from = indic)
     all_chains[[c]]=res
   }
@@ -217,6 +220,9 @@ for(i in unique(simu_lst$indic)){
     res$year=year(res$year)
     #res=res[!is.na(res$indic),]
     res=res[,c("year","code","indic")]
+    if(scenAvail$rcp=="rcp26"&scenAvail$gcm=="EC-EARTH"&scenAvail$rcm=="HadREM3-GA7-05"){
+      res=res[!nrow(res),]
+    }
     res=pivot_wider(res,names_from = code,values_from = indic)
     all_chains[[c]]=res
   }
