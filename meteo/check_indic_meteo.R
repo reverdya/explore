@@ -29,8 +29,8 @@ path_temp="C:/Users/reverdya/Documents/Docs/2_data/processed/"
 
 Var=vector(mode="list")
 Var[["tasAdjust"]]=c("monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","seasmean","seasmean","seasmean","seasmean","yearmean")
-Var[["prtotAdjust"]]=c("monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","seassum","seassum","seassum","seassum","yearsum")
-Var[["evspsblpotAdjust"]]=c("monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","monsum","seassum","seassum","seassum","seassum","yearsum")
+Var[["prtotAdjust"]]=c(rep("monsum",12),rep("seassum",4),"yearsum")
+Var[["evspsblpotAdjust"]]=c(rep("monsum",12),rep("seassum",4),"yearsum")
 Var[["prsnAdjust"]]=c("NDJFMAsum")
 period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
 rcp=c("historical","rcp26","rcp45","rcp85")
@@ -148,6 +148,7 @@ for (i in 1:nrow(ref_cities)){
 # plot(refs$mask)
 # points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 
+ref_cities=ref_cities[c(1,3,7),]
 
 #########################################################################################
 ## Reference cities above 1000 m
@@ -176,62 +177,69 @@ for (i in 1:nrow(ref_snow)){
 
 memory_saving_function=function(cpt){
   tic()
-  dir.create(paste0(path_fig,v,"/",indic[cpt]))
+  dir.create(paste0(path_fig,lst_indic$v[cpt],"/",lst_indic$indic[cpt]))
   
-  scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==indic[cpt],]
+  scenAvail=simu_lst[simu_lst$var==lst_indic$v[cpt] & simu_lst$indic==lst_indic$indic[cpt],]
   global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
   assign("global_tas",global_tas,envir = globalenv())
-  all_chains=extract_chains(scenAvail=scenAvail,ref_cities=ref_c)
-  for(c in 1:nrow(ref_c)){
+  all_chains=extract_chains(scenAvail=scenAvail,ref_cities=lst_indic$ref_c[[cpt]])
+  for(c in 1:nrow(lst_indic$ref_c[[cpt]])){
     for(R in c("rcp26","rcp45","rcp85")){
       for(S in c(0.8,0.9,1,1.1,1.2)){
-        plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],idx=c)
+        plot_spline(all_chains=all_chains,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name =lst_indic$ref_c[[cpt]]$name[c],idx=c)
       }
     }
     for(R in c("rcp85")){
       for(S in c(1.2,1.3,1.4,1.5,1.6)){
-        plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = ref_c$name[c],globaltas = global_tas,idx=c)
+        plot_spline(all_chains=all_chains,type="raw_spline",pred="temp",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = lst_indic$ref_c[[cpt]]$name[c],globaltas = global_tas,idx=c)
       }
     }
   }
   rm(all_chains,global_tas)
   closeAllConnections()
   gc()
-  print(indic[cpt])
+  print(lst_indic$indic[cpt])
   toc()
 }
 
-
-
+lst_indic=list(indic=c(),v=c(),ref_c=list())
+count=1
 for(v in unique(simu_lst$var)){
   dir.create(paste0(path_fig,v,"/"))
   if(v=="prsnAdjust"){
-    ref_c=ref_snow
+    lst_indic$ref_c[[count]]=ref_snow
+    count=count+1
+    lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic))
+    lst_indic$v=c(lst_indic$v,v)
   }else{
-    ref_c=ref_cities
+    lgth=length(unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+    for(j in 1:lgth){
+      lst_indic$ref_c[[count]]=ref_cities
+      count=count+1
+    }
+    lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+    lst_indic$v=c(lst_indic$v,rep(v,lgth))
   }
-  indic=unique(simu_lst[simu_lst$var==v,]$indic)
-  
-  restart_loop(fct=memory_saving_function,last=length(indic),step=1)
-  
-  
 }
+restart_loop(fct=memory_saving_function,last=length(lst_indic$indic),step=1)
+  
   
 ################################################
 ## Idem for basins hydro
 
+basHy=basHy[c(1,3,4),]
 
 memory_saving_function=function(cpt){
   tic()
-  dir.create(paste0(path_fig,v,"/",indic[cpt]))
-  dir.create(paste0(path_fig,v,"/",indic[cpt],"/bas/"))
-  
-  scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==indic[cpt],]
+  dir.create(paste0(path_fig,lst_indic$v[cpt],"/",lst_indic$indic[cpt]))
+  dir.create(paste0(path_fig,lst_indic$v[cpt],"/",lst_indic$indic[cpt],"/bas/"))
+
+  scenAvail=simu_lst[simu_lst$var==lst_indic$v[cpt] & simu_lst$indic==lst_indic$indic[cpt],]
   global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
   assign("global_tas",global_tas,envir = globalenv())
   all_chains_bas=extract_chains(scenAvail,ref_cities = basHy,type = "bas")
   for(c in 1:nrow(basHy)){
-    for(R in c("rcp26","rcp45","rcp85")){
+    for(R in c("rcp26","rcp85")){
       for(S in c(1,1.1)){
         plot_spline(all_chains=all_chains_bas,type="raw_spline",pred="time",scenAvail = scenAvail,SPAR=S,rcp=R,city_name = basHy$name[c],cat="meteo",idx=c,place="bas")
       }
@@ -245,15 +253,16 @@ memory_saving_function=function(cpt){
   rm(all_chains_bas,global_tas)
   closeAllConnections()
   gc()
-  print(indic[cpt])
+  print(lst_indic$indic[cpt])
   toc()
 }
 
 
+lst_indic=list(indic=c(),v=c())
 for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
   dir.create(paste0(path_fig,v,"/"))
-  indic=unique(simu_lst[simu_lst$var==v,]$indic)
-  
-  restart_loop(fct=memory_saving_function,last=length(indic),step=1)
-  
+  lgth=length(unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+  lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+  lst_indic$v=c(lst_indic$v,rep(v,lgth))
 }
+restart_loop(fct=memory_saving_function,last=length(lst_indic$indic),step=1)
