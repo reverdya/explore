@@ -16,8 +16,8 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 ->prep_temp/prep_temp_pred.R				||||
 ->prep_temp/understandXfut_mat.R			|||	figures checked? NO																	Waiting on T_global
 
-->meteo/check_indic_meteo.R				||||	figures checked? NO																	
-->meteo/run_Qualypso.R					|||	before that visually determine best spar														adapt Xfut temp to Tglobal, spar, with 2100 earth/hadrem removed
+->meteo/check_indic_meteo.R				||||	figures checked? YES																	
+->meteo/run_Qualypso.R					||||	before that visually determine best spar														adapt Xfut temp to Tglobal
 ->meteo/make_figures_meteo.R				| |	figures checked? NO																	new T_FR function, bv..., new mask, change Xfut, safran data (ETP<2019), Waiting on T_global, new figures (regime, carte erreur, storylines), figuré significatif (2 types hachures)
 
 
@@ -28,7 +28,7 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 ->hydro/preprocess/clean_files_indic.R			||||																	
 
 ->hydro/check_indic_hydro.R				|||	figures checked? NO																	Waiting on Mordor 2006, waiting on bug february, with 2100 earth/hadrem removed
-->hydro/run_Qualypso.R					|||	before that visually determine best spar														adapt Xfut temp to Tglobal, Waiting on Mordor 2006, waiting on bug february, with 2100 earth/hadrem removed, run notice avec cdft
+->hydro/run_Qualypso.R					|||	before that visually determine best spar														adapt Xfut temp to Tglobal, Waiting on Mordor 2006, waiting on bug february, with 2100 earth/hadrem removed, run notice avec cdft, run FR sans SIM2
 ->hydro/make_figures_hydro.R				|||	figures checked? NO																	Waiting on T_global, waiting on Mordor 2006, waiting on bug february, with 2100 earth/hadrem removed, run notice avec cdft QA et VCN3, run FR
 
 
