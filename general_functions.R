@@ -557,7 +557,7 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
       # check is some simulation chains are entirely missing
       hasAllNa = apply(Y[g,,],1,function(x) all(is.na(x)))
       if(any(hasAllNa)){
-        climResponse[[g]]=list(phiStar = NA, etaStar = NA, phi = NA,
+        climResponse[[g]]=list(phiStar = NA, etaStar = NA, YStar=NA, phi = NA, climateResponse=NA, warning_store=NA,
                                varInterVariability = NA)
       }else{
         climResponse[[g]]= prepare_clim_resp_2D(Y = Y[g,,],Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nY=nY,nS = nS,nFut = nFut,scenAvail=scenAvail)
