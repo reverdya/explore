@@ -334,7 +334,7 @@ rle2 <- function (x)  {
 
 ## etaStar is by definition of X dimensions's and not Xfut and can contain NA (logical when thinking of tempreature predictor)
 
-prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type,nY,nS,nFut,scenAvail){
+prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type,nY,nS,nFut,scenAvail,replace0){
   # prepare outputs
   phiStar = phi = matrix(nrow=nS,ncol=nFut)
   etaStar = YStar = matrix(nrow=nS,ncol=nY)
@@ -360,7 +360,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       phiC = predict(smooth.spline.out, Xrefs)$y
     }
     if(type=="log_spline"){
-      Ys[Ys==0]=1e-50
+      Ys[Ys==0]=replace0
       Yslog10=log10(Ys)
       smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
       # store spline object
@@ -427,7 +427,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
       # fit a smooth signal
       zz = (!is.na(Ys))&(!is.na(Xs))
       phiY=Xs
-      Ys[Ys==0]=1e-50
+      Ys[Ys==0]=replace0
       Yslog10=log10(Ys)
       smooth.spline.out<-stats::smooth.spline(Xs[zz],Yslog10[zz],spar=spar[iS])
       # store spline object
@@ -539,7 +539,7 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
   
   
   if(paralType=="Time"){
-    out=prepare_clim_resp_2D(Y = Y,Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail,nY=nY)
+    out=prepare_clim_resp_2D(Y = Y,Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail,nY=nY,replace0=min(Y))
   }
   
   if(paralType=="Grid"){
@@ -560,7 +560,7 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
         climResponse[[g]]=list(phiStar = NA, etaStar = NA, YStar=NA, phi = NA, climateResponse=NA, warning_store=NA,
                                varInterVariability = NA)
       }else{
-        climResponse[[g]]= prepare_clim_resp_2D(Y = Y[g,,],Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nY=nY,nS = nS,nFut = nFut,scenAvail=scenAvail)
+        climResponse[[g]]= prepare_clim_resp_2D(Y = Y[g,,],Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nY=nY,nS = nS,nFut = nFut,scenAvail=scenAvail,replace0=min(Y))
       }
       if(g%%100==0){gc()}
     }
