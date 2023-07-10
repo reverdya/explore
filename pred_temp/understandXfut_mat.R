@@ -31,6 +31,10 @@ ref_year=1990
 ######
 
 load(file=paste0(path_data,"processed/pred_temp.Rdata"))
+load(file=paste0(path_data,"raw/Global_temp/T_FR_RibesESD2022.Rdata"))
+load(file=paste0(path_data,"raw/Global_temp/T_GLO_RibesSA2021.Rdata"))
+T_FR = X_Consc[,"be","all","histssp585","cons"]
+T_glo = CX_fulls[,"be","loc-ANN","all","histssp585","cons"]
 
 
 df=data.frame(time=pred_temp[[1]]$year,x1=pred_temp[[46]]$temp_spline,x2=pred_temp[[47]]$temp_spline,y1=pred_temp[[46]]$temp_raw,y2=pred_temp[[47]]$temp_raw)
