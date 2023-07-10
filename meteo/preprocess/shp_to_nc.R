@@ -79,6 +79,11 @@ fr_8km_bv=vector(mode="list")
 
 for(i in 1:length(BV$Code8)){
   fr_8km_bv[[i]]=mask(fr_8km,BV[i,])#mask by cell centroid (allows to not have region overlap)
+  if(!any(!is.na(fr_8km_bv[[i]]@data@values))){#case where BV is so small that it covers no pixel centroid then take all intersecting pixels
+    tmp=rasterize(BV[i,],fr_8km,getCover=TRUE)
+    tmp[tmp==0] <- NA
+    fr_8km_bv[[i]]=mask(fr_8km,tmp)
+  }
 }
 
 for(i in 1:length(BV$Code8)){
