@@ -32,7 +32,7 @@ ref_year=1990# central year of 1975-2005 reference period
 horiz=c(2030,2050,2085)
 final_year=2100
 
-bc_sample=c("ADAMONT")
+bc_sample=c("ADAMONT","CDFt")
 simu_lst=simu_lst[simu_lst$bc %in% bc_sample,]
 
 
@@ -41,7 +41,7 @@ simu_lst=simu_lst[simu_lst$bc %in% bc_sample,]
 ######
 
 ###########################################################
-## General run for 3 (time) and 8 (temp) steps
+## General run for 3 steps (time) 
 
 for(v in unique(simu_lst$var)){
   dir.create(paste0(path_data,"Qualypso/",v,"/"))
@@ -108,8 +108,8 @@ for(v in unique(simu_lst$var)){
     for(cpt in 1:length(Xfut)){
     # for(x in c(2030,2050,2085)){
       lst.QUALYPSOOUT_time[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                                            # scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
-                                                            scenAvail=scenAvail[,c("rcp","gcm","rcm")],
+                                                            scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                                            # scenAvail=scenAvail[,c("rcp","gcm","rcm")],
                                                             X=X,
                                                             Xfut=Xfut,
                                                             iFut=cpt,
@@ -150,8 +150,8 @@ for(v in unique(simu_lst$var)){
     lst.QUALYPSOOUT_temp=vector(mode="list",length=length((Xfut)))
     for(cpt in 1:length(Xfut)){
       lst.QUALYPSOOUT_temp[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                                  # scenAvail=scenAvail[,c("gcm","rcm","bc")],
-                                                  scenAvail=scenAvail[,c("gcm","rcm")],
+                                                  scenAvail=scenAvail[,c("gcm","rcm","bc")],
+                                                  # scenAvail=scenAvail[,c("gcm","rcm")],
                                                   X=X,
                                                   Xfut=Xfut,
                                                   iFut=cpt,
@@ -191,7 +191,8 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
     SPAR=1.1
   }
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-    for(type_reg in c("bas","bv","deptmt","sect")){
+    # for(type_reg in c("bas","bv","deptmt","sect")){
+    for(type_reg in c("bas")){
       
       tic()
       dir.create(paste0(path_data,"Qualypso/",v,"/",i))
@@ -243,8 +244,8 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       for(cpt in 1:length(Xfut)){
         # for(x in c(2030,2050,2085)){
         lst.QUALYPSOOUT_time[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                               # scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
-                                               scenAvail=scenAvail[,c("rcp","gcm","rcm")],
+                                               scenAvail=scenAvail[,c("rcp","gcm","rcm","bc")],
+                                               # scenAvail=scenAvail[,c("rcp","gcm","rcm")],
                                                X=X,
                                                Xfut=Xfut,
                                                iFut=cpt,
@@ -290,8 +291,8 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
       lst.QUALYPSOOUT_temp=vector(mode="list",length=length((Xfut)))
       for(cpt in 1:length(Xfut)){
         lst.QUALYPSOOUT_temp[[cpt]] = QUALYPSO(Y=Y, #one Y and run per pixel because otherwise we cannot have several future times
-                                               # scenAvail=scenAvail[,c("gcm","rcm","bc")],
-                                               scenAvail=scenAvail[,c("gcm","rcm")],
+                                               scenAvail=scenAvail[,c("gcm","rcm","bc")],
+                                               # scenAvail=scenAvail[,c("gcm","rcm")],
                                                X=X,
                                                Xfut=Xfut,
                                                iFut=cpt,
