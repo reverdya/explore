@@ -24,9 +24,11 @@ path_fig="C:/Users/reverdya/Documents/Docs/3_figures/hydro/analyse-indic/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
 
-indic=c("QA","QA_DJF","QA_MAM","QA_JJA","QA_SON","QA_janv","QA_fevr","QA_mars","QA_avr","QA_mai","QA_juin","QA_juill","QA_aout","QA_sept","QA_oct","QA_nov","QA_dec","QA05","QA10","QA50","QA90","QA95","QJXA","QMNA","VCN3","VCN10","VCX3")
+# indic=c("QA","QA_DJF","QA_MAM","QA_JJA","QA_SON","QA_janv","QA_fevr","QA_mars","QA_avr","QA_mai","QA_juin","QA_juill","QA_aout","QA_sept","QA_oct","QA_nov","QA_dec","QA05","QA10","QA50","QA90","QA95","QJXA","QMNA","VCN3","VCN10","VCX3")
+indic=c("QA","QJXA","VCN3")
 rcp=c("rcp26","rcp45","rcp85")
-bc=c("ADAMONT","CDFt")
+# bc=c("ADAMONT","CDFt")
+bc=c("ADAMONT")
 hm=c("CTRIP","EROS","GRSD","J2000","MORDOR-SD","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
 hm_domain=c("FR","Lo-Br","FR","Lo-Rh","Lo","FR","FR","FR","FR")
 hm_NBbc=c(1,2,2,2,2,2,1,1,2)
@@ -66,6 +68,7 @@ for (i in indic){
 }
 simu_lst=data.frame(sapply(simu_lst,unlist))
 simu_lst=simu_lst[!(simu_lst$gcm=="IPSL-CM5A-MR"&simu_lst$rcm=="WRF381P"),]
+simu_lst=simu_lst[!(simu_lst$gcm=="CNRM-CM5"&simu_lst$rcm=="RACMO22E"),]
 # simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
 # simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
 save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
