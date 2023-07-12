@@ -28,11 +28,15 @@ path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_data/processed/"
 
 Var=vector(mode="list")
-Var[["tasAdjust"]]=c("monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","monmean","seasmean","seasmean","seasmean","seasmean","yearmean")
-Var[["prtotAdjust"]]=c(rep("monsum",12),rep("seassum",4),"yearsum")
-Var[["evspsblpotAdjust"]]=c(rep("monsum",12),rep("seassum",4),"yearsum")
+# Var[["tasAdjust"]]=c(rep("monmean",12),rep("seasmean",4),"yearmean")
+# Var[["prtotAdjust"]]=c(rep("monsum",12),rep("seassum",4),"yearsum")
+# Var[["evspsblpotAdjust"]]=c(rep("monsum",12),rep("seassum",4),"yearsum")
+Var[["tasAdjust"]]=c(rep("seasmean",2))
+Var[["prtotAdjust"]]=c(rep("seassum",2))
+Var[["evspsblpotAdjust"]]=c(rep("seassum",2))
 Var[["prsnAdjust"]]=c("NDJFMAsum")
-period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
+# period=c("_01","_02","_03","_04","_05","_06","_07","_08","_09","_10","_11","_12","_DJF","_MAM","_JJA","_SON","")
+period=c("_DJF","_JJA","")
 rcp=c("historical","rcp26","rcp45","rcp85")
 bc=c("ADAMONT","CDFt")
 
@@ -89,6 +93,7 @@ for (v in names(Var)){
 }
 simu_lst=data.frame(sapply(simu_lst,unlist))
 simu_lst=simu_lst[!(simu_lst$gcm=="IPSL-CM5A-MR"&simu_lst$rcm=="WRF381P"),]
+simu_lst=simu_lst[!(simu_lst$gcm=="CNRM-CM5"&simu_lst$rcm=="RACMO22E"),]
 # simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
 # simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
 save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
