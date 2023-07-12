@@ -40,6 +40,7 @@ library(onewaytests)#bf.test
 library(forcats)#fct_rev
 
 
+
 #############################################################
 #Save a graph in svg, pdf or jpeg format (size in cm)
 #object ggplot : object in "plot.object"
@@ -539,7 +540,7 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
   
   
   if(paralType=="Time"){
-    out=prepare_clim_resp_2D(Y = Y,Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail,nY=nY,replace0=min(Y))
+    out=prepare_clim_resp_2D(Y = Y,Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nS = nS,nFut = nFut,scenAvail=scenAvail,nY=nY,replace0=min(Y[Y!=0],na.rm=T))
   }
   
   if(paralType=="Grid"){
@@ -560,7 +561,7 @@ prepare_clim_resp=function(Y, X, Xfut, typeChangeVariable, spar,type,nbcores=6,s
         climResponse[[g]]=list(phiStar = NA, etaStar = NA, YStar=NA, phi = NA, climateResponse=NA, warning_store=NA,
                                varInterVariability = NA)
       }else{
-        climResponse[[g]]= prepare_clim_resp_2D(Y = Y[g,,],Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nY=nY,nS = nS,nFut = nFut,scenAvail=scenAvail,replace0=min(Y))
+        climResponse[[g]]= prepare_clim_resp_2D(Y = Y[g,,],Xmat = Xmat,Xfut = Xfut,Xref = Xref,typeChangeVariable = typeChangeVariable,spar = spar,type = type,nY=nY,nS = nS,nFut = nFut,scenAvail=scenAvail,replace0=min(Y[Y!=0],na.rm=T))
       }
       if(g%%100==0){gc()}
     }
@@ -1502,16 +1503,18 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     names(rcp.labs) <- "rcp85"
   }
   
-  ylims=c(quantile(chain_band$min,probs=0.05,na.rm=T),quantile(chain_band$max,probs=0.95,na.rm=T)) #na.rm because of NA in 2006 for MORDOR
+  ylims=c(quantile(chain_band$min,probs=0.05,na.rm=T),quantile(chain_band$max,probs=0.95))
+  
+  
   
   if(pred=="time"){
     plt1=ggplot(data)+
       geom_hline(yintercept = 0)+
-      geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.7)+#raw chain band
+      geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.3,linetype="dotted",color="gray40")+#raw chain band
       scale_fill_discrete("Variabilité naturelle",type= as.vector(col_3rcp_shade[color_select]))+
       guides(fill=guide_legend(order=4,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
       new_scale_fill()+
-      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.55)+#uncertainty band
+      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.6)+#uncertainty band
       scale_fill_discrete("Dispersion liée aux modèles",type= as.vector(col_3rcp[color_select]))+
       guides(fill=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
       scale_x_continuous("",limits=xlim2,expand=c(0,0),minor_breaks = seq(xlim2[1],xlim2[2],10))+
@@ -1527,7 +1530,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   }else{
     plt1=ggplot(data)+
       geom_hline(yintercept = 0)+
-      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.55)+#uncertainty band
+      geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.6)+#uncertainty band
       scale_fill_discrete("Dispersion liée aux modèles",type= as.vector(col_3rcp[color_select]))+
       guides(fill=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
       scale_x_continuous("",limits=xlim2,expand=c(0,0))+
@@ -1542,9 +1545,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=10)
   }
   if(!storyl){
+    col_3rcp_darker=c(col_3rcp[1],darkenCol(col_3rcp[2],0.2),col_3rcp[3])
+    names(col_3rcp_darker)=names(col_3rcp)
     plt1=plt1+
       geom_line(aes(x=pred,y=med,group=eff,color=eff),size=0.8)+#RCP mean
-      scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp[color_select]),labels=NULL)+
+      scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp_darker[color_select]),labels=NULL)+
       guides(color=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))
   }else{
     plt1=plt1+
@@ -1566,7 +1571,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       scale_y_continuous(paste0("Changement moyen (°C)"),expand=c(0,0))
   }
   plt1=plt1+
-    geom_line(data=Obs,aes(x=pred,y=val,size="aa"),alpha=0.7,color="gray50")+
+    geom_line(data=Obs,aes(x=pred,y=val,size="aa"),alpha=1,color="gray40")+
     scale_size_manual("Observations",values = c("aa"=1))+
     guides(size=guide_legend(order=1,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),label=F))
     
@@ -1574,6 +1579,10 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     plt1=plt1+
       scale_x_continuous("Niveau de réchauffement planétaire (°C)",limits=xlim2,expand=c(0,0))
   }
+  
+  
+  
+  
   
   
   perc_pos=vector(mode="list",length=nEff)
