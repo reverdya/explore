@@ -121,7 +121,7 @@ for(i in unique(simu_lst$indic)){
   rm(listOption)
   closeAllConnections()
   gc()
-  save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time.RData"))
+  save(lst.QUALYPSOOUT_time,file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time_LO.RData"))
   rm(lst.QUALYPSOOUT_time) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
   closeAllConnections()
   gc()
@@ -175,7 +175,7 @@ for(i in unique(simu_lst$indic)){
     }
     if(((cpt) %% 10)==0){print(cpt)}
   }
-  save(lst.QUALYPSOOUT_temp,file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_temp.RData"))
+  save(lst.QUALYPSOOUT_temp,file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_temp_LO.RData"))
   rm(lst.QUALYPSOOUT_temp,listOption) # on local computer (don't know for server) performances degrade through iterations (due to memory saturation? And memory is only given back by closing R)
   closeAllConnections()
   gc()
