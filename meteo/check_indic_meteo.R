@@ -26,7 +26,7 @@ path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/analyse-indic/"
 pth_mask="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_data/processed/"
-load(file=paste0(pth_temp,"T_coef_spline1990toGlob.Rdata"))
+load(file=paste0(path_temp,"T_coef_spline1990toGlob.Rdata"))
 
 Var=vector(mode="list")
 # Var[["tasAdjust"]]=c(rep("monmean",12),rep("seasmean",4),"yearmean")
@@ -230,7 +230,7 @@ for(v in unique(simu_lst$var)){
 }
 
 
-#Strangely sometimes the functions that does the restart does not work first time and need to be relaunched a second time...
+#Strangely sometimes the functions that does the restart does not work if the code is ran all at once and need to be launched individually...
 restart_loop(fct=memory_saving_function,last=length(lst_indic$indic),step=1)
   
   
@@ -279,6 +279,5 @@ for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
 
 
 
-#Strangely sometimes the functions that does the restart does not work first time and need to be relaunched a second time...
-
+#Strangely sometimes the functions that does the restart does not work if the code is ran all at once and need to be launched individually...
 restart_loop(fct=memory_saving_function,last=length(lst_indic$indic),step=1)

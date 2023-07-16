@@ -23,7 +23,7 @@ path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/"
 path_fig="C:/Users/reverdya/Documents/Docs/3_figures/hydro/analyse-indic/"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
-load(file=paste0(pth_temp,"T_coef_spline1990toGlob.Rdata"))
+load(file=paste0(path_temp,"T_coef_spline1990toGlob.Rdata"))
 
 # indic=c("QA","QA_DJF","QA_MAM","QA_JJA","QA_SON","QA_janv","QA_fevr","QA_mars","QA_avr","QA_mai","QA_juin","QA_juill","QA_aout","QA_sept","QA_oct","QA_nov","QA_dec","QA05","QA10","QA50","QA90","QA95","QJXA","QMNA","VCN3","VCN10","VCX3")
 indic=c("QA","QJXA","VCN3")
@@ -121,7 +121,7 @@ print(dim(ref))
 # type : raw_spline, raw, diff, diff_spline
 
 ##Merge data frame warnings are okay
-## Sometimes problem with too many connections opened requires running step by step (i by i) (or memory problem)
+
 
 ref_c=ref[ref$code %in% bv_sample,]
 
@@ -153,7 +153,7 @@ memory_saving_function=function(cpt){
   toc()
 }
 
-
+#Strangely sometimes the functions that does the restart does not work if the code is ran all at once and need to be launched individually...
 restart_loop(fct=memory_saving_function,last=length(indic),step=1)
 
 

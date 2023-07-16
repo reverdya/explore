@@ -27,7 +27,7 @@ path_hadcrut="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
-load(file=paste0(pth_temp,"T_coef_spline1990toGlob.Rdata"))
+load(file=paste0(path_temp,"T_coef_spline1990toGlob.Rdata"))
 mask_fr=as.vector(refs$mask)
 
 path_river=paste0(path_sig,"/processed/CoursEau_idx1_wgs84.shp")
