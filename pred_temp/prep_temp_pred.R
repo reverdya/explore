@@ -20,6 +20,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 ####################
 
 path_data="C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/indic/tasAdjust/"
+path_data2="C:/Users/reverdya/Documents/Docs/2_data/"
 pth_mask="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc"
 pth_save="C:/Users/reverdya/Documents/Docs/2_data/processed/"
 centr_ref_year=1990# central year of 1975-2005 reference period
@@ -36,6 +37,30 @@ indic="yearmean"
 #MAIN#
 ######
 
+
+
+load(file=paste0(path_data2,"raw/Global_temp/T_GLO_RibesSA2021.Rdata"))
+T_glo = X_Consc[,"be","all","histssp585","cons"]
+years_glo=as.numeric(names(T_glo))
+T_glo=T_glo-mean(T_glo[years_glo>=1850&years_glo<=1900])
+T_glo_spline=smooth.spline(x=years_glo,y = T_glo,spar=0.8)$y
+plot(years_glo,T_glo)
+lines(years_glo,T_glo_spline,lwd=2)
+
+load(file=paste0(path_data2,"raw/Global_temp/T_FR_RibesESD2022.Rdata"))
+T_FR = CX_fulls[,"be","loc-ANN","all","histssp585","cons"]
+years_FR=as.numeric(names(T_FR))
+T_FR_spline=smooth.spline(x=years_FR,y = T_FR,spar=0.8)$y
+plot(years_FR,T_FR)
+lines(years_FR,T_FR_spline,lwd=2)
+T_FR_spline1990=T_FR_spline-T_FR_spline[years_FR==1990]
+
+plot(T_FR_spline1990,T_glo_spline)
+T_lm=lm(T_glo_spline~T_FR_spline1990)
+abline(T_lm,lwd=2)
+print(summary(T_lm))
+T_coef=c(T_lm$coefficients[[2]],T_lm$coefficients[[1]])
+save(T_coef,file=paste0(pth_save,"T_coef_spline1990toGlob.Rdata"))
 
 nc=load_nc(pth_mask)
 mask=ncvar_get(nc,varid="masque")
@@ -73,5 +98,6 @@ for(i in 1:length(lst_path)){
 
 pred_temp=all_chain
 save(pred_temp,file=paste0(pth_save,"pred_temp.Rdata"))
+
 
 
