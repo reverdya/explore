@@ -13,12 +13,12 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 ->meteo/preprocess/regrid_safran.R			||||	after that manually moved and renamed raw/meteo/safran/safran_new_ETP.nc raw/meteo/safran/regridded/safran_new_ETP_grid.nc
 ->scripts/calc_indic_safran.sh				||||																				
 
-->prep_temp/prep_temp_pred.R				|||																				Waiting on T_global
-->prep_temp/understandXfut_mat.R			|||	figures checked? NO																	Waiting on T_global
+->prep_temp/prep_temp_pred.R				||||																				
+->prep_temp/understandXfut_mat.R			||||	figures checked? NO
 
 ->meteo/check_indic_meteo.R				|||	figures checked? NO																	
-->meteo/run_Qualypso.R					|||	before that visually determine best spar														
-->meteo/make_figures_meteo.R				| |	figures checked? NO																	Waiting on T_global, new T_FR function, bas, new mask, change Xfut, safran data (ETP<2019), storylines, add bc
+->meteo/run_Qualypso_meteo.R				|||	before that visually determine best spar														
+->meteo/make_figures_meteo.R				| |	figures checked? NO																	T_global, bas, new mask, change Xfut, safran data (ETP<2019), storylines, add bc
 
 
 
@@ -28,5 +28,5 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 ->hydro/preprocess/clean_files_indic.R			||||																				
 
 ->hydro/check_indic_hydro.R				||||	figures checked? NO																	
-->hydro/run_Qualypso.R					||||	before that visually determine best spar									
-->hydro/make_figures_hydro.R				| |	figures checked? NO																	Waiting on T_global, new T_FR function
+->hydro/run_Qualypso_hydro.R				||||	before that visually determine best spar									
+->hydro/make_figures_hydro.R				|||	figures checked? NO																	T_global
