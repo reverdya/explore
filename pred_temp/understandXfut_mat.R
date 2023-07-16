@@ -31,10 +31,9 @@ ref_year=1990
 ######
 
 load(file=paste0(path_data,"processed/pred_temp.Rdata"))
-load(file=paste0(path_data,"raw/Global_temp/T_FR_RibesESD2022.Rdata"))
-load(file=paste0(path_data,"raw/Global_temp/T_GLO_RibesSA2021.Rdata"))
-T_FR = X_Consc[,"be","all","histssp585","cons"]
-T_glo = CX_fulls[,"be","loc-ANN","all","histssp585","cons"]
+load(file=paste0(path_data,"processed/T_coef_spline1990toGlob.Rdata"))
+
+
 
 
 df=data.frame(time=pred_temp[[1]]$year,x1=pred_temp[[46]]$temp_spline,x2=pred_temp[[47]]$temp_spline,y1=pred_temp[[46]]$temp_raw,y2=pred_temp[[47]]$temp_raw)
@@ -174,11 +173,14 @@ plt7=ggplot(df)+
 plt7
 
 
+df$Dx1glo=T_coef[1]*df$Dx1+T_coef[2]
+df$Dx2glo=T_coef[1]*df$Dx2+T_coef[2]
+
 plt7_bis=ggplot(df)+
-  geom_line(aes(x=Dx1,y=Dy1_spline),color="red",size=1.2)+
-  geom_line(aes(x=Dx2,y=Dy2_spline),color="blue",size=1.2)+
+  geom_line(aes(x=Dx1glo,y=Dy1_spline),color="red",size=1.2)+
+  geom_line(aes(x=Dx2glo,y=Dy2_spline),color="blue",size=1.2)+
   scale_y_continuous(limits=c(-0.125,0.75),expand=c(0,0))+
-  scale_x_continuous(limits=c(-1,5),expand=c(0,0),labels=function(x) 0.75*x+0.1)+##dummy function to replace by MF function
+  scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
   xlab("Niveau de réchauffement (°C)")+
   ylab("DQan (m3/s)")+
   theme_bw(base_size = 12)+
@@ -267,19 +269,23 @@ data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
 plt=ggplot(data)+
   geom_line(aes(x=year,y=val,col=rcp,group=chain),size=1.2)+
   xlab("")+
-  ylab("Changement de température France (°C)")+
+  ylab("Température France (°C)")+
   theme_bw(base_size = 18)+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
   scale_color_discrete("",type = as.vector(col_3rcp),labels=c("RCP 2.6","RCP 4.5","RCP 8.5"))+
-  ggtitle("Changement de température France pour les différents RCP/GCM/RCM")
+  ggtitle("Température France pour les différents RCP/GCM/RCM")
 save.plot(plt,Filename = "global_tas",Folder = path_fig,Format = "jpeg")
 
 ##############################################
 ## Plot emergence dates
 
-
-##to rerun when MF function
+data=lapply(pred_temp,function(x) x[,c(1,4)])
+data=Reduce(function(...) merge(...,by="year", all=T), data)
+colnames(data)=c("year",unlist(lapply(names(pred_temp),function(x) x[1])))
+data=pivot_longer(data=data,cols=!year,names_to = "chain",values_to = "val")
+data$rcp=unlist(lapply(strsplit(data$chain,"_"),function(x) x[1]))
+data$val=T_coef[1]*data$val+T_coef[2]
 
 idx=vector(mode = "list")
 temp_ref=c(1,1.5,2,3,4,5)
