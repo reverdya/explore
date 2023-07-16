@@ -640,7 +640,11 @@ prep_global_tas=function(path_temp,simu_lst,cat="meteo"){
     chains_pred=str_replace(chains_pred,"CNRM-CM5-LR","CNRM-CM5")
     chains_pred=str_replace(chains_pred,"HadREM3-GA7-05","HadREM3-GA7")
   }
-  chains_var=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm,"_",simu_lst$bc)
+  if(any(colnames(simu_lst)=="bc")){
+    chains_var=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm,"_",simu_lst$bc)
+  }else{
+    chains_var=paste0(simu_lst$rcp,"_",simu_lst$gcm,"_",simu_lst$rcm,"_ADAMONT")
+  }
   mat_Globaltas=vector(mode="list",length=length(chains_var))
   for (j in 1:length(chains_var)){
     mat_Globaltas[[j]]=pred_temp[[which(chains_pred==chains_var[j])]][c("year","temp_spline1990")]
@@ -926,6 +930,10 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
   
   rcm_colors=tol(length(unique(scenAvail$rcm)))
   names(rcm_colors)=unique(scenAvail$rcm)
+  
+  if(pred=="temp"){
+    data$xfut=T_coef[1]*data$xfut+T_coef[2]
+  }
   
   if(cat=="meteo"){
     if(type=="diff_spline"|type=="raw_spline"){
@@ -1468,10 +1476,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     for (j in 1:nrow(storylines)){
       if(pred=="time"){
         for(r in lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]){
-          scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==r)
           if(var=="Q"){
+            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$rcp==r)
             scen_rep=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,],2,mean)
           }else{
+            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==r)
             scen_rep=lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,]
           }
           if(var!="tasAdjust"){
@@ -2335,9 +2344,9 @@ base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL){
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.border = element_blank())+
     theme(strip.text = element_text(size = 12, face = "bold"))#+
   if(!is.null(zoom)){
-    if(zoom=="Loire"){
+    if(zoom=="LO"){
       plt=plt+
-        coord_equal(ratio=111/78,xlim = c(-2.5, 4.75),ylim = c(44.25,48.75),expand=F)## ratio of 1lat by 1long at 45N
+        coord_equal(ratio=111/78,xlim = c(-2.5, 4.75),ylim = c(45,48),expand=F)## ratio of 1lat by 1long at 45N
     }
   }
   if(!is.null(alpha_name)){
@@ -2507,6 +2516,8 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   quant.labs <- c("Projections\nbasses", "Projections\nintermédiaires", "Projections\nhautes")
   names(quant.labs) <- quant
   
+  exut[exut$quant==quant[1],]$sign_agree="Non concerné"
+  exut[exut$quant==quant[3],]$sign_agree="Non concerné"
   
   #Setting limits for color scale
   if(var!="tasAdjust"){
@@ -2527,7 +2538,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
       guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
-      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21))+
+      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21,"Non concerné"=22))+
       guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       facet_grid(rcp ~ quant,labeller = labeller(rcp=rcp.labs, quant = quant.labs))+
       ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCPs et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990)"))+
@@ -2693,6 +2704,9 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   quant.labs <- c("Projections\nbasses", "Projections\nintermédiaires", "Projections\nhautes")
   names(quant.labs) <- quant
   
+  exut[exut$quant==quant[1],]$sign_agree="Non concerné"
+  exut[exut$quant==quant[3],]$sign_agree="Non concerné"
+  
   #Setting limits for color scale
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
@@ -2713,7 +2727,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
       guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
-      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21))+
+      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21,"Non concerné"=22))+
       guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
       ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents horizons et\nle prédicteur ",pred_name,"(",rcp_plainname,", référence 1990)"))+
@@ -2834,6 +2848,9 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   quant.labs <- c("Projections\nbasses", "Projections\nintermédiaires", "Projections\nhautes")
   names(quant.labs) <- quant
   
+  exut[exut$quant==quant[1],]$sign_agree="Non concerné"
+  exut[exut$quant==quant[3],]$sign_agree="Non concerné"
+  
   #Setting limits for color scale
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
@@ -2853,7 +2870,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
     plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
       guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
-      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21))+
+      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21,"Non concerné"=22))+
       guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       facet_grid(rcp ~ quant,labeller = labeller(rcp=rcp.labs, quant = quant.labs))+
       ggtitle(paste0("Changement relatif du ",ind_name_full," et son incertitude pour\ndifférents RCPs et le prédicteur ",pred_name,"\n(",horiz," ",pred_unit," VS 1990),\n ensemble non balancé"))+
@@ -3335,19 +3352,26 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   
 
   idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  
+  
+  tmp=data.frame(lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR)*100
+  tmp$sum_IVout=apply(tmp[,-which(colnames(tmp)=="InternalVar")],1,sum)
+  tmp[,-which(colnames(tmp)=="InternalVar"|colnames(tmp)=="sum_IVout")]=tmp[,-which(colnames(tmp)=="InternalVar"|colnames(tmp)=="sum_IVout")]/tmp$sum_IVout*100
+  tmp$ratio=tmp$InternalVar/tmp$sum_IVout
+  
   if(pred=="time"){
-    exut$rcp=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"rcp"]*100
+    exut$rcp=tmp[,"rcp"]
   }
-  exut$gcm=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"gcm"]*100
-  exut$rcm=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"rcm"]*100
+  exut$gcm=tmp[,"gcm"]
+  exut$rcm=tmp[,"rcm"]
   if(!is.null(lst.QUALYPSOOUT[[1]]$CONTRIB_EACH_EFFECT$bc)){
-    exut$bc=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"bc"]*100
+    exut$bc=tmp[,"bc"]
   }
   if(!is.null(lst.QUALYPSOOUT[[1]]$CONTRIB_EACH_EFFECT$hm)){
-    exut$hm=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"hm"]*100
+    exut$hm=tmp[,"hm"]
   }
-  exut$rv=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"ResidualVar"]*100
-  exut$iv=lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR[,"InternalVar"]*100
+  exut$rv=tmp[,"ResidualVar"]
+  exut$IVout=tmp[,"sum_IVout"]
   
   exut=pivot_longer(exut,cols=-c(x,y,idx),names_to="source",values_to = "val")
   exut=exut[order(exut$source),]
@@ -3356,21 +3380,21 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
     return(labs_part[value])
   }
   
-  lim_col1=as.numeric(round(quantile((exut[exut$source!="iv",]$val),probs=0.99)/5)*5)
+  lim_col1=as.numeric(round(quantile((exut[exut$source!="IVout",]$val),probs=0.99)/5)*5)
   if(lim_col1==0){lim_col1=5}
-  lim_col2=as.numeric(round(quantile((exut[exut$source=="iv",]$val),probs=c(0.01,0.99))/5)*5)
+  lim_col2=as.numeric(round(quantile((exut[exut$source=="IVout",]$val),probs=c(0.01,0.99))/5)*5)
   if(lim_col2[1]==100){lim_col2[1]=95}
   if(lim_col2[2]==lim_col2[1]){lim_col2[2]=lim_col2[1]+5}
   
   if(!pix){
-    plt1=base_map_outlets(data = exut[exut$source!="iv",],val_name = "val",zoom=zoom)+
+    plt1=base_map_outlets(data = exut[exut$source!="IVout",],val_name = "val",zoom=zoom)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
-    plt1=base_map_grid(data = exut[exut$source!="iv",],val_name = "val")+
+    plt1=base_map_grid(data = exut[exut$source!="IVout",],val_name = "val")+
       guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   plt1=plt1+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale (100%)\npour chaque source\nd'incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col1),breaks=seq(0,lim_col1,length.out=6),show.limits = T,labels= c(0,round(seq(0+(lim_col1-0)/6,0+(lim_col1-0)/6*4,length.out=4),1),paste0("> ",lim_col1)),oob=squish)+#that way because stepsn deforms colors
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance liée à la dispersion\nentre les modèles\nissue de chaque source\nd'incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col1),breaks=seq(0,lim_col1,length.out=6),show.limits = T,labels= c(0,round(seq(0+(lim_col1-0)/6,0+(lim_col1-0)/6*4,length.out=4),1),paste0("> ",lim_col1)),oob=squish)+#that way because stepsn deforms colors
     facet_wrap(vars(factor(source,levels=c("rv","rcp","gcm","rcm","bc","hm"))),labeller=labs_part_labeller )
   if(!pix){
     plt1$layers[[3]]$aes_params$size=3
@@ -3378,14 +3402,14 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   
   exut$cat="Variabilité interne"
   if(!pix){
-    plt2=base_map_outlets(data = exut[exut$source=="iv",],val_name = "val",zoom=zoom)+
+    plt2=base_map_outlets(data = exut[exut$source=="IVout",],val_name = "val",zoom=zoom)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
-    plt2=base_map_grid(data = exut[exut$source=="iv",],val_name = "val")+
+    plt2=base_map_grid(data = exut[exut$source=="IVout",],val_name = "val")+
       guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
   }
   plt2=plt2+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale (100%)\npour chaque source\nd'incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale\nissue de la dispersion\nentre les modèles (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
     facet_grid(. ~ cat)
   if(!pix){
     plt2$layers[[3]]$aes_params$size=3
