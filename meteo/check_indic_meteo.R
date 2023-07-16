@@ -26,7 +26,7 @@ path_fig="C:/Users/reverdya/Documents/Docs/3_figures/meteo/analyse-indic/"
 pth_mask="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/SAFRAN_mask_France.nc"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 path_temp="C:/Users/reverdya/Documents/Docs/2_data/processed/"
-load(file=paste0(pth_temp,"T_coef_spline1990toGlob.Rdata"))
+load(file=paste0(path_temp,"T_coef_spline1990toGlob.Rdata"))
 
 Var=vector(mode="list")
 # Var[["tasAdjust"]]=c(rep("monmean",12),rep("seasmean",4),"yearmean")

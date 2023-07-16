@@ -27,7 +27,7 @@ path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"ref.Rdata"))
-load(file=paste0(pth_temp,"T_coef_spline1990toGlob.Rdata"))
+load(file=paste0(path_temp,"T_coef_spline1990toGlob.Rdata"))
 
 path_river=paste0(path_sig,"/processed/CoursEau_idx1_wgs84.shp")
 path_fr=paste0(path_sig,"/raw/IGN/contours_FR/gadm36_FRA_0.shp")
