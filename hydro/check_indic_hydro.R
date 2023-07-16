@@ -147,7 +147,6 @@ memory_saving_function=function(cpt){
     }
   }
   rm(all_chains,global_tas)
-  closeAllConnections()
   gc()
   print(indic[cpt])
   toc()
