@@ -27,6 +27,7 @@ path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"ref.Rdata"))
+load(file=paste0(pth_temp,"T_coef_spline1990toGlob.Rdata"))
 
 path_river=paste0(path_sig,"/processed/CoursEau_idx1_wgs84.shp")
 path_fr=paste0(path_sig,"/raw/IGN/contours_FR/gadm36_FRA_0.shp")
@@ -190,43 +191,43 @@ for (sp in c("FR","LO")){
       freq_col=0.99
       
       if(preds=="time"){
-        map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",nbcores=nbcores,zoom="Loire")
-        map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz=horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",ref0=ref_year,zoom="Loire")
-        map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,rcp_name = "rcp85",rcp_plainname="RCP 8.5",folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",nbcores=nbcores,zoom="Loire")
+        map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",nbcores=nbcores,zoom=sp)
+        map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz=horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",ref0=ref_year,zoom=sp)
+        map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,rcp_name = "rcp85",rcp_plainname="RCP 8.5",folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",nbcores=nbcores,zoom=sp)
         
-        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-        # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "hm",name_eff_plain = "HM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
+        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+        # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "hm",name_eff_plain = "HM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
         
-        map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="rcp85",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom="Loire")
-        map_storyline(lst.QUALYPSOOUT = lst.QUALYPSOOUT,RCP = "rcp85",RCP_plainname="RCP8.5",horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire",storylines=storylines)
+        map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="rcp85",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom=sp)
+        map_storyline(lst.QUALYPSOOUT = lst.QUALYPSOOUT,RCP = "rcp85",RCP_plainname="RCP8.5",horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp,storylines=storylines)
       }
       if(preds=="temp"){
-        map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,rcp_name = "rcp85",rcp_plainname="RCP8.5",folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",nbcores=nbcores,path_temp=path_temp,cat="hydro",zoom="Loire")
+        map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz3,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,rcp_name = "rcp85",rcp_plainname="RCP8.5",folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",nbcores=nbcores,path_temp=path_temp,cat="hydro",zoom=sp)
         
-        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-        # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "hm",name_eff_plain = "HM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
+        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+        # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "hm",name_eff_plain = "HM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
         
-        map_storyline(lst.QUALYPSOOUT = lst.QUALYPSOOUT,RCP = NULL,RCP_plainname=NULL,horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire",storylines=storylines)
+        map_storyline(lst.QUALYPSOOUT = lst.QUALYPSOOUT,RCP = NULL,RCP_plainname=NULL,horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp,storylines=storylines)
       }
       
-      map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-      map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-      # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
-      map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "hm",name_eff_plain = "HM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom="Loire")
+      map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+      map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+      # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
+      map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "hm",name_eff_plain = "HM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,freq_col=freq_col,pix=F,var="Q",zoom=sp)
       
       
-      map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out =folder_out,pix=F,var="Q",zoom="Loire")
-      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom="Loire")
-      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom="Loire")
-      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom="Loire")
-      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom="Loire")
-      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom="Loire")
+      map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out =folder_out,pix=F,var="Q",zoom=sp)
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom=sp)
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varres",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom=sp)
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="vartot",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom=sp)
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="incert",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom=sp)
+      map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="mean",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = folder_out,pix=F,var="Q",freq_col=freq_col,zoom=sp)
       
-      map_limitations(lst.QUALYPSOOUT = lst.QUALYPSOOUT,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out =folder_out,pix=F,var="Q",zoom="Loire")
+      map_limitations(lst.QUALYPSOOUT = lst.QUALYPSOOUT,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out =folder_out,pix=F,var="Q",zoom=sp)
     }
     print(i)
     try(dev.off(dev.list()["RStudioGD"]), silent=TRUE)#otherwise "depth" error linked to plots after some time, maybe not solved because could be linked to resizing Rstudio window and/or plot window
@@ -258,7 +259,7 @@ for (sp in c("FR","LO")){
     lim_col=round(lim_col)#arrondi au 1 le plus proche
     br=round(seq(lim_col[1],lim_col[2],length.out=6))
   
-    plt=base_map_outlets(data = exut,val_name = "val",zoom="Loire")
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=sp)
     plt=plt+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name = "",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),limits=lim_col,oob=squish,show.limits = T,breaks=br,labels= c(paste0(">",br[1]),br[2:5],paste0("<",br[6])) )+#that way because stepsn deforms colors
