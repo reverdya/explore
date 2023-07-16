@@ -183,7 +183,7 @@ for (i in 1:nrow(ref_snow)){
 memory_saving_function=function(cpt){
   tic()
   dir.create(paste0(path_fig,lst_indic$v[cpt],"/",lst_indic$indic[cpt]))
-  
+
   scenAvail=simu_lst[simu_lst$var==lst_indic$v[cpt] & simu_lst$indic==lst_indic$indic[cpt],]
   global_tas=prep_global_tas(path_temp,simu_lst=scenAvail)
   assign("global_tas",global_tas,envir = globalenv())
@@ -201,7 +201,6 @@ memory_saving_function=function(cpt){
     }
   }
   rm(all_chains,global_tas)
-  closeAllConnections()
   gc()
   print(lst_indic$indic[cpt])
   toc()
@@ -217,15 +216,20 @@ for(v in unique(simu_lst$var)){
     lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic))
     lst_indic$v=c(lst_indic$v,v)
   }else{
-    lgth=length(unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+    # lgth=length(unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])# to reduce number of indic plotted
+    lgth=length(unique(simu_lst[simu_lst$var==v,]$indic))
     for(j in 1:lgth){
       lst_indic$ref_c[[count]]=ref_cities
       count=count+1
     }
-    lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+    # lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+    lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic))# to reduce number of indic plotted
     lst_indic$v=c(lst_indic$v,rep(v,lgth))
   }
 }
+
+
+#Strangely sometimes the functions that does the restart does not work first time and need to be relaunched a second time...
 restart_loop(fct=memory_saving_function,last=length(lst_indic$indic),step=1)
   
   
@@ -256,7 +260,6 @@ memory_saving_function=function(cpt){
     }
   }
   rm(all_chains_bas,global_tas)
-  closeAllConnections()
   gc()
   print(lst_indic$indic[cpt])
   toc()
@@ -266,8 +269,15 @@ memory_saving_function=function(cpt){
 lst_indic=list(indic=c(),v=c())
 for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
   dir.create(paste0(path_fig,v,"/"))
-  lgth=length(unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
-  lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+  # lgth=length(unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+  # lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic)[c(1,4,7,10,17)])
+  lgth=length(unique(simu_lst[simu_lst$var==v,]$indic))
+  lst_indic$indic=c(lst_indic$indic,unique(simu_lst[simu_lst$var==v,]$indic))
   lst_indic$v=c(lst_indic$v,rep(v,lgth))
 }
+
+
+
+#Strangely sometimes the functions that does the restart does not work first time and need to be relaunched a second time...
+
 restart_loop(fct=memory_saving_function,last=length(lst_indic$indic),step=1)
