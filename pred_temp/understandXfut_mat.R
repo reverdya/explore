@@ -118,12 +118,12 @@ plt5=ggplot(df)+
   geom_line(aes(x=Dx2,y=y2),color="blue",size=1.2)+
   scale_y_continuous(limits=c(1.25,3),expand=c(0,0))+
   scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("Niveau de réchauffement (°C)")+
+  xlab("DTempérature (°C)")+
   ylab("Qan (m3/s)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Débit moyen annuel en fonction\ndu réchauffement France")
+  ggtitle("Débit moyen annuel en fonction de\nl'anomalie de température France\n(par rapport à 1990)")
 plt5
 
 
@@ -145,12 +145,12 @@ plt6=ggplot(df)+
   geom_hline(yintercept=Yref[2],color="blue",lty="dotted",size=1.2)+
   scale_y_continuous(limits=c(1.25,3),expand=c(0,0))+
   scale_x_continuous(limits=c(-1.5,5),expand=c(0,0))+
-  xlab("Niveau de réchauffement (°C)")+
+  xlab("DTempérature (°C)")+
   ylab("Qan (m3/s)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Débit moyen annuel en fonction\ndu réchauffement France,\navec spline")+
+  ggtitle("Débit moyen annuel en fonction de\nl'anomalie de température France\n(par rapport à 1990), avec spline")+
   annotate("text", x = -0.75, y = Yref[1], label = "Yref1",fontface = "bold",size=3,color="red")+
   annotate("text", x = -0.75, y = Yref[2], label = "Yref2",fontface = "bold",size=3,color="blue")+
   annotate("text", x = 0, y = 2.75, label = "1990",fontface = "bold",size=3)
@@ -164,12 +164,12 @@ plt7=ggplot(df)+
   geom_line(aes(x=Dx2,y=Dy2_spline),color="blue",size=1.2)+
   scale_y_continuous(limits=c(-0.125,0.75),expand=c(0,0))+
   scale_x_continuous(limits=c(-1,5),expand=c(0,0))+
-  xlab("Niveau de réchauffement (°C)")+
+  xlab("DTempérature (°C)")+
   ylab("DQan (m3/s)")+
   theme_bw(base_size = 12)+
   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  ggtitle("Différence de débit moyen annuel\nen fonction du réchauffement France")
+  ggtitle("Différence de débit moyen annuel\nen fonction de l'anomalie de température\nFrance (par rapport à 1990)")
 plt7
 
 
