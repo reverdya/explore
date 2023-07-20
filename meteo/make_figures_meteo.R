@@ -116,7 +116,7 @@ for(v in unique(simu_lst$var)){
         pred_name="température"
         predict="temp"
         pred_unit="°C"
-        xlim=c(min(lst.QUALYPSOOUT[[1]]$Xfut),max(lst.QUALYPSOOUT[[1]]$Xfut))
+        xlim=c(T_coef[2],4)
         horiz3=c(1.5,2,3,4)
       }
       
@@ -180,7 +180,7 @@ for(v in unique(simu_lst$var)){
         pred_name="température"
         predict="temp"
         pred_unit="°C"
-        xlim=c(min(lst.QUALYPSOOUT[[1]]$Xfut),max(lst.QUALYPSOOUT[[1]]$Xfut))
+        xlim=c(T_coef[2],4)
         horiz=3
         horiz3=c(1.5,2,3,4)
       }
