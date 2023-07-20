@@ -1093,8 +1093,10 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
   if(substr(color_select[1],5,5)!="."){
     for (cs in 1:length(color_select)){
       color_select[cs]=paste(c(substr(color_select[cs], 1, 4), substr(color_select[cs], 5,nchar(color_select[cs]))), collapse=".")#rcp26 to rcp2.6
-      
     }
+  }
+  if(pred=="temp"){
+    data$pred=T_coef[1]*data$pred+T_coef[2]
   }
   
   plt=ggplot(data)+
@@ -1250,13 +1252,14 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       # obtained from QUALYPSO
       sd.qua = sqrt(unlist(lapply(lst.QUALYPSOOUT,function(x) x$TOTALVAR[idx]-x$INTERNALVAR[idx])))
     }
+    
     sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
     phiStar.corr = phiStar*t(replicate(dim(phiStar)[1],sd.corr))
     # compute the lower bound if the distribution is gaussian
-    binf = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
-    bsup = apply(phiStar.corr,2,quantile,probs = 0.5+probCI/2)
+    binf = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2,na.rm=T)
+    bsup = apply(phiStar.corr,2,quantile,probs = 0.5+probCI/2,na.rm=T)
     if(var!="tasAdjust"){
       if(any(binf<(-1))){
         warning("Lower bound forced to -100%")
@@ -1287,6 +1290,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   Bsup=pivot_longer(data=Bsup,cols=!pred,names_to = "eff",values_to = "bsup")
   data=merge(med,Binf,by=c("pred","eff"))
   data=merge(data,Bsup,by=c("pred","eff"))
+  data$med[is.na(data$binf)]=NA
   
   if(pred=="time"){
     if(var!="tasAdjust"){
@@ -1303,6 +1307,10 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     }
   }
   colnames(chains)=c("pred","val","eff","chain")
+  if(pred=="temp"){
+    data$pred=T_coef[1]*data$pred+T_coef[2]
+    chains$pred=T_coef[1]*chains$pred+T_coef[2]
+  }
   data=data[data$pred>=xlim[1],]
   
 
@@ -1476,11 +1484,14 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     for (j in 1:nrow(storylines)){
       if(pred=="time"){
         for(r in lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]){
-          if(var=="Q"){
+          if(any(colnames(scenAvail)=="bc")){
+            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==r)
+          }else{
             scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$rcp==r)
+          }
+          if(var=="Q"){
             scen_rep=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,],2,mean)
           }else{
-            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==r)
             scen_rep=lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,]
           }
           if(var!="tasAdjust"){
@@ -1490,7 +1501,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         }
       }
       if(pred=="temp"){
-        scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+        if(any(colnames(scenAvail)=="bc")){
+          scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+        }else{
+          scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j])
+        }
         if(var=="Q"){
           scen_rep=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,],2,mean)
         }else{
@@ -1512,9 +1527,14 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     names(rcp.labs) <- "rcp85"
   }
   
-  ylims=c(quantile(chain_band$min,probs=0.05,na.rm=T),quantile(chain_band$max,probs=0.95))
+  ylims=c(quantile(chain_band$min,probs=0.05,na.rm=T),quantile(chain_band$max,probs=0.95,na.rm=T))
   
-  
+  if(pred=="temp"){
+    Obs$pred=T_coef[1]*Obs$pred+T_coef[2]
+    if(storyl){
+      story$pred=T_coef[1]*story$pred+T_coef[2]
+    }
+  }
   
   if(pred=="time"){
     plt1=ggplot(data)+
@@ -1563,7 +1583,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   }else{
     plt1=plt1+
       geom_line(data=story,aes(x=pred,y=val,group=name,linetype=name),colour="black",size=1)+
-      scale_linetype_manual("Storylines",values=c("Sec en été et chaud"="dotted","Sec"="dotdash","Faibles changements"="dashed","Chaud et humide"="solid"))+
+      scale_linetype_manual("Storylines",values=c("HadGEM2-ES/CCLM4-8-17"="dotted","EC-EARTH/HadREM3-GA7"="dotdash","CNRM-CM5/ALADIN63"="dashed","HadGEM2-ES/ALADIN63"="solid"))+
       guides(linetype=guide_legend(order=2,title.theme=element_text(size = 13),keywidth=unit(3, 'cm')))
   }  
   
@@ -1579,11 +1599,13 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     plt1=plt1+
       scale_y_continuous(paste0("Changement moyen (°C)"),expand=c(0,0))
   }
-  plt1=plt1+
-    geom_line(data=Obs,aes(x=pred,y=val,size="aa"),alpha=1,color="gray40")+
-    scale_size_manual("Observations",values = c("aa"=1))+
-    guides(size=guide_legend(order=1,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),label=F))
-    
+  if(pred=="time"){
+    plt1=plt1+
+      geom_line(data=Obs,aes(x=pred,y=val,size="aa"),alpha=1,color="gray40")+
+      scale_size_manual("Observations",values = c("aa"=1))+
+      guides(size=guide_legend(order=1,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),label=F))
+  }
+
   if(pred=="temp"){
     plt1=plt1+
       scale_x_continuous("Niveau de réchauffement planétaire (°C)",limits=xlim2,expand=c(0,0))
@@ -1599,19 +1621,22 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     if(pred=="time"){
       idx_rcp=which(scenAvail$rcp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r])
       phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,idx_rcp,]
+      phiStar=phiStar[,Xfut>xlim[1]]
     }
     if(pred=="temp"){
       phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,,]
+      phiStar=phiStar[,(Xfut*T_coef[1]+T_coef[2])>xlim[1]]
     }
-    phiStar=phiStar[,Xfut>xlim[1]]
     n_chain=dim(phiStar)[1]
     perc_pos[[r]]=apply(phiStar,MARGIN=2,function(x) sum(x>=0)/n_chain*100)
   }
-  data=data.frame(Xfut[Xfut>xlim[1]],do.call("cbind",perc_pos))
+  
   if(pred=="time"){
+    data=data.frame(Xfut[Xfut>xlim[1]],do.call("cbind",perc_pos))
     colnames(data)=c("pred",lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]])
   }
   if(pred=="temp"){
+    data=data.frame(Xfut[(Xfut*T_coef[1]+T_coef[2])>xlim[1]],do.call("cbind",perc_pos))
     colnames(data)=c("pred","rcp85")
   }
   data=pivot_longer(data,cols=!pred,names_to = "rcp",values_to = "val")
@@ -1626,6 +1651,10 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   data$cat[data$val<=20]="Négatif"
   data$cat=factor(data$cat,levels=c("Positif","Pas d'accord","Négatif"))
   data=data[data$pred!=2085,]
+  
+  if(pred=="temp"){
+    data$pred=T_coef[1]*data$pred+T_coef[2]
+  }
   
   plt2=ggplot(data)+
     geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=cat),color="transparent",size=5,shape=21)+
@@ -1662,6 +1691,9 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     data[,j]=cum.smooth
   }
   data=data.frame(cbind(Xfut,data))
+  if(pred=="temp"){
+    data$Xfut=T_coef[1]*data$Xfut+T_coef[2]
+  }
   data=data[data$Xfut>=xlim[1],]
   namesEff = lst.QUALYPSOOUT[[1]]$names
   names_var=c(namesEff,"res","int")
@@ -1672,6 +1704,8 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   vec_color=col_7var[names(col_7var) %in% names_var]
   data$var=factor(data$var,levels=rev(names(vec_color)))
   labels_var=rev(legend_7var[names(col_7var) %in% names_var])
+  
+  
   
   plt3=ggplot(data)+
     geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var,alpha=var))+
@@ -1725,11 +1759,13 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   if (pred=="time"){
     iEff = which(lst.QUALYPSOOUT[[1]]$namesEff == "rcp")
     nrcp=length(unique(scenAvail$rcp))
+    h=which(Xfut %in% horiz)
   }
   if (pred=="temp"){
     nrcp=1
+    h=unlist(lapply(horiz,function(x) which.min(abs((Xfut*T_coef[1]+T_coef[2]) - x))))
   }
-  h=which(Xfut %in% horiz)
+  
   
   
   if(pred=="time"){
@@ -1833,13 +1869,14 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     label_rcp=c("RCP 8.5")
   }
   
-  data1=aggregate(phiStar.corr$val,by=list(phiStar.corr$rcp,phiStar.corr$horiz), quantile,probs=0.05)
-  data2=aggregate(phiStar.corr$val,by=list(phiStar.corr$rcp,phiStar.corr$horiz), quantile,probs=0.95)
+  data1=aggregate(phiStar.corr$val,by=list(phiStar.corr$rcp,phiStar.corr$horiz), quantile,probs=0.05,na.rm=T)
+  data2=aggregate(phiStar.corr$val,by=list(phiStar.corr$rcp,phiStar.corr$horiz), quantile,probs=0.95,na.rm=T)
   colnames(data1)=c("rcp","horiz","lower")
   colnames(data2)=c("rcp","horiz","upper")
   colnames(med)=c("horiz","rcp","mean")
   data=merge(data1,data2,by=c("rcp","horiz"))
   data=merge(data,med,by.x=c("rcp","horiz"))
+  data$med[is.na(data$lower)]=NA
   
   if(var!="tasAdjust"){
     IV_sd=sqrt(lst.QUALYPSOOUT[[1]]$INTERNALVAR[idx])*100
@@ -1863,7 +1900,11 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
     for (j in 1:nrow(storylines)){
       if(pred=="time"){
         for(r in lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]){
-          scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==r)
+          if(any(colnames(scenAvail)=="bc")){
+            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==r)
+          }else{
+            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$rcp==r)
+          }
           if(var=="Q"){
             scen_rep=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,],2,mean)
           }else{
@@ -1876,7 +1917,11 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
         }
       }
       if(pred=="temp"){
-        scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+        if(any(colnames(scenAvail)=="bc")){
+          scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+        }else{
+          scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j])
+        }
         if(var=="Q"){
           scen_rep=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,],2,mean)
         }else{
@@ -1888,8 +1933,15 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
         story=rbind(story,data.frame(pred=Xfut,val=scen_rep,eff="rcp85",name=storylines$type[j]))
       }
     }
-    story=story[story$pred %in% horiz,]
-    story$pred=paste0("h_",story$pred)
+    if(pred=="temp"){
+      story$pred=story$pred*T_coef[1]+T_coef[2]
+      h_selec=unlist(lapply(horiz,function(x) which.min(abs(story$pred - x))))
+      story=story[h_selec,]
+    }
+    if(pred=="time"){
+      story=story[story$pred %in% horiz,]
+    }
+    story$pred=paste0("h_",horiz)
   }
 
   
@@ -1927,7 +1979,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   }else{
     plt1=plt1+
       geom_point(data=story,aes(x=pred,y=val,group=eff,shape=name),position = position_dodge(0.75),color="gray90",size=2,fill="gray90")+
-      scale_shape_manual("Storylines",values=c("Sec en été et chaud"=21,"Sec"=22,"Faibles changements"=24,"Chaud et humide"=25))+
+      scale_shape_manual("Storylines",values=c("HadGEM2-ES/CCLM4-8-17"=21,"EC-EARTH/HadREM3-GA7"=22,"CNRM-CM5/ALADIN63"=24,"HadGEM2-ES/ALADIN63"=25))+
       guides(shape=guide_legend(override.aes = list(fill="grey20",color="grey20",size=4)))
   }
   
@@ -1984,7 +2036,12 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
 
   scenAvail=lst_lst.QUALYPSOOUT[["janv"]][[1]]$listScenarioInput$scenAvail
   Xfut = lst_lst.QUALYPSOOUT[["janv"]][[1]]$Xfut
-  h=which(Xfut %in% horiz)
+  if (pred=="time"){
+    h=which(Xfut %in% horiz)
+  }
+  if (pred=="temp"){
+    h=unlist(lapply(horiz,function(x) which.min(abs((Xfut*T_coef[1]+T_coef[2]) - x))))
+  }
 
   med=vector(mode="list")
   for(m in names(lst_lst.QUALYPSOOUT)){
@@ -2111,13 +2168,14 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
     labels=paste0(horiz,"°C")
   }
   
-  data1=aggregate(phiStar.corr$val,by=list(phiStar.corr$group,phiStar.corr$month), quantile,probs=0.05)
-  data2=aggregate(phiStar.corr$val,by=list(phiStar.corr$group,phiStar.corr$month), quantile,probs=0.95)
+  data1=aggregate(phiStar.corr$val,by=list(phiStar.corr$group,phiStar.corr$month), quantile,probs=0.05,na.rm=T)
+  data2=aggregate(phiStar.corr$val,by=list(phiStar.corr$group,phiStar.corr$month), quantile,probs=0.95,na.rm=T)
   colnames(data1)=c("group","month","lower")
   colnames(data2)=c("group","month","upper")
   colnames(med)=c("mean","month","group")
   data=merge(data1,data2,by=c("month","group"))
   data=merge(data,med,by.x=c("month","group"))
+  data$med[is.na(data$lower)]=NA
   
   if(var!="tasAdjust"){
     IV_sd=unlist(lapply(lst_lst.QUALYPSOOUT,function(x) sqrt(x[[1]]$INTERNALVAR[idx])*100))
@@ -2144,7 +2202,12 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
       for (j in 1:nrow(storylines)){
         if(pred=="time"){
           for(r in lst_lst.QUALYPSOOUT[["janv"]][[1]]$listScenarioInput$listEff[[iEff]]){
-            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==r)
+            if(any(colnames(scenAvail)=="bc")){
+              scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==r)
+            }else{
+              scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$rcp==r)
+            }
+
             if(var=="Q"){
               scen_rep=apply(lst_lst.QUALYPSOOUT[[m]][[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,],2,mean)
             }else{
@@ -2157,7 +2220,11 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
           }
         }
         if(pred=="temp"){
-          scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+          if(any(colnames(scenAvail)=="bc")){
+            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+          }else{
+            scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j])
+          }
           if(var=="Q"){
             scen_rep=apply(lst_lst.QUALYPSOOUT[[m]][[1]]$CLIMATEESPONSE$phiStar[idx,scen_idx,],2,mean)
           }else{
@@ -2170,9 +2237,16 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
         }
       }
     }
-    story=story[story$pred %in% horiz,]
     if(pred=="temp"){
-      story$pred=paste0("h_",story$pred)
+      story$pred=story$pred*T_coef[1]+T_coef[2]
+      h_selec=unlist(lapply(horiz,function(x) which.min(abs(story$pred - x))))
+      story=story[h_selec,]
+    }
+    if(pred=="time"){
+      story=story[story$pred %in% horiz,]
+    }
+    if(pred=="temp"){
+      story$pred=paste0("h_",horiz)
     }
   }
   
@@ -2194,7 +2268,7 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
       }else{
         plt1=plt1+
           geom_point(data=story,aes(x=month,y=val,group=eff,shape=name),position = position_dodge(0.75),color="black",size=2,fill="gray90")+
-          scale_shape_manual("Storylines",values=c("Sec en été et chaud"=21,"Sec"=22,"Faibles changements"=24,"Chaud et humide"=25))+
+          scale_shape_manual("Storylines",values=c("HadGEM2-ES/CCLM4-8-17"=21,"EC-EARTH/HadREM3-GA7"=22,"CNRM-CM5/ALADIN63"=24,"HadGEM2-ES/ALADIN63"=25))+
           guides(shape=guide_legend(override.aes = list(size=4)))
       }
   }
@@ -2215,7 +2289,7 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
     }else{
       plt1=plt1+
         geom_point(data=story,aes(x=month,y=val,group=pred,shape=name),position = position_dodge(0.75),color="black",size=2,fill="gray90")+
-        scale_shape_manual("Storylines",values=c("Sec en été et chaud"=21,"Sec"=22,"Faibles changements"=24,"Chaud et humide"=25))+
+        scale_shape_manual("Storylines",values=c("HadGEM2-ES/CCLM4-8-17"=21,"EC-EARTH/HadREM3-GA7"=22,"CNRM-CM5/ALADIN63"=24,"HadGEM2-ES/ALADIN63"=25))+
         guides(shape=guide_legend(override.aes = list(size=4)))
     }
   }
@@ -2348,6 +2422,10 @@ base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL){
       plt=plt+
         coord_equal(ratio=111/78,xlim = c(-2.5, 4.75),ylim = c(45,48),expand=F)## ratio of 1lat by 1long at 45N
     }
+    if(zoom=="FR"){
+      plt=plt+
+        coord_equal(ratio=111/78,xlim = c(-5, 9.75),ylim = c(41,51.25),expand=F)## ratio of 1lat by 1long at 45N
+    }
   }
   if(!is.null(alpha_name)){
     plt=plt+
@@ -2474,12 +2552,15 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
     # compute a multiplicative factor SDtot/SD(phi*) to match the standard deviation for each RCP
     # obtained from QUALYPSO
     sd.qua = sqrt(lst.QUALYPSOOUT[[idx_Xfut]]$TOTALVAR-lst.QUALYPSOOUT[[idx_Xfut]]$INTERNALVAR-lst.QUALYPSOOUT[[idx_Xfut]]$EFFECTVAR[,ieff_rcp])
+    if(any(is.na(sd.qua))){
+      chg_mean[which(is.na(sd.qua))]=NA
+    }
     sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
     phiStar.corr = phiStar*replicate(dim(phiStar)[2],sd.corr)
-    chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2)
-    chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2)
+    chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2,na.rm=T)
+    chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2,na.rm=T)
     
 
     resp=lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r),idx_Xfut]*100
@@ -2521,13 +2602,13 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   #Setting limits for color scale
   if(var!="tasAdjust"){
-    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
     lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
-    q99=quantile(exut$val,probs=freq_col)
-    q01=quantile(exut$val,probs=(1-freq_col))
+    q99=quantile(exut$val,probs=freq_col,na.rm=T)
+    q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
     lim_col=as.numeric(c(q01,q99))
     lim_col=round(lim_col)#arrondi au 1 le plus proche
     br=seq(lim_col[1],lim_col[2],length.out=11)
@@ -2628,7 +2709,11 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   exut$sign_agree="Pas d'accord"
   
   for(h in horiz){
-    idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==h)
+    if(pred=="time"){
+      idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==h)
+    }else{
+      idx_Xfut=unlist(lapply(h,function(x) which.min(abs((lst.QUALYPSOOUT[[1]]$Xfut*T_coef[1]+T_coef[2]) - x))))
+    }
     
     if(pred=="time"){
       chg_mean=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,ieff_this_rcp]+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN
@@ -2657,12 +2742,15 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
     if(pred=="temp"){
       sd.qua = sqrt(lst.QUALYPSOOUT[[idx_Xfut]]$TOTALVAR-lst.QUALYPSOOUT[[idx_Xfut]]$INTERNALVAR)
     }
+    if(any(is.na(sd.qua))){
+      chg_mean[which(is.na(sd.qua))]=NA
+    }
     sd.emp = apply(chains,2,sd)
     sd.emp[sd.emp==0] = 1 # avoid NaN for the reference year
     sd.corr = sd.qua/sd.emp
     phiStar.corr = phiStar*replicate(dim(phiStar)[2],sd.corr)
-    chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2)
-    chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2)
+    chg_q5 = apply(phiStar.corr,1,quantile,probs = (1-probCI)/2,na.rm=T)
+    chg_q95 = apply(phiStar.corr,1,quantile,probs = 0.5+probCI/2,na.rm=T)
     
     if(pred=="time"){
       resp=lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==rcp_name),idx_Xfut]*100
@@ -2709,13 +2797,13 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   #Setting limits for color scale
   if(var!="tasAdjust"){
-    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
     lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
-    q99=quantile(exut$val,probs=freq_col)
-    q01=quantile(exut$val,probs=(1-freq_col))
+    q99=quantile(exut$val,probs=freq_col,na.rm=T)
+    q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
     lim_col=as.numeric(c(q01,q99))
     lim_col=round(lim_col)#arrondi au 1 le plus proche
     br=seq(lim_col[1],lim_col[2],length.out=11)
@@ -2853,8 +2941,8 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   
   #Setting limits for color scale
   if(var!="tasAdjust"){
-    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
     lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
@@ -2946,7 +3034,11 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   exut$val=0
   
 
-  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  if(pred=="time"){
+    idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  }else{
+    idx_Xfut=unlist(lapply(horiz,function(x) which.min(abs((lst.QUALYPSOOUT[[1]]$Xfut*T_coef[1]+T_coef[2]) - x))))
+  }
   if(var!="tasAdjust"){
     if(includeMean){
       chg=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT[[name_eff]]$MEAN*100 + lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN*100 #*100 for percentages
@@ -2993,8 +3085,8 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     tmp=tmp*100
   }
   if(var!="tasAdjust"|(is.null(includeRCP)&includeMean==F)){
-    q99pos=quantile(tmp[tmp>=0],probs=freq_col)
-    q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col)))
+    q99pos=quantile(tmp[tmp>=0],probs=freq_col,na.rm=T)
+    q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col),na.rm=T))
     lim_col=max(q99pos,q99neg,na.rm=T)
     if(var!="tasAdjust"){
       lim_col=round(lim_col/10)*10#arrondi au 10 le plus proche
@@ -3002,8 +3094,8 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
       lim_col=round(lim_col/0.5)*0.5#arrondi au 0.5 le plus proche
     }
   }else{
-    q99=quantile(exut$val,probs=freq_col)
-    q01=quantile(exut$val,probs=(1-freq_col))
+    q99=quantile(exut$val,probs=freq_col,na.rm=T)
+    q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
     lim_col=as.numeric(c(q01,q99))
     lim_col=round(lim_col)#arrondi au 1 le plus proche
     br=seq(lim_col[1],lim_col[2],0.25)
@@ -3123,7 +3215,11 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   exut$idx=seq(1:nrow(exut))
   exut$val=0
   
-  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  if(pred=="time"){
+    idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  }else{
+    idx_Xfut=unlist(lapply(horiz,function(x) which.min(abs((lst.QUALYPSOOUT[[1]]$Xfut*T_coef[1]+T_coef[2]) - x))))
+  }
   
   if(vartype=="mean"){
     if(var!="tasAdjust"){
@@ -3190,8 +3286,8 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   }
   if(vartype=="mean"){
     if(var!="tasAdjust"){
-      q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-      q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+      q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
+      q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
       lim_col=max(q99pos,q99neg,na.rm=T)
       lim_col=round(lim_col/5)*5#arrondi au 5 le plus proche
       plt=plt+
@@ -3202,8 +3298,8 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
           binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
       }
     }else{
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=(1-freq_col))
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
       lim_col=as.numeric(c(q01,q99))
       lim_col=round(lim_col/0.25)*0.25#arrondi au 1 le plus proche
       br=seq(lim_col[1],lim_col[2],0.25)
@@ -3214,15 +3310,15 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   }
   if(vartype=="vartot"){
     if(var!="tasAdjust"){
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=1-freq_col)
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
       lim_col=c(round(q01/5)*5,round(q99/5)*5)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Incertitude\nliée à la variabilité totale du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
     }else{
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=1-freq_col)
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
       lim_col=c(round(q01/0.5)*0.5,round(q99/0.5)*0.5)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (°C)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3231,15 +3327,15 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   }
   if(vartype=="incert"){
     if(var!="tasAdjust"){
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=1-freq_col)
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
       lim_col=c(round(q01/5)*5,round(q99/5)*5)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Incertitude\nliée à la variabilité (sauf interne) du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
     }else{
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=1-freq_col)
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
       lim_col=c(round(q01/0.25)*0.25,round(q99/0.25)*0.25)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (°C)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3248,15 +3344,15 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   }
   if(vartype=="varint"){
     if(var!="tasAdjust"){
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=1-freq_col)
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
       lim_col=c(round(q01/5)*5,round(q99/5)*5)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Incertitude\nliée à la variabilité interne du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
     }else{
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=1-freq_col)
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
       lim_col=c(round(q01/0.25)*0.25,round(q99/0.25)*0.25)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (°C)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3266,15 +3362,15 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   
   if(vartype=="varres"){
     if(var!="tasAdjust"){
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=1-freq_col)
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
       lim_col=c(round(q01),round(q99))
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
         ggtitle(paste0("Incertitude\nliée à la variabilité résiduelle du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz," ",pred_unit,")"))
     }else{
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=1-freq_col)
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
       lim_col=c(round(q01,2),round(q99,2))
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (°C)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),2),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3283,9 +3379,9 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   }
   if(vartype=="rcp8.5"|vartype=="rcp85"){
     if(var!="tasAdjust"){
-      q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-      q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
-      lim_col=max(q99pos,q99neg,na.rm=T,na.rm=T)
+      q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
+      q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+      lim_col=max(q99pos,q99neg,na.rm=T)
       lim_col=round(lim_col/5)*5#arrondi au 5 le plus proche
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+#that way because stepsn deforms colors
@@ -3295,8 +3391,8 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
           binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement relatif (%)",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
       }
     }else{
-      q99=quantile(exut$val,probs=freq_col)
-      q01=quantile(exut$val,probs=(1-freq_col))
+      q99=quantile(exut$val,probs=freq_col,na.rm=T)
+      q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
       lim_col=as.numeric(c(q01,q99))
       lim_col=round(lim_col/0.5)*0.5#arrondi au 1 le plus proche
       br=seq(lim_col[1],lim_col[2],0.5)
@@ -3351,7 +3447,11 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   
 
-  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  if(pred=="time"){
+    idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  }else{
+    idx_Xfut=unlist(lapply(horiz,function(x) which.min(abs((lst.QUALYPSOOUT[[1]]$Xfut*T_coef[1]+T_coef[2]) - x))))
+  }
   
   
   tmp=data.frame(lst.QUALYPSOOUT[[idx_Xfut]]$DECOMPVAR)*100
@@ -3380,9 +3480,9 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
     return(labs_part[value])
   }
   
-  lim_col1=as.numeric(round(quantile((exut[exut$source!="IVout",]$val),probs=0.99)/5)*5)
+  lim_col1=as.numeric(round(quantile((exut[exut$source!="IVout",]$val),probs=0.99,na.rm=T)/5)*5)
   if(lim_col1==0){lim_col1=5}
-  lim_col2=as.numeric(round(quantile((exut[exut$source=="IVout",]$val),probs=c(0.01,0.99))/5)*5)
+  lim_col2=as.numeric(round(quantile((exut[exut$source=="IVout",]$val),probs=c(0.01,0.99),na.rm=T)/5)*5)
   if(lim_col2[1]==100){lim_col2[1]=95}
   if(lim_col2[2]==lim_col2[1]){lim_col2[2]=lim_col2[1]+5}
   
@@ -3440,6 +3540,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
 plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4),cat){
   simu_lst$rcp="rcp85"
   data=prep_global_tas(path_temp,simu_lst=simu_lst,cat=cat)[["mat_Globaltas"]]
+  data=data*T_coef[1]+T_coef[2]
   idx=vector(mode = "list")
   for(temp in temp_ref){
     idx[[as.character(temp)]]=apply(data,MARGIN=2,function(x) min(which(x>=temp)))
@@ -3522,14 +3623,26 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
   exut$val=0
   
   scenAvail=lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail
-  idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  if(pred=="time"){
+    idx_Xfut=which(lst.QUALYPSOOUT[[1]]$Xfut==horiz)
+  }else{
+    idx_Xfut=unlist(lapply(horiz,function(x) which.min(abs((lst.QUALYPSOOUT[[1]]$Xfut*T_coef[1]+T_coef[2]) - x))))
+  }
   
   for (j in 1:nrow(storylines)){
     if(pred=="time"){
-      scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==RCP)
+      if(any(colnames(scenAvail)=="bc")){
+        scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j]&scenAvail$rcp==RCP)
+      }else{
+        scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$rcp==RCP)
+      }
     }
     if(pred=="temp"){
-      scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+      if(any(colnames(scenAvail)=="bc")){
+        scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j]&scenAvail$bc==storylines$bc[j])
+      }else{
+        scen_idx=which(scenAvail$gcm==storylines$gcm[j]&scenAvail$rcm==storylines$rcm[j])
+      }
     }
     if(var=="Q"){
       scen_rep=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[,scen_idx,idx_Xfut],1,mean)
@@ -3545,13 +3658,13 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
   
   #Setting limits for color scale
   if(var!="tasAdjust"){
-    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col)
-    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col)))
+    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
+    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
     lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/10)*10#arrondi au 10 le plus proche
   }else{
-    q99=quantile(exut$val,probs=freq_col)
-    q01=quantile(exut$val,probs=(1-freq_col))
+    q99=quantile(exut$val,probs=freq_col,na.rm=T)
+    q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
     lim_col=as.numeric(c(q01,q99))
     lim_col=round(lim_col)#arrondi au 1 le plus proche
     br=seq(lim_col[1],lim_col[2],0.25)
@@ -3612,6 +3725,7 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
 
 map_limitations=function(lst.QUALYPSOOUT,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,pix,var,zoom=NULL){
   
+  probCI=lst.QUALYPSOOUT[[1]]$listOption$probCI
   warn_store=lst.QUALYPSOOUT[[1]]$listOption$climResponse$warning_store
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
@@ -3647,7 +3761,6 @@ map_limitations=function(lst.QUALYPSOOUT,pred,pred_name,pred_unit,ind_name,ind_n
     if(var!="tasAdjust"){
       if(pred=="time"){
         chg_q5=list()
-        probCI=lst.QUALYPSOOUT[[1]]$listOption$probCI
         ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
         for(r in c("rcp26","rcp45","rcp85")){
           ieff_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]==r)
@@ -3662,13 +3775,18 @@ map_limitations=function(lst.QUALYPSOOUT,pred,pred_name,pred_unit,ind_name,ind_n
           sd.emp[sd.emp==0] = 1 
           sd.corr = sd.qua/sd.emp
           phiStar.corr = phiStar*t(replicate(dim(phiStar)[1],sd.corr))
-          chg_q5[[r]] = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
+          chg_q5[[r]] = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2,na.rm=T)
         }
-        if(any(unlist(chg_q5)<(-1))){
-          exut[exut$type=="Somme effets < -100%",]$val[j]="Oui"
+        if(!is.na(any(unlist(chg_q5)<(-1)))){
+          if(any(unlist(chg_q5)<(-1))){
+            exut[exut$type=="Somme effets < -100%",]$val[j]="Oui"
+          }else{
+            exut[exut$type=="Somme effets < -100%",]$val[j]="Non"
+          }
         }else{
-          exut[exut$type=="Somme effets < -100%",]$val[j]="Non"
+          exut[exut$type=="Somme effets < -100%",]$val[j]=NA
         }
+        
       }
       if(pred=="temp"){
         phiStar = lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phiStar[j,,]
@@ -3680,7 +3798,7 @@ map_limitations=function(lst.QUALYPSOOUT,pred,pred_name,pred_unit,ind_name,ind_n
         sd.emp[sd.emp==0] = 1 
         sd.corr = sd.qua/sd.emp
         phiStar.corr = phiStar*t(replicate(dim(phiStar)[1],sd.corr))
-        chg_q5 = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2)
+        chg_q5 = apply(phiStar.corr,2,quantile,probs = (1-probCI)/2,na.rm=T)
         if(any(chg_q5<(-1))){
           exut[exut$type=="Somme effets < -100%",]$val[j]="Oui"
         }else{
