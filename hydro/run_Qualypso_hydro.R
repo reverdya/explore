@@ -41,9 +41,10 @@ basin_sample=ref[ref$n==9,]$code
 n_bv=length(basin_sample)
 # bc_sample=c("ADAMONT","CDFt")
 bc_sample=c("ADAMONT")
-hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-SD","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
-hm_sample2=c("CTRIP","GRSD","MORDOR-SD","ORCHIDEE","SMASH")
-
+# hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-SD","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
+hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
+# hm_sample2=c("CTRIP","GRSD","MORDOR-SD","ORCHIDEE","SMASH")
+hm_sample2=c("CTRIP","GRSD","ORCHIDEE","SMASH")
 
 ######
 #MAIN#

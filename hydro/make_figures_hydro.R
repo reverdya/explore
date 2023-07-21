@@ -66,7 +66,8 @@ bv_selec=ref_LO[ref_LO$code %in% bv_sample,]
 #######################################################################################
 ## Extract indexes of reference watersheds FR
 
-hm_sampleFR=c("CTRIP","GRSD","MORDOR-SD","ORCHIDEE","SMASH")
+# hm_sampleFR=c("CTRIP","GRSD","MORDOR-SD","ORCHIDEE","SMASH")
+hm_sampleFR=c("CTRIP","GRSD","ORCHIDEE","SMASH")
 codes=vector(length=length(hm_sampleFR),mode="list")
 for(c in 1:length(hm_sampleFR)){# for each chain
   if(hm_sampleFR[c]!="SMASH"){#because some station not simulated for SMASH
