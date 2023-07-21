@@ -1188,7 +1188,7 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
 ## xlim the starting value (often 1990 or 0.7°C)
 
 
-plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,var="toto",indic="titi",idx_pix="tata",idx_row="tata",idx_col="tata",path_temp=NULL,storyl=F){
+plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,var="toto",indic="titi",idx_pix="tata",idx_row="tata",idx_col="tata",path_hadcrut=NULL,path_processed,storyl=F,type=NULL){
   
   if(var!="tasAdjust"){
     Ystar=(lst.QUALYPSOOUT[[1]]$Y[idx,,]-lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phi[idx,,1])/lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phi[idx,,1]*100
@@ -1319,30 +1319,37 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     xlim2=c(1950,xlim[2])
     
     if(var=="tasAdjust"|var=="prtotAdjust"|var=="prsnAdjust"|var=="evspsblpotAdjust"){
-      pth_tmp=list.files(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/safran/indic/",var,"/"),full.names=T,pattern=glob2rx(paste0(var,"*",indic,"*")))
+      if(!is.null(type)){
+        pth_tmp=list.files(paste0(path_processed,"safran/indic/",type,"/"),full.names=T,pattern=glob2rx(paste0("*",var,"*",indic,"*")))
+      }else{
+        pth_tmp=list.files(paste0(path_processed,"safran/indic/"),full.names=T,pattern=glob2rx(paste0("*",var,"*",indic,"*")))
+      }
       nc=load_nc(pth_tmp)
       if(var=="tasAdjust"|var=="prtotAdjust"|var=="prsnAdjust"){
         full_years=nc$dim$Time$vals
         full_years=year(as.Date(full_years,origin="1958-07-31"))
-        if(var=="tasAdjust"){
-          res=ncvar_get(nc,varid="Tair")
-        }else if(var=="prtotAdjust"){
-          res=ncvar_get(nc,varid="Rain")
-        }else if(var=="prsnAdjust"){
-          res=ncvar_get(nc,varid="Snow")
-        }
+        # if(var=="tasAdjust"){
+        #   res=ncvar_get(nc,varid="Tair")
+        # }else if(var=="prtotAdjust"){
+        #   res=ncvar_get(nc,varid="Rain")
+        # }else if(var=="prsnAdjust"){
+        #   res=ncvar_get(nc,varid="Snow")
+        # }
+        res=ncvar_get(nc,varid=var)
         Obs=res[idx_pix,]
       }
       if(var=="evspsblpotAdjust"){
         full_years=nc$dim$time$vals
         full_years=year(as.Date(full_years,origin="1975-01-01"))
         res=ncvar_get(nc,varid="etp")
-        Obs=res[idx_row,idx_col,]
+        Obs=res[idx_pix,full_years<2019]#because false data in 2019
+        full_years=full_years[full_years<2019]
       }
+      
       rm(nc)
       gc()
     }else{
-      Obs=read_fst(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/Diagnostic/diag/",ind_name,".fst"))
+      Obs=read_fst(paste0(path_processed,"Explore2-hydro/Diagnostic/diag/",ind_name,".fst"))
       Obs=Obs[Obs$Code==bv_name,]
       colnames(Obs)=c("hm","code","year","val")
       Obs$year=year(Obs$year)
@@ -1374,7 +1381,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         colnames(Obs)=c("pred","val")
       }
     }else{
-      tmp=smooth.spline(full_years,Obs,spar = sp)$y
+      if(all(is.na(Obs))){#for some reason some safran netcdf contain NA for tasADjust
+        tmp=Obs
+      }else{
+        tmp=smooth.spline(full_years,Obs,spar = sp)$y
+      }
       Obs=data.frame(full_years,Obs-tmp[full_years==1990])
       colnames(Obs)=c("pred","val")
     }
@@ -1384,30 +1395,36 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     xlim2=c(0,xlim[2])
     
     if(var=="tasAdjust"|var=="prtotAdjust"|var=="prsnAdjust"|var=="evspsblpotAdjust"){
-      pth_tmp=list.files(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/safran/indic/",var,"/"),full.names=T,pattern=glob2rx(paste0(var,"*",indic,"*")))
+      if(!is.null(type)){
+        pth_tmp=list.files(paste0(path_processed,"safran/indic/",type,"/"),full.names=T,pattern=glob2rx(paste0("*",var,"*",indic,"*")))
+      }else{
+        pth_tmp=list.files(paste0(path_processed,"safran/indic/"),full.names=T,pattern=glob2rx(paste0("*",var,"*",indic,"*")))
+      }
       nc=load_nc(pth_tmp)
       if(var=="tasAdjust"|var=="prtotAdjust"|var=="prsnAdjust"){
         full_years=nc$dim$Time$vals
         full_years=year(as.Date(full_years,origin="1958-07-31"))
-        if(var=="tasAdjust"){
-          res=ncvar_get(nc,varid="Tair")
-        }else if(var=="prtotAdjust"){
-          res=ncvar_get(nc,varid="Rain")
-        }else if(var=="prsnAdjust"){
-          res=ncvar_get(nc,varid="Snow")
-        }
+        # if(var=="tasAdjust"){
+        #   res=ncvar_get(nc,varid="Tair")
+        # }else if(var=="prtotAdjust"){
+        #   res=ncvar_get(nc,varid="Rain")
+        # }else if(var=="prsnAdjust"){
+        #   res=ncvar_get(nc,varid="Snow")
+        # }
+        res=ncvar_get(nc,varid=var)
         Obs=res[idx_pix,]
       }
       if(var=="evspsblpotAdjust"){
         full_years=nc$dim$time$vals
         full_years=year(as.Date(full_years,origin="1975-01-01"))
         res=ncvar_get(nc,varid="etp")
-        Obs=res[idx_row,idx_col,]
+        Obs=res[idx_pix,full_years<2019]#because false data in 2019
+        full_years=full_years[full_years<2019]
       }
       rm(nc)
       gc()
     }else{
-      Obs=read_fst(paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-hydro/Diagnostic/diag/",ind_name,".fst"))
+      Obs=read_fst(paste0(path_processed,"Explore2-hydro/Diagnostic/diag/",ind_name,".fst"))
       Obs=Obs[Obs$Code==bv_name,]
       colnames(Obs)=c("hm","code","year","val")
       Obs$year=year(Obs$year)
@@ -1415,7 +1432,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       full_years=Obs$year
     }
     # Calculate 1860-1990 warming from HADCRUT5 with spline
-    nc=load_nc(paste0(path_temp,"HadCRUT.5.0.1.0.analysis.summary_series.global.annual.nc"))
+    nc=load_nc(paste0(path_hadcrut,"HadCRUT.5.0.1.0.analysis.summary_series.global.annual.nc"))
     res2=ncvar_get(nc,varid="tas_mean")
     full_years2=nc$dim$time$vals
     full_years2=year(as.Date(full_years2,origin="1850-01-01"))
@@ -1455,7 +1472,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       }
     }else{
       tas_obs=tas_obs[which(full_years2 %in% full_years)]
-      tmp=smooth.spline(tas_obs,Obs,spar = sp)$y
+      if(all(is.na(Obs))){#for some reason some safran netcdf contain NA for tasADjust
+        tmp=Obs
+      }else{
+        tmp=smooth.spline(tas_obs,Obs,spar = sp)$y
+      }
       Obs=data.frame(tas_obs,Obs-tmp[full_years==1990])
       colnames(Obs)=c("pred","val")
     }
@@ -1497,6 +1518,9 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
           if(var!="tasAdjust"){
             scen_rep=scen_rep*100
           }
+          if(length(scen_rep)==0){
+            scen_rep=rep(NA,length(Xfut))
+          }
           story=rbind(story,data.frame(pred=Xfut,val=scen_rep,eff=r,name=storylines$type[j]))
         }
       }
@@ -1513,6 +1537,9 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         }
         if(var!="tasAdjust"){
           scen_rep=scen_rep*100
+        }
+        if(length(scen_rep)==0){
+          scen_rep=rep(NA,length(Xfut))
         }
         story=rbind(story,data.frame(pred=Xfut,val=scen_rep,eff="rcp85",name=storylines$type[j]))
       }
@@ -1913,6 +1940,9 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
           if(var!="tasAdjust"){
             scen_rep=scen_rep*100
           }
+          if(length(scen_rep)==0){
+            scen_rep=rep(NA,length(Xfut))
+          }
           story=rbind(story,data.frame(pred=Xfut,val=scen_rep,eff=r,name=storylines$type[j]))
         }
       }
@@ -1929,6 +1959,9 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
         }
         if(var!="tasAdjust"){
           scen_rep=scen_rep*100
+        }
+        if(length(scen_rep)==0){
+          scen_rep=rep(NA,length(Xfut))
         }
         story=rbind(story,data.frame(pred=Xfut,val=scen_rep,eff="rcp85",name=storylines$type[j]))
       }
@@ -2216,6 +2249,9 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
             if(var!="tasAdjust"){
               scen_rep=scen_rep*100
             }
+            if(length(scen_rep)==0){
+              scen_rep=rep(NA,length(Xfut))
+            }
             story=rbind(story,data.frame(pred=Xfut,val=scen_rep,eff=r,name=storylines$type[j],month=m))
           }
         }
@@ -2232,6 +2268,9 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
           }
           if(var!="tasAdjust"){
             scen_rep=scen_rep*100
+          }
+          if(length(scen_rep)==0){
+            scen_rep=rep(NA,length(Xfut))
           }
           story=rbind(story,data.frame(pred=Xfut,val=scen_rep,eff="rcp85",name=storylines$type[j],month=m))
         }
@@ -3651,6 +3690,9 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
     }
     if(var!="tasAdjust"){
       scen_rep=scen_rep*100
+    }
+    if(length(scen_rep)==0){
+      scen_rep=rep(NA,length(Xfut))
     }
     exut[exut$type==storylines$type[j],]$val=scen_rep
   }
