@@ -37,14 +37,15 @@ final_year=2100
 typechangeVar="rel"
 SPAR_time=1.1
 SPAR_temp=1.2
-basin_sample=ref[ref$n==9,]$code
-n_bv=length(basin_sample)
+
 # bc_sample=c("ADAMONT","CDFt")
 bc_sample=c("ADAMONT")
 # hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-SD","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
 hm_sample=c("CTRIP","EROS","GRSD","J2000","MORDOR-TS","ORCHIDEE","SIM2","SMASH")
 # hm_sample2=c("CTRIP","GRSD","MORDOR-SD","ORCHIDEE","SMASH")
 hm_sample2=c("CTRIP","GRSD","ORCHIDEE","SMASH")
+basin_sample=ref[ref$n==length(hm_sample),]$code
+n_bv=length(basin_sample)
 
 ######
 #MAIN#
@@ -191,7 +192,7 @@ for(i in unique(simu_lst$indic)){
 ##################################################################################################
 ## Run for all steps and all models hydro for biggest common national sample  (without SIM2)
 
-
+hm_sample2=c("CTRIP","GRSD","MORDOR-SD","ORCHIDEE","SMASH")#Keeping same number of basins as MORDOR-SD for run so that latter it does not decrease, but removing its chains
 codes=vector(length=length(hm_sample2),mode="list")
 for(c in 1:length(hm_sample2)){# for each chain
   if(hm_sample2[c]!="SMASH"){#because some station not simulated for SMASH
@@ -206,6 +207,7 @@ for(c in 1:length(hm_sample2)){# for each chain
 }
 basin_sample2=Reduce(intersect, codes)
 n_bv2=length(basin_sample2)
+hm_sample2=c("CTRIP","GRSD","ORCHIDEE","SMASH")#Keeping same number of basins as MORDOR-SD for run so that latter it does not decrease, but removing its chains
 
 for(i in unique(simu_lst$indic)){
   dir.create(paste0(path_data,"Qualypso/",i,"/"))

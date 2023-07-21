@@ -50,7 +50,7 @@ storylines=data.frame(gcm=c("HadGEM2-ES","HadGEM2-ES","CNRM-CM5","EC-EARTH"),rcm
 #######################################################################################
 ## Extract indexes of reference watersheds LO
 
-ref_LO=ref[ref$n==9,]
+ref_LO=ref[ref$n==length(unique(simu_lst$hm)),]
 ref_LO$idx=seq(1,nrow(ref_LO))
 coordinates(ref_LO) <- c("x_l93", "y_l93")
 proj4string(ref_LO) <- CRS("+init=epsg:2154")
@@ -67,7 +67,7 @@ bv_selec=ref_LO[ref_LO$code %in% bv_sample,]
 ## Extract indexes of reference watersheds FR
 
 # hm_sampleFR=c("CTRIP","GRSD","MORDOR-SD","ORCHIDEE","SMASH")
-hm_sampleFR=c("CTRIP","GRSD","ORCHIDEE","SMASH")
+hm_sampleFR=c("CTRIP","GRSD","MORDOR-SD","ORCHIDEE","SMASH")#Keeping same number of basins as MORDOR-SD for run so that latter it does not decrease, but removing its chains
 codes=vector(length=length(hm_sampleFR),mode="list")
 for(c in 1:length(hm_sampleFR)){# for each chain
   if(hm_sampleFR[c]!="SMASH"){#because some station not simulated for SMASH
@@ -92,6 +92,7 @@ colnames(ref_FR)[colnames(ref_FR)=="y"]="y2"
 colnames(ref_FR)[colnames(ref_FR)=="x_l93"]="x"
 colnames(ref_FR)[colnames(ref_FR)=="y_l93"]="y"
 ref_FR$y=as.numeric(ref_FR$y)
+hm_sampleFR=c("CTRIP","GRSD","ORCHIDEE","SMASH")
 
 #############################################################
 ## Times series Qualypso for selected watersheds
