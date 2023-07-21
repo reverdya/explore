@@ -29,6 +29,8 @@ load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
 load(file=paste0(path_temp,"T_coef_spline1990toGlob.Rdata"))
 mask_fr=as.vector(refs$mask)
+mask_fr=mask_fr[mask_fr!=0]
+basHy=read.csv(paste0(path_sig,"processed/SAFRAN_ref_basHy.csv"))
 
 path_river=paste0(path_sig,"/processed/CoursEau_idx1_wgs84.shp")
 path_fr=paste0(path_sig,"/raw/IGN/contours_FR/gadm36_FRA_0.shp")
@@ -36,6 +38,10 @@ background_for_maps(path_river,path_fr)
 
 labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualypsoout, same for color scale. Used inside plot functions
 ref_year=1990
+
+#storylines=data.frame(gcm=c("HadGEM2-ES","HadGEM2-ES","CNRM-CM5-LR","EC-EARTH"),rcm=c("ALADIN63","CCLM4-8-17","ALADIN63","HadREM3-GA7-05"),bc=rep("ADAMONT",4),type=c("Chaud et humide","Sec en été et chaud","Faibles changements","Sec"))
+storylines=data.frame(gcm=c("HadGEM2-ES","HadGEM2-ES","CNRM-CM5-LR","EC-EARTH"),rcm=c("ALADIN63","CCLM4-8-17","ALADIN63","HadREM3-GA7-05"),bc=rep("ADAMONT",4),type=c("HadGEM2-ES/ALADIN63","HadGEM2-ES/CCLM4-8-17","CNRM-CM5/ALADIN63","EC-EARTH/HadREM3-GA7"))#using longer model names than in hydro
+
 
 nbcores=detectCores()-2
 
@@ -62,17 +68,12 @@ tmp=tmp[as.logical(refs$mask)]
 ref_cities$idx_masked=which(tmp %in% ref_cities$idx)
 
 #########################################################################################
-## Reference departments and zones
+## Reference basins
 
-ref_dep=read.csv(paste0(path_sig,"processed/SAFRAn_ref_deptmt.csv"))
-colnames(ref_dep)=c("id","code","name")
-idx_ref_dep=c(12,34,64,65,75)
-ref_bv=read.csv(paste0(path_sig,"processed/SAFRAn_ref_bv.csv"))
-colnames(ref_bv)=c("id","code","name")
-idx_ref_bv=c(206,226,242)
-ref_reg=read.csv(paste0(path_sig,"processed/SAFRAn_ref_reg_hyd.csv"))
-colnames(ref_reg)=c("id","name")
-idx_ref_reg=c(1,4,139)
+basHy=read.csv(paste0(path_sig,"processed/SAFRAN_ref_basHy.csv"))
+colnames(basHy)=c("id","code","name")
+idx_ref_bas=c(1,3,4)
+
 
 #########################################################################################
 ## Reference cities above 1000 m
@@ -80,28 +81,23 @@ idx_ref_reg=c(1,4,139)
 ref_snow=data.frame(name=c("La Grave","Font-Romeu","Mont-Dore"),xcoord=c(6.30620,2.04383,2.80826),ycoord=c(45.04667,42.50592,45.57661))
 ref_snow$col=ref_snow$row=ref_snow$xcoord
 for (i in 1:nrow(ref_snow)){
-  dist=sqrt((lon-ref_snow$xcoord[i])^2+(lat-ref_snow$ycoord[i])^2)
+  dist=sqrt((refs$lon-ref_snow$xcoord[i])^2+(refs$lat-ref_snow$ycoord[i])^2)
   min_dist=as.vector(which(dist==min(dist),arr.ind = T))
   ref_snow$row[i]=min_dist[1]
   ref_snow$col[i]=min_dist[2]
 }
 
 #############################################################
-## Times series Qualypso for selected cities
+## Times series Qualypso for selected basins
 ## lst.QUALYPSOUT is a list of QUALYPSOOUT objects through time (or temperature)
 
-for(v in unique(simu_lst$var)){
-
-# for(v in unique(simu_lst$var)[c(1,2)]){
-
+for(v in unique(simu_lst$var)[unique(simu_lst$var)!="prsnAdjust"]){
   dir.create(paste0(path_fig,v,"/"))
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  # for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
     for (preds in c("time","temp")){
-    # for (preds in c("time")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/")
-        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
+        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_bas.RData"))
         lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
         pred_name="temps"
         predict="time"
@@ -111,7 +107,7 @@ for(v in unique(simu_lst$var)){
       }
       if (preds == "temp"){
         folder_out=paste0(path_fig,v,"/",i,"/temp/")
-        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp.RData"))
+        load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_temp_bas.RData"))
         lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp
         pred_name="température"
         predict="temp"
@@ -122,34 +118,33 @@ for(v in unique(simu_lst$var)){
       
       dir.create(folder_out)
 
-      for(c in 1:nrow(ref_cities)){
-        idx=ref_cities$idx_masked[c]
+      # for(c in 1:nrow(ref_cities)){
+        # idx=ref_cities$idx_masked[c]
+      for(c in idx_ref_bas){
+        idx=c
         # Warnings "removed rows" okay, due to xlim
         if(preds=="time"){
-          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcp",plain_nameEff = "RCP",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
-          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcp",plain_nameEff = "RCP",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = T,xlim=xlim,var=v)
-          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var=v)
-          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var=v)
-          # plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var=v)
+          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcp",plain_nameEff = "RCP",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
+          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcp",plain_nameEff = "RCP",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = T,xlim=xlim,var=v)
+          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var=v)
+          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var=v)
+          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var=v)
         }
         if(preds=="temp"){
-          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,includeMean = T)
-          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,includeMean = T)
-          # plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,includeMean = T)
+          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,includeMean = T)
+          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,includeMean = T)
+          plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,includeMean = T)
         }
-        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
-        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
-        # plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v)
         
-        if(v=="evspsblpotAdjust"){
-          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,idx_row = ref_cities$row[c],idx_col = ref_cities$col[c],path_temp=path_hadcrut)
-        }else{
-          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,idx_pix = idx,path_temp=path_hadcrut)
+        for(storyl in c(T,F)){
+          plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var=v,indic = i,idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=storyl,type="bas")
+          plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=folder_out,var=v,indic=i,horiz = horiz3,title=T,storyl=storyl)
         }
-        plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[c],bv_full_name = ref_cities$name[c],pred_unit = pred_unit,folder_out=folder_out,var=v,indic=i,horiz = horiz3,title=T)
       }
     }
-    
   }
 }
 
@@ -157,11 +152,8 @@ for(v in unique(simu_lst$var)){
 ## Maps
 
 for(v in unique(simu_lst$var)){
-# for(v in unique(simu_lst$var)[c(1,2)]){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  # for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
     for (preds in c("time","temp")){
-    # for (preds in c("time")){
       if (preds == "time"){
         folder_out=paste0(path_fig,v,"/",i,"/maps/")
         load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
@@ -194,7 +186,7 @@ for(v in unique(simu_lst$var)){
         
         map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
         map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
-        # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
+        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=F,includeRCP = "rcp85",horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
       
         map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="rcp85",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = folder_out,pix=T,var=v,freq_col=freq_col)
       }
@@ -203,12 +195,12 @@ for(v in unique(simu_lst$var)){
         
         map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
         map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
-        # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
+        map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeMean=T,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
       }
            
       map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
       map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
-      # map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
+      map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = folder_out,freq_col=freq_col,pix=T,var=v)
         
       map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out =folder_out,pix=T,var=v)
       map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = folder_out,pix=T,var=v,freq_col=freq_col)
@@ -228,11 +220,9 @@ for(v in unique(simu_lst$var)){
 
 
 for(v in unique(simu_lst$var)){
-# for(v in unique(simu_lst$var)[c(1,2)]){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-  # for (i in unique(simu_lst[simu_lst$var==v,]$indic)[c(5)]){
     folder_out=paste0(path_fig,v,"/",i,"/maps/")
-    load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
+    load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
     lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
     exut=exut[as.logical(refs$mask),]
