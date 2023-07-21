@@ -18,7 +18,7 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 
 ->meteo/check_indic_meteo.R				||||	figures checked? NO																	
 ->meteo/run_Qualypso_meteo.R				||||	before that visually determine best spar														
-->meteo/make_figures_meteo.R				| |	figures checked? NO																	bas (only chronique), snow (chronique and map and ref) , new mask, change Xfut, safran data (ETP<2019), storylines, add bc
+->meteo/make_figures_meteo.R				| |	figures checked? NO																	snow (map and ref) 
 
 
 
