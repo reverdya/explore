@@ -2452,7 +2452,12 @@ background_for_maps=function(path_river,path_fr){
 ## Data has at least longitude in x, latitude in y and a numeric filling value in val_name
 
 
-base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL){
+base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL,ind_name=NULL){
+  if(zoom=="FR"&ind_name=="VCN3"){
+    n=nrow(data)/nrow(ref_FR)
+    data$mask=rep(ref_FR$mask_weird_values,n)
+    data=data[data$mask,]
+  }
   plt=ggplot(data=data)+
     geom_polygon(data=fr,aes(x=long,y=lat,group=group),fill=NA,colour="black",size=0.1)+
     geom_path(data=river,aes(x=long,y=lat,group=group),colour="gray80",size=0.1)+
@@ -2482,7 +2487,7 @@ base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL){
       geom_point(aes(x=x,y=y,fill=get(val_name)),size=3,shape=21,stroke=0.2)
   }
   if(zoom=="FR"){
-    plt$layers[[3]]$aes_params$size= 2
+    plt$layers[[3]]$aes_params$size= 1.5
   }
   return(plt)
 }
@@ -2586,7 +2591,11 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-    exut=exut[as.logical(refs$mask),]
+    if(v=="prsnAdjust"){
+      exut=exut[as.logical(refs$mask_prsn),]
+    }else{
+      exut=exut[as.logical(refs$mask),]
+    }
   }else{
     exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
@@ -2604,7 +2613,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
 
   for(r in rcp_names){
     ieff_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]==r)
-    chg_mean=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,ieff_this_rcp]+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN[ieff_this_rcp]
+    chg_mean=lst.QUALYPSOOUT[[idx_Xfut]]$MAINEFFECT$rcp$MEAN[,ieff_this_rcp]+lst.QUALYPSOOUT[[idx_Xfut]]$GRANDMEAN$MEAN
     
     idx_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail$rcp==r)
     # phiStar
@@ -2669,6 +2678,14 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+    if(ind_name=="VCN3"){
+      if(zoom=="FR"){
+        n=nrow(exut)/nrow(ref_FR)
+        exut$mask=rep(ref_FR$mask_weird_values,n)
+        q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
+        q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+      }
+    }
     lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
@@ -2681,7 +2698,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
+    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom,ind_name=ind_name)+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
       guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21,"Non concerné"=22))+
@@ -2747,7 +2764,11 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-    exut=exut[as.logical(refs$mask),]
+    if(v=="prsnAdjust"){
+      exut=exut[as.logical(refs$mask_prsn),]
+    }else{
+      exut=exut[as.logical(refs$mask),]
+    }
   }else{
     exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
@@ -2865,6 +2886,14 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+    if(ind_name=="VCN3"){
+      if(zoom=="FR"){
+        n=nrow(exut)/nrow(ref_FR)
+        exut$mask=rep(ref_FR$mask_weird_values,n)
+        q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
+        q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+      }
+    }
     lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
@@ -2878,10 +2907,10 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
+    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom,ind_name=ind_name)+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
       guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
-      scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21,"Non concerné"=22))+
+      scale_shape_manual("Accord entre\nprojections sur le\nsigne du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21,"Non concerné"=22))+
       guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       facet_grid(horiz ~ quant,labeller = labeller(horiz=horiz.labs, quant = quant.labs))+
       ggtitle(paste0("Changement relatif du ",ind_name_full," et\nson incertitude pour différents horizons et\nle prédicteur ",pred_name,"(",rcp_plainname,", référence 1990)"))+
@@ -2953,7 +2982,11 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-    exut=exut[as.logical(refs$mask),]
+    if(v=="prsnAdjust"){
+      exut=exut[as.logical(refs$mask_prsn),]
+    }else{
+      exut=exut[as.logical(refs$mask),]
+    }
   }else{
     exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
@@ -3011,6 +3044,14 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+    if(ind_name=="VCN3"){
+      if(zoom=="FR"){
+        n=nrow(exut)/nrow(ref_FR)
+        exut$mask=rep(ref_FR$mask_weird_values,n)
+        q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
+        q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+      }
+    }
     lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
@@ -3023,7 +3064,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   }
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom)+
+    plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom,ind_name=ind_name)+
       binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),oob=squish,show.limits = T,labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)))+
       guides(fill = guide_bins(override.aes=list(shape=22,size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       scale_shape_manual("Accord entre projections\nsur le signe du changement",values = c("Positif"=24,"Négatif"=25,"Pas d'accord"=21,"Non concerné"=22))+
@@ -3033,7 +3074,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
       theme(panel.border = element_rect(colour = "black",fill=NA))
   }else{
     if(var!="tasAdjust"){
-      plt=base_map_grid(data = exut,val_name = "val",pattern_name = "sign_agree",facet_vert_name ="rcp",threshold="<80%",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
+      plt=base_map_grid(data = exut,val_name = "val",pattern_name = "sign_agree",facet_vert_name ="rcp",facet_horizontal_name="quant",exclude_horizontal=c("5%","95%"))
       plt=plt+
         facet_grid(rcp ~ quant,labeller = labeller(rcp = rcp.labs, quant = quant.labs))+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(precip_10)),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3088,7 +3129,6 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     }else{
       exut=exut[as.logical(refs$mask),]
     }
-
   }else{
     exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
@@ -3161,6 +3201,14 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   if(var!="tasAdjust"|(is.null(includeRCP)&includeMean==F)){
     q99pos=quantile(tmp[tmp>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col),na.rm=T))
+    if(ind_name=="VCN3"){
+      if(zoom=="FR"){
+        n=nrow(exut)/nrow(ref_FR)
+        exut$mask=rep(ref_FR$mask_weird_values,n)
+        q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
+        q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+      }
+    }
     lim_col=max(q99pos,q99neg,na.rm=T)
     if(var!="tasAdjust"){
       lim_col=round(lim_col/10)*10#arrondi au 10 le plus proche
@@ -3170,13 +3218,21 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   }else{
     q99=quantile(exut$val,probs=freq_col,na.rm=T)
     q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
+    if(ind_name=="VCN3"){
+      if(zoom=="FR"){
+        n=nrow(exut)/nrow(ref_FR)
+        exut$mask=rep(ref_FR$mask_weird_values,n)
+        q99=quantile(exut$val[exut$mask],probs=freq_col,na.rm=T)
+        q01=quantile(exut$val[exut$mask],probs=(1-freq_col),na.rm=T)
+      }
+    }
     lim_col=as.numeric(c(q01,q99))
     lim_col=round(lim_col)#arrondi au 1 le plus proche
     br=seq(lim_col[1],lim_col[2],0.25)
   }
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom)+
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom,ind_name=ind_name)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt=base_map_grid(data = exut,val_name = "val")+
@@ -3197,7 +3253,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     }else{
       plt=plt+
         facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C))",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
+        binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
         ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
         theme(panel.border = element_rect(colour = "black",fill=NA))
       }
@@ -3219,7 +3275,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
       }else{
         plt=plt+
           facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-          binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (%)",ggplot2:::binned_pal(scales::manual_pal(rev(temp_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels= c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),oob=squish,show.limits = T)+#that way because stepsn deforms colors
+          binned_scale(aesthetics = "fill",scale_name = "toto",name="Effet principal (°C)",ggplot2:::binned_pal(scales::manual_pal(rev(temp_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels= c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),oob=squish,show.limits = T)+#that way because stepsn deforms colors
           ggtitle(paste0("Effet principaux des ",name_eff_plain,"s pour le ",ind_name_full,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
           theme(panel.border = element_rect(colour = "black",fill=NA))
       }
@@ -3244,7 +3300,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
       }else{
         plt=plt+
           facet_wrap(~effs,ncol=3,labeller = labeller(effs=effs.labs))+
-          binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (%)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
+          binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))+#that way because stepsn deforms colors
           ggtitle(paste0("Changement des ",name_eff_plain,"s pour le ",ind_name_full," le ",includeRCP,"\net le prédicteur ",pred_name," (",horiz," ",pred_unit," VS 1990)"))+
           theme(panel.border = element_rect(colour = "black",fill=NA))
       }
@@ -3276,7 +3332,11 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-    exut=exut[as.logical(refs$mask),]
+    if(v=="prsnAdjust"){
+      exut=exut[as.logical(refs$mask_prsn),]
+    }else{
+      exut=exut[as.logical(refs$mask),]
+    }
   }else{
     exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
@@ -3346,7 +3406,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
   ## We show uncertainties not variances
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom)+
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom,ind_name=ind_name)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt=base_map_grid(data = exut,val_name = "val")+
@@ -3356,6 +3416,14 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+      if(ind_name=="VCN3"){
+        if(zoom=="FR"){
+          n=nrow(exut)/nrow(ref_FR)
+          exut$mask=rep(ref_FR$mask_weird_values,n)
+          q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
+          q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+        }
+      }
       lim_col=max(q99pos,q99neg,na.rm=T)
       lim_col=round(lim_col/5)*5#arrondi au 5 le plus proche
       plt=plt+
@@ -3380,6 +3448,14 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
+      if(ind_name=="VCN3"){
+        if(zoom=="FR"){
+          n=nrow(exut)/nrow(ref_FR)
+          exut$mask=rep(ref_FR$mask_weird_values,n)
+          q99=quantile(exut$val[exut$mask],probs=freq_col,na.rm=T)
+          q01=quantile(exut$val[exut$mask],probs=1-freq_col,na.rm=T)
+        }
+      }
       lim_col=c(round(q01/5)*5,round(q99/5)*5)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ntotale (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3397,6 +3473,14 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
+      if(ind_name=="VCN3"){
+        if(zoom=="FR"){
+          n=nrow(exut)/nrow(ref_FR)
+          exut$mask=rep(ref_FR$mask_weird_values,n)
+          q99=quantile(exut$val[exut$mask],probs=freq_col,na.rm=T)
+          q01=quantile(exut$val[exut$mask],probs=1-freq_col,na.rm=T)
+        }
+      }
       lim_col=c(round(q01/5)*5,round(q99/5)*5)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3414,6 +3498,14 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
+      if(ind_name=="VCN3"){
+        if(zoom=="FR"){
+          n=nrow(exut)/nrow(ref_FR)
+          exut$mask=rep(ref_FR$mask_weird_values,n)
+          q99=quantile(exut$val[exut$mask],probs=freq_col,na.rm=T)
+          q01=quantile(exut$val[exut$mask],probs=1-freq_col,na.rm=T)
+        }
+      }
       lim_col=c(round(q01/5)*5,round(q99/5)*5)
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\ninterne (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3432,6 +3524,14 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
+      if(ind_name=="VCN3"){
+        if(zoom=="FR"){
+          n=nrow(exut)/nrow(ref_FR)
+          exut$mask=rep(ref_FR$mask_weird_values,n)
+          q99=quantile(exut$val[exut$mask],probs=freq_col,na.rm=T)
+          q01=quantile(exut$val[exut$mask],probs=1-freq_col,na.rm=T)
+        }
+      }
       lim_col=c(round(q01),round(q99))
       plt=plt+
         binned_scale(aesthetics = "fill",scale_name = "toto",name="Incertitude\nrésiduelle (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=lim_col,breaks=seq(lim_col[1],lim_col[2],length.out=6),labels= c(paste0("< ",lim_col[1]),round(seq(lim_col[1]+(lim_col[2]-lim_col[1])/6,lim_col[1]+(lim_col[2]-lim_col[1])/6*4,length.out=4),1),paste0("> ",lim_col[2])),show.limits = T,oob=squish)+#that way because stepsn deforms colors
@@ -3449,6 +3549,14 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+      if(ind_name=="VCN3"){
+        if(zoom=="FR"){
+          n=nrow(exut)/nrow(ref_FR)
+          exut$mask=rep(ref_FR$mask_weird_values,n)
+          q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
+          q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+        }
+      }
       lim_col=max(q99pos,q99neg,na.rm=T)
       lim_col=round(lim_col/5)*5#arrondi au 5 le plus proche
       plt=plt+
@@ -3461,6 +3569,14 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     }else{
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
+      if(ind_name=="VCN3"){
+        if(zoom=="FR"){
+          n=nrow(exut)/nrow(ref_FR)
+          exut$mask=rep(ref_FR$mask_weird_values,n)
+          q99=quantile(exut$val[exut$mask],probs=freq_col,na.rm=T)
+          q01=quantile(exut$val[exut$mask],probs=1-freq_col,na.rm=T)
+        }
+      }
       lim_col=as.numeric(c(q01,q99))
       lim_col=round(lim_col/0.5)*0.5#arrondi au 1 le plus proche
       br=seq(lim_col[1],lim_col[2],0.5)
@@ -3470,6 +3586,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     }
   }
 
+  plt$layers[[3]]$aes_params$size= 4
   
   if (is.na(folder_out)){
     return(plt)
@@ -3495,7 +3612,11 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-    exut=exut[as.logical(refs$mask),]
+    if(v=="prsnAdjust"){
+      exut=exut[as.logical(refs$mask_prsn),]
+    }else{
+      exut=exut[as.logical(refs$mask),]
+    }
   }else{
     exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
@@ -3547,17 +3668,33 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   
   lim_col1=as.numeric(round(quantile((exut[exut$source!="IVout",]$val),probs=0.99,na.rm=T)/5)*5)
+  if(ind_name=="VCN3"){
+    if(zoom=="FR"){
+      n=nrow(exut)/nrow(ref_FR)
+      exut$mask=rep(ref_FR$mask_weird_values,n)
+      lim_col1=as.numeric(round(quantile((exut[exut$source!="IVout"&exut$mask,]$val),probs=0.99,na.rm=T)/5)*5)
+    }
+  }
   if(lim_col1==0){lim_col1=5}
   lim_col2=as.numeric(round(quantile((exut[exut$source=="IVout",]$val),probs=c(0.01,0.99),na.rm=T)/5)*5)
+  if(ind_name=="VCN3"){
+    if(zoom=="FR"){
+      n=nrow(exut)/nrow(ref_FR)
+      exut$mask=rep(ref_FR$mask_weird_values,n)
+      lim_col2=as.numeric(round(quantile((exut[exut$source=="IVout"&exut$mask,]$val),probs=c(0.01,0.99),na.rm=T)/5)*5)
+    }
+  }
   if(lim_col2[1]==100){lim_col2[1]=95}
   if(lim_col2[2]==lim_col2[1]){lim_col2[2]=lim_col2[1]+5}
   
   if(!pix){
-    plt1=base_map_outlets(data = exut[exut$source!="IVout",],val_name = "val",zoom=zoom)+
-      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),title.position = "right"))
+    plt1=base_map_outlets(data = exut[exut$source!="IVout",],val_name = "val",zoom=zoom,ind_name=ind_name)+
+      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),title.position = "right"))+
+      theme(legend.title.align=0.5) 
   }else{
     plt1=base_map_grid(data = exut[exut$source!="IVout",],val_name = "val")+
-      guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold"),title.position = "right"))
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold"),title.position = "right"))+
+      theme(legend.title.align=0.5) 
   }
   plt1=plt1+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance liée à la dispersion\nentre les modèles\nissue de chaque source\nd'incertitude (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),guide="coloursteps",limits=c(0,lim_col1),breaks=seq(0,lim_col1,length.out=6),show.limits = T,labels= c(0,round(seq(0+(lim_col1-0)/6,0+(lim_col1-0)/6*4,length.out=4),1),paste0("> ",lim_col1)),oob=squish)+#that way because stepsn deforms colors
@@ -3565,11 +3702,13 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   
   exut$cat="Variabilité interne"
   if(!pix){
-    plt2=base_map_outlets(data = exut[exut$source=="IVout",],val_name = "val",zoom=zoom)+
-      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),title.position = "right"))
+    plt2=base_map_outlets(data = exut[exut$source=="IVout",],val_name = "val",zoom=zoom,ind_name=ind_name)+
+      guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold"),title.position = "right"))+
+      theme(legend.title.align=0.5) 
   }else{
     plt2=base_map_grid(data = exut[exut$source=="IVout",],val_name = "val")+
-      guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold"),title.position = "right"))
+      guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold"),title.position = "right"))+
+      theme(legend.title.align=0.5) 
   }
   plt2=plt2+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale\nissue de la dispersion\nentre les modèles (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
@@ -3669,7 +3808,11 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
   
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-    exut=exut[as.logical(refs$mask),]
+    if(v=="prsnAdjust"){
+      exut=exut[as.logical(refs$mask_prsn),]
+    }else{
+      exut=exut[as.logical(refs$mask),]
+    }
   }else{
     exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
@@ -3723,6 +3866,14 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+    if(ind_name=="VCN3"){
+      if(zoom=="FR"){
+        n=nrow(exut)/nrow(ref_FR)
+        exut$mask=rep(ref_FR$mask_weird_values,n)
+        q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
+        q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+      }
+    }
     lim_col=max(q99pos,q99neg,na.rm=T)
     lim_col=round(lim_col/10)*10#arrondi au 10 le plus proche
   }else{
@@ -3734,7 +3885,7 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
   }
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom)+
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom,ind_name=ind_name)+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
   }else{
     plt=base_map_grid(data = exut,val_name = "val")+
@@ -3762,7 +3913,7 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
     }
   }else{
     plt=plt+
-      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C))",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))#that way because stepsn deforms colors
+      binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement (°C)",ggplot2:::binned_pal(scales::manual_pal(brewer.ylorrd(length(br)-1))),guide="coloursteps",limits=lim_col,breaks=br,oob=squish,show.limits = T,labels=c(paste0("< ",lim_col[1]),br[-c(1,length(br))],paste0("> ",lim_col[2])))#that way because stepsn deforms colors
   }
   
 
@@ -3790,7 +3941,11 @@ map_limitations=function(lst.QUALYPSOOUT,pred,pred_name,pred_unit,ind_name,ind_n
   warn_store=lst.QUALYPSOOUT[[1]]$listOption$climResponse$warning_store
   if(pix){
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-    exut=exut[as.logical(refs$mask),]
+    if(v=="prsnAdjust"){
+      exut=exut[as.logical(refs$mask_prsn),]
+    }else{
+      exut=exut[as.logical(refs$mask),]
+    }
   }else{
     exut=data.frame(x=as.vector(ref$x),y=as.vector(ref$y))
   }
@@ -3873,7 +4028,7 @@ map_limitations=function(lst.QUALYPSOOUT,pred,pred_name,pred_unit,ind_name,ind_n
   
   
   if(!pix){
-    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom)
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=zoom,ind_name=ind_name)
   }else{
     plt=base_map_grid(data = exut,val_name = "val")
   }
