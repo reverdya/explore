@@ -18,7 +18,7 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 
 ->meteo/check_indic_meteo.R				||||	figures checked? YES
 ->meteo/run_Qualypso_meteo.R				||||	before that visually determine best spar
-->meteo/make_figures_meteo.R				| |	figures checked? NO
+->meteo/make_figures_meteo.R				||||	figures checked? YES
 
 
 
@@ -29,4 +29,4 @@ from "C:/Users/reverdya/Documents/Docs/1_code/explore/"
 
 ->hydro/check_indic_hydro.R				||||	figures checked? YES
 ->hydro/run_Qualypso_hydro.R				||||	before that visually determine best spar
-->hydro/make_figures_hydro.R				||||	figures checked? NO
+->hydro/make_figures_hydro.R				||||	figures checked? YES
