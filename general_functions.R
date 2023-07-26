@@ -1384,7 +1384,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         Obs=data.frame(full_years,(Obs$val-obs1990)/obs1990*100)
         colnames(Obs)=c("pred","val")
       }else{
-        tmp=smooth.spline(full_years,Obs,spar = sp)$y
+        if(all(is.na(Obs))){#for some reason some safran netcdf contain NA for prtotAdjust
+          tmp=Obs
+        }else{
+          tmp=smooth.spline(full_years,Obs,spar = sp)$y
+        }
         Obs=data.frame(full_years,(Obs-tmp[full_years==1990])/tmp[full_years==1990]*100)
         colnames(Obs)=c("pred","val")
       }
@@ -1474,7 +1478,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         colnames(Obs)=c("pred","val")
       }else{
         tas_obs=tas_obs[which(full_years2 %in% full_years)]
-        tmp=smooth.spline(tas_obs,Obs,spar = sp)$y
+        if(all(is.na(Obs))){#for some reason some safran netcdf contain NA for prtotAdjust
+          tmp=Obs
+        }else{
+          tmp=smooth.spline(full_years,Obs,spar = sp)$y
+        }
         Obs=data.frame(tas_obs,(Obs-tmp[full_years==1990])/tmp[full_years==1990]*100)
         colnames(Obs)=c("pred","val")
       }

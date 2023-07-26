@@ -74,7 +74,7 @@ ref_cities$idx_masked=which(tmp %in% ref_cities$idx)
 
 basHy=read.csv(paste0(path_sig,"processed/SAFRAN_ref_basHy.csv"))
 colnames(basHy)=c("id","code","name")
-idx_ref_bas=c(1,3,4)
+idx_ref_bas=c(1:6)
 
 
 #########################################################################################
