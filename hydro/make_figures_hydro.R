@@ -38,6 +38,7 @@ nbcores=detectCores()-2
 ref_year=1990
 
 bv_sample=c("K337301001","K259301001","K118001010")
+bv_sample_FR=c("W323000000","A850061001")
 #storylines=data.frame(gcm=c("HadGEM2-ES","HadGEM2-ES","CNRM-CM5","EC-EARTH"),rcm=c("ALADIN63","CCLM4-8-17","ALADIN63","HadREM3-GA7"),bc=rep("ADAMONT",4),type=c("Chaud et humide","Sec en été et chaud","Faibles changements","Sec"))
 storylines=data.frame(gcm=c("HadGEM2-ES","HadGEM2-ES","CNRM-CM5","EC-EARTH"),rcm=c("ALADIN63","CCLM4-8-17","ALADIN63","HadREM3-GA7"),bc=rep("ADAMONT",4),type=c("HadGEM2-ES/ALADIN63","HadGEM2-ES/CCLM4-8-17","CNRM-CM5/ALADIN63","EC-EARTH/HadREM3-GA7"))#using shorter model names than in meteo
 
@@ -96,6 +97,8 @@ hm_sampleFR=c("CTRIP","GRSD","ORCHIDEE","SMASH")
 load(file=paste0(path_data,"Qualypso/VCN3/VCN3_list_QUALYPSOOUT_time_FR.RData"))
 lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
 ref_FR$mask_weird_values=(sqrt(lst.QUALYPSOOUT[[1]]$INTERNALVAR)*100)<200#catchments that does not seem to satisfy normality hypothesis
+
+bv_selec_FR=ref_FR[ref_FR$code %in% bv_sample_FR,]
 
 #############################################################
 ## Times series Qualypso for selected watersheds
@@ -196,6 +199,103 @@ for (space in c("FR","LO")){
   #   }
   # }
 }
+
+#############################################################
+## Times series Qualypso for selected watersheds for report
+## lst.QUALYPSOUT is a list of QUALYPSOOUT objects through time (or temperature)
+space="FR"
+ref=ref_FR
+for (i in unique(simu_lst$indic)){
+  for (preds in c("time","temp")){
+    if (preds == "time"){
+      folder_out=paste0(path_fig,i,"/",space,"/")
+      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time_",space,".RData"))
+      lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+      pred_name="temps"
+      predict="time"
+      pred_unit=""
+      xlim=c(1990,2105)
+      horiz3=c(2030,2050,2085)
+    }
+    if (preds == "temp"){
+      folder_out=paste0(path_fig,i,"/",space,"/temp/")
+      load(file=paste0(path_data,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_temp_",space,".RData"))
+      lst.QUALYPSOOUT=lst.QUALYPSOOUT_temp
+      pred_name="température"
+      predict="temp"
+      pred_unit="°C"
+      # xlim=c(min(lst.QUALYPSOOUT[[1]]$Xfut),max(lst.QUALYPSOOUT[[1]]$Xfut))
+      xlim=c(T_coef[2],4)
+      horiz3=c(1.5,2,3,4)
+    }
+    
+    dir.create(folder_out)
+    
+    for(c in 1:nrow(bv_selec)){
+      idx=bv_selec_FR$idx[c]
+      # Warnings "removed rows" okay, due to xlim
+      if(preds=="time"){
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcp",plain_nameEff = "RCP",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q")
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcp",plain_nameEff = "RCP",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = T,xlim=xlim,var="Q")
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var="Q")
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var="Q")
+        # plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var="Q")
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="hm",plain_nameEff = "HM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,includeMean = F,includeRCP="rcp85",xlim=xlim,var="Q")
+      }
+      if(preds=="temp"){
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q",includeMean = T)
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q",includeMean = T)
+        # plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q",includeMean = T)
+        plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="hm",plain_nameEff = "HM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q",includeMean = T)
+      }
+      plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q")
+      plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q")
+      # plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q")
+      plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="hm",plain_nameEff = "HM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q")
+      
+      for(storyl in c(T,F)){
+        plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$code[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,xlim=xlim,var="Q",indic = i,idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=storyl)
+        plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,var="Q",indic=i,horiz = horiz3,title=T,storyl=storyl)
+      }
+    }
+  }
+  print(i)
+}
+## Regime
+# months=c("janv","fevr","mars","avr","mai","juin","juill","aout","sept","oct","nov","dec")
+# folder_out=paste0(path_fig,"regime/")
+# for (preds in c("time","temp")){
+#   lst_lst.QUALYPSOOUT=vector(mode="list")
+#   for(mth in months){
+#     if (preds == "time"){
+#       load(file=paste0(path_data,"Qualypso/QA_",mth,"/QA_",mth,"_list_QUALYPSOOUT_time_FR.RData"))
+#       lst_lst.QUALYPSOOUT[[mth]]=lst.QUALYPSOOUT_time
+#     }
+#     if (preds == "temp"){
+#       load(file=paste0(path_data,"Qualypso/QA_",mth,"/QA_",mth,"_list_QUALYPSOOUT_temp_FR.RData"))
+#       lst_lst.QUALYPSOOUT[[mth]]=lst.QUALYPSOOUT_temp
+#     }
+#   }
+#   if (preds == "time"){
+#     pred_name="temps"
+#     predict="time"
+#     pred_unit=""
+#     horiz=c(2085)
+#   }
+#   if (preds == "temp"){
+#     pred_name="température"
+#     predict="temp"
+#     pred_unit="°C"
+#     horiz=c("1.5","2",3,"4")
+#   }
+#   for(c in 1:nrow(bv_selec)){
+#     idx=bv_selec$idx[c]
+#     for(storyl in c(T,F)){
+#       plotQUALYPSO_regime(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,bv_name = bv_selec$name[c],bv_full_name = bv_selec$name[c],pred_unit = pred_unit,folder_out=folder_out,horiz=horiz,var="Q",title=T,storyl=storyl)
+#     }
+#   }
+# }
+
 
 
 ##############################################
