@@ -115,6 +115,7 @@ nc=load_nc(pth_tmp)
 mask_prsn=ncvar_get(nc,varid="height")
 mask_prsn[!is.na(mask_prsn)]=1
 mask_prsn[is.na(mask_prsn)]=0
+mask_prsn=mask*mask_prsn#filtering switzerland
 
 lon=ncvar_get(nc,varid="lon")
 lat=ncvar_get(nc,varid="lat")

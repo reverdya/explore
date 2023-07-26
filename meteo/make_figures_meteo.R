@@ -30,7 +30,7 @@ load(file=paste0(path_data,"refs.Rdata"))
 load(file=paste0(path_temp,"T_coef_spline1990toGlob.Rdata"))
 mask_fr=as.vector(refs$mask)
 mask_fr=mask_fr[mask_fr!=0]
-mask_fr_prsn=as.vector(refs$mask_prsn*refs$mask)#filtering out switzerland
+mask_fr_prsn=as.vector(refs$mask_prsn)
 mask_fr_prsn=mask_fr_prsn[mask_fr_prsn!=0]
 basHy=read.csv(paste0(path_sig,"processed/SAFRAN_ref_basHy.csv"))
 
@@ -229,7 +229,11 @@ for(v in unique(simu_lst$var)){
     load(file=paste0(path_data,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
     lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
     exut=data.frame(x=as.vector(refs$x_l2),y=as.vector(refs$y_l2))
-    exut=exut[as.logical(refs$mask),]
+    if(v=="prsnAdjust"){
+      exut=exut[as.logical(refs$mask_prsn),]
+    }else{
+      exut=exut[as.logical(refs$mask),]
+    }
     exut$idx=seq(1:nrow(exut))
     exut$val=apply(lst.QUALYPSOOUT[[1]]$CLIMATEESPONSE$phi[,,1],1,mean)
     colnames(exut)=c("x","y","idx","val")
