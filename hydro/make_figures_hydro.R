@@ -93,6 +93,9 @@ colnames(ref_FR)[colnames(ref_FR)=="x_l93"]="x"
 colnames(ref_FR)[colnames(ref_FR)=="y_l93"]="y"
 ref_FR$y=as.numeric(ref_FR$y)
 hm_sampleFR=c("CTRIP","GRSD","ORCHIDEE","SMASH")
+load(file=paste0(path_data,"Qualypso/VCN3/VCN3_list_QUALYPSOOUT_time_FR.RData"))
+lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+ref_FR$mask_weird_values=(sqrt(lst.QUALYPSOOUT[[1]]$INTERNALVAR)*100)<200#catchments that does not seem to satisfy normality hypothesis
 
 #############################################################
 ## Times series Qualypso for selected watersheds
@@ -299,11 +302,12 @@ for (space in c("FR","LO")){
     lim_col=round(lim_col)#arrondi au 1 le plus proche
     br=round(seq(lim_col[1],lim_col[2],length.out=6))
   
-    plt=base_map_outlets(data = exut,val_name = "val",zoom=space)
+    plt=base_map_outlets(data = exut,val_name = "val",zoom=space,ind_name=i)
     plt=plt+
       guides(fill = guide_bins(override.aes=list(size=7),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))+
       binned_scale(aesthetics = "fill",scale_name = "toto",name = "",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelblue_5)),limits=lim_col,oob=squish,show.limits = T,breaks=br,labels= c(paste0(">",br[1]),br[2:5],paste0("<",br[6])) )+#that way because stepsn deforms colors
     ggtitle(paste0("Valeurs de référence (1990) du ",i,"\n(moyenne des fonctions de réponse disponibles)"))
+    plt$layers[[3]]$aes_params$size= 4
     save.plot(plt,Filename = paste0("ref1990_mean-response_",i),Folder = folder_out,Format = "jpeg")
     print(i)
   }
