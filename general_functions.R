@@ -2734,7 +2734,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
         scale_pattern_density_manual("Accord entre projections\nsur le signe du changement\n(>80% des projections)",values = c("0"=0.2,"1"=0,"2"=0),drop=F,labels=c("Non","Oui","Non concerné"))+
         scale_color_manual("Accord entre projections\nsur le signe du changement\n(>80% des projections)",values = c("0"="transparent","1"="transparent","2"="red"),drop=F,labels=c("Non","Oui","Non concerné"))+
         theme(legend.key = element_rect(color="grey",size=0.1),legend.title = element_text(face = "bold",size = 14),legend.text = element_text(face = "bold",size = 11))+
-        guides(fill=guide_colorbar(barwidth = 2, barheight = 20))
+        guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
         if(var=="evspsblpotAdjust"){
           plt=plt+
             binned_scale(aesthetics = "fill",scale_name = "toto",name="Changement\nrelatif [%]",ggplot2:::binned_pal(scales::manual_pal(rev(precip_10))),guide="coloursteps",limits=c(-lim_col,lim_col),breaks=seq(-lim_col,lim_col,length.out=11),labels=c(paste0("< -",lim_col),seq(-lim_col+lim_col/5,lim_col-lim_col/5,lim_col/5),paste0("> ",lim_col)),show.limits = T,oob=squish)#that way because stepsn deforms colors
@@ -3220,10 +3220,10 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col),na.rm=T))
     if(ind_name=="VCN3"){
       if(zoom=="FR"){
-        n=nrow(exut)/nrow(ref_FR)
-        exut$mask=rep(ref_FR$mask_weird_values,n)
-        q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
-        q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+        n=length(tmp)/nrow(ref_FR)
+        tmp_mask=rep(ref_FR$mask_weird_values,n)
+        q99pos=quantile(tmp[tmp>=0&tmp_mask],probs=freq_col,na.rm=T)
+        q99neg=abs(quantile(tmp[tmp<=0&tmp_mask],probs=(1-freq_col),na.rm=T))
       }
     }
     lim_col=max(q99pos,q99neg,na.rm=T)
@@ -3232,6 +3232,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
     }else{
       lim_col=round(lim_col/0.5)*0.5#arrondi au 0.5 le plus proche
     }
+    if(lim_col==0){lim_col=5}#small changes ETP winter
   }else{
     q99=quantile(exut$val,probs=freq_col,na.rm=T)
     q01=quantile(exut$val,probs=(1-freq_col),na.rm=T)
@@ -3602,8 +3603,10 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
         ggtitle(paste0("Changement moyen du ",ind_name_full,"\npour le prédicteur ",pred_name," et le RCP 8.5\n(",horiz," ",pred_unit," VS 1990)"))
     }
   }
-
-  plt$layers[[3]]$aes_params$size= 4
+  
+  if(!pix){
+    plt$layers[[3]]$aes_params$size= 4
+  }
   
   if (is.na(folder_out)){
     return(plt)
@@ -3707,10 +3710,11 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   if(!pix){
     plt1=base_map_outlets(data = exut[exut$source!="IVout",],val_name = "val",zoom=zoom,ind_name=ind_name)+
       guides(fill = guide_bins(override.aes=list(shape=22,size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold"),title.position = "right"),title.position = "right")+
-      theme(legend.title.align=0.5) 
+      theme(legend.title.align=0.5)
+    plt1$layers[[3]]$aes_params$size= 1
   }else{
     plt1=base_map_grid(data = exut[exut$source!="IVout",],val_name = "val")+
-      guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))+
+      guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))+
       theme(legend.title.align=0.5) 
   }
   plt1=plt1+
@@ -3721,11 +3725,12 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   exut$cat="Variabilité interne"
   if(!pix){
     plt2=base_map_outlets(data = exut[exut$source=="IVout",],val_name = "val",zoom=zoom,ind_name=ind_name)+
-      guides(fill = guide_bins(override.aes=list(shape=22,size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold"),title.position = "right"),title.position = "right")+
+      guides(fill = guide_bins(override.aes=list(shape=22,size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))+
       theme(legend.title.align=0.5) 
+    plt2$layers[[3]]$aes_params$size= 1
   }else{
     plt2=base_map_grid(data = exut[exut$source=="IVout",],val_name = "val")+
-      guides(fill=guide_colorbar(barwidth = 2, barheight = 10,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))+
+      guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))+
       theme(legend.title.align=0.5) 
   }
   plt2=plt2+
