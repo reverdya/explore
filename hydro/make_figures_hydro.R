@@ -231,7 +231,7 @@ for (i in unique(simu_lst$indic)){
     
     dir.create(folder_out)
     
-    for(c in 1:nrow(bv_selec)){
+    for(c in 1:nrow(bv_selec_FR)){
       idx=bv_selec_FR$idx[c]
       # Warnings "removed rows" okay, due to xlim
       if(preds=="time"){
