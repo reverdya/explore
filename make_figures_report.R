@@ -120,7 +120,7 @@ for (i in unique(simu_lst$indic)){
   plt=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = horiz,name_eff = "hm",name_eff_plain = "HM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",zoom=space)
   plt=plt+
     labs(title=NULL)
-  save.plot(dpi=300,plt,Filename = paste0(i,"_LO_HM_Effect"),Folder =path_fig,Format = "jpeg")
+  save.plot(dpi=300,plt,Filename = paste0(i,"_LO_HM_Effect_2085"),Folder =path_fig,Format = "jpeg")
   print(i)
 }
 
@@ -146,16 +146,19 @@ for (i in unique(simu_lst$indic)){
       labs(title=NULL)+
       guides(fill = guide_bins(override.aes=list(size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
       theme(strip.text = element_text(size = 8, face = "bold"))
+    plt1$layers[[3]]$aes_params$size= 1
     plt2=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",zoom=space)
     plt2=plt2+
       labs(title=NULL)+
       guides(fill = guide_bins(override.aes=list(size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
       theme(strip.text = element_text(size = 8, face = "bold"))
+    plt2$layers[[3]]$aes_params$size= 1
     plt3=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "hm",name_eff_plain = "HM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",zoom=space)
     plt3=plt3+
       labs(title=NULL)+
       guides(fill = guide_bins(override.aes=list(size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
       theme(strip.text = element_text(size = 8, face = "bold"))
+    plt3$layers[[3]]$aes_params$size= 1
     plt=ggarrange(plt1,plt2,plt3,heights=c(3,2,2),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
     save.plot(dpi=96,plt,Filename = paste0(i,"_",hor,"_FR_Effect"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
     
@@ -166,14 +169,16 @@ for (i in unique(simu_lst$indic)){
       guides(fill = guide_bins(override.aes=list(shape=22,size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
       theme(legend.box = "horizontal")+
       guides(shape = guide_legend(override.aes=list(fill="grey"),label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))
+    plt1$layers[[3]]$aes_params$size= 1
     plt2=map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out =NA,pix=F,var="Q",zoom=space,title = F)
     plt2=plt2+
       labs(title=NULL)
+    plt2$layers[[3]]$aes_params$size= 1
     plt3=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,pix=F,var="Q",freq_col=freq_col,zoom=space)
     plt3=plt3+
       labs(title=NULL)+
       guides(fill = guide_bins(override.aes=list(shape=22,size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))
-    plt3$layers[[3]]$aes_params$size= 1.5
+    plt3$layers[[3]]$aes_params$size= 1
     plt=ggarrange(plt1,plt2,plt3,heights=c(1.75,2,0.75),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
     save.plot(dpi=96,plt,Filename = paste0(i,"_",hor,"_FR_change-incert"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
     
@@ -199,39 +204,53 @@ mask_fr_prsn=mask_fr_prsn[mask_fr_prsn!=0]
 
 for(v in unique(simu_lst$var)){
   for (i in unique(simu_lst[simu_lst$var==v,]$indic)){
-      load(file=paste0(path_data_meteo,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
-      lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
-      pred_name="temps"
-      predict="time"
-      pred_unit=""
-      xlim=c(1990,2105)
-      horiz=2085
-      horiz3=c(2030,2050,2085)
-      freq_col=0.99
+    load(file=paste0(path_data_meteo,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
+    lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+    pred_name="temps"
+    predict="time"
+    pred_unit=""
+    xlim=c(1990,2105)
+    horiz=2085
+    horiz3=c(2030,2050,2085)
+    freq_col=0.99
 
-      for(hor in horiz3){
+    for(hor in horiz3){
+    
+      plt1=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v)
+      plt1=plt1+
+        labs(title=NULL)+
+        guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold")))+
+        theme(strip.text = element_text(size = 8, face = "bold"))
+      plt2=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v)
+      plt2=plt2+
+        labs(title=NULL)+
+        guides(fill=guide_colorbar(barwidth = 1.5, barheight =7.5,label.theme = element_text(size =8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold")))+
+        theme(strip.text = element_text(size = 8, face = "bold"))
+      plt3=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v)
+      plt3=plt3+
+        labs(title=NULL)+
+        guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold")))+
+        theme(strip.text = element_text(size = 8, face = "bold"))
+      plt=ggarrange(plt1,plt2,plt3,heights=c(2,3,1),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
+      save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_",hor,"_Effect"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
       
-        plt1=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v)
-        plt1=plt1+
-          labs(title=NULL)+
-          guides(fill=guide_colorbar(barwidth = 2, barheight = 15,label.theme = element_text(size =8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold")))+
-          theme(strip.text = element_text(size = 8, face = "bold"))
-        plt2=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v)
-        plt2=plt2+
-          labs(title=NULL)+
-          guides(fill=guide_colorbar(barwidth = 2, barheight = 15,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold")))+
-          theme(strip.text = element_text(size = 8, face = "bold"))
-        plt3=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "bc",name_eff_plain = "BC",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v)
-        plt3=plt3+
-          labs(title=NULL)+
-          guides(fill=guide_colorbar(barwidth = 2, barheight = 15,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold")))+
-          theme(strip.text = element_text(size = 8, face = "bold"))
-        plt=ggarrange(plt1,plt2,plt3,heights=c(2,3,1),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
-        save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_",hor,"_Effect"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
-        
-        
-        
-        
-      }
+      
+      
+      plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out =NA,freq_col=freq_col,pix=T,var=v,nbcores=nbcores)
+      plt1=plt1+
+        labs(title=NULL)+
+        guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
+        theme(legend.box = "horizontal")+
+        theme(legend.key = element_rect(color="grey",size=0.1),legend.title = element_text(face = "bold",size = 12),legend.text = element_text(face = "bold",size = 8))
+      plt2=map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out =NA,pix=T,var=v,title = F)
+      plt2=plt2+
+        labs(title=NULL)
+      plt3=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T,var=v,freq_col=freq_col)
+      plt3=plt3+
+        labs(title=NULL)+
+        guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))
+      plt=ggarrange(plt1,plt2,plt3,heights=c(1.75,2,0.75),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
+      save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_",hor,"_change-incert"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+    }
   }
 }
