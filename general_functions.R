@@ -724,6 +724,7 @@ prep_global_tas=function(path_temp,simu_lst,cat="meteo"){
 # }
 
 
+
 ###########################################################
 ## Plot raw indicator and spline (2 functions necessary)
 
