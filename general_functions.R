@@ -1379,9 +1379,13 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         #   tmp=rbind(tmp,tmp2)
         # }
         # Obs=tmp
-        tmp=smooth.spline(full_years[idx_na],Obs$val[idx_na],spar = sp)
-        obs1990=predict(tmp, 1990)$y
-        Obs=data.frame(full_years,(Obs$val-obs1990)/obs1990*100)
+        if(all(is.na(Obs))){#some basins dont't have measurements
+          Obs=data.frame(full_years,Obs)
+        }else{
+          tmp=smooth.spline(full_years[idx_na],Obs$val[idx_na],spar = sp)
+          obs1990=predict(tmp, 1990)$y
+          Obs=data.frame(full_years,(Obs$val-obs1990)/obs1990*100)
+        }
         colnames(Obs)=c("pred","val")
       }else{
         if(all(is.na(Obs))){#for some reason some safran netcdf contain NA for prtotAdjust
@@ -1472,9 +1476,13 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         
         idx_na=which(!is.na(Obs$val))
         tas_obs=tas_obs[which(full_years2 %in% full_years)]
-        tmp=smooth.spline(tas_obs[idx_na],Obs$val[idx_na],spar = sp)
-        obs1990=predict(tmp, tas_obs[full_years==1990])$y
-        Obs=data.frame(tas_obs,(Obs$val-obs1990)/obs1990*100)
+        if(all(is.na(Obs))){#some basins dont't have measurements
+          Obs=data.frame(tas_obs,Obs)
+        }else{
+          tmp=smooth.spline(tas_obs[idx_na],Obs$val[idx_na],spar = sp)
+          obs1990=predict(tmp, tas_obs[full_years==1990])$y
+          Obs=data.frame(tas_obs,(Obs$val-obs1990)/obs1990*100)
+        }
         colnames(Obs)=c("pred","val")
       }else{
         tas_obs=tas_obs[which(full_years2 %in% full_years)]
@@ -2054,7 +2062,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
       geom_text(aes(x=1.05,y=50,label="Moyenne\nd'ensemble"),size=5)
   }
   
-  plt=ggarrange(plt1,plt2,widths=c(0.8,0.2),nrow=1,ncol=2,align="h")+
+  plt=ggarrange(plt1,plt2,widths=c(0.75,0.25),nrow=1,ncol=2,align="h")+
     theme(plot.margin = unit(c(0,0.5,0,0), "cm"))
   if(title==T){
     plt=annotate_figure(plt, top = text_grob(paste0("Distribution de l'ensemble balancé pour le prédicteur ",pred_name,"\net l'indicateur ",ind_name_full,"\n(",bv_full_name,", référence 1990)"), face = "bold", size = 20,hjust=0.5))+
