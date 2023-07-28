@@ -173,6 +173,7 @@ for (i in unique(simu_lst$indic)){
     plt2=map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out =NA,pix=F,var="Q",zoom=space,title = F)
     plt2=plt2+
       labs(title=NULL)
+    plt2$layers[[3]]$aes_params$size= 1
     plt3=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,pix=F,var="Q",freq_col=freq_col,zoom=space)
     plt3=plt3+
       labs(title=NULL)+
