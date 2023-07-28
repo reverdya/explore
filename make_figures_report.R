@@ -135,13 +135,14 @@ for (i in unique(simu_lst$indic)){
   
   for(hor in horiz3){
     
-    plt1=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",zoom=space)
+    
+    plt1=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",zoom=space)
     plt1=plt1+
       labs(title=NULL)+
       guides(fill = guide_bins(override.aes=list(size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
       theme(strip.text = element_text(size = 8, face = "bold"))
     plt1$layers[[3]]$aes_params$size= 1
-    plt2=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "gcm",name_eff_plain = "GCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",zoom=space)
+    plt2=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,name_eff = "rcm",name_eff_plain = "RCM",pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",zoom=space)
     plt2=plt2+
       labs(title=NULL)+
       guides(fill = guide_bins(override.aes=list(size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
@@ -154,8 +155,8 @@ for (i in unique(simu_lst$indic)){
       theme(strip.text = element_text(size = 8, face = "bold"))
     plt3$layers[[3]]$aes_params$size= 1
     plt=ggarrange(plt1,plt2,plt3,heights=c(3,2,2),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
-    save.plot(dpi=96,plt,Filename = paste0(i,"_",hor,"_FR_Effect"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
-    
+    # save.plot(dpi=96,plt,Filename = paste0(i,"_",hor,"_FR_Effect"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7) #pdf does not allow to play with quality apparently
+    save.plot(dpi=300,plt,Filename = paste0(i,"_",hor,"_FR_Effect"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
     
     plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",nbcores=nbcores,zoom=space)
     plt1=plt1+
@@ -167,14 +168,13 @@ for (i in unique(simu_lst$indic)){
     plt2=map_var_part(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out =NA,pix=F,var="Q",zoom=space,title = F)
     plt2=plt2+
       labs(title=NULL)
-    plt2$layers[[3]]$aes_params$size= 1
     plt3=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,pix=F,var="Q",freq_col=freq_col,zoom=space)
     plt3=plt3+
       labs(title=NULL)+
       guides(fill = guide_bins(override.aes=list(shape=22,size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))
     plt3$layers[[3]]$aes_params$size= 1
     plt=ggarrange(plt1,plt2,plt3,heights=c(1.75,2,0.75),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
-    save.plot(dpi=96,plt,Filename = paste0(i,"_",hor,"_FR_change-incert"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+    save.plot(dpi=300,plt,Filename = paste0(i,"_",hor,"_FR_change-incert"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
     
     
   }
@@ -219,7 +219,7 @@ for(c in 1:nrow(bv_selec_FR)){
   plt4=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name =  bv_selec_FR$code[c],bv_full_name =  bv_selec_FR$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var="Q",indic = i,idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=storyl)
 
   plt=ggarrange(plt4,ggarrange(plt1,plt2,plt3,nrow=2,ncol=2,align="v",labels="B"),nrow=2,ncol=1,align="v",labels="A",heights=c(1.5,1))
-  save.plot(dpi=96,plt,Filename = paste0(i,"_chronique_",bv_selec_FR$code[c]),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+  save.plot(dpi=300,plt,Filename = paste0(i,"_chronique_",bv_selec_FR$code[c]),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
 }
 
 
@@ -269,7 +269,7 @@ for(v in unique(simu_lst$var)){
         guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = c("bold"),color=c("black")),title.theme=element_text(size = 12, face = "bold")))+
         theme(strip.text = element_text(size = 8, face = "bold"))
       plt=ggarrange(plt1,plt2,plt3,heights=c(2,3,1),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
-      save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_",hor,"_Effect"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+      save.plot(dpi=300,plt,Filename = paste0(v,"_",i,"_",hor,"_Effect"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
       
       
       
@@ -287,7 +287,7 @@ for(v in unique(simu_lst$var)){
         labs(title=NULL)+
         guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))
       plt=ggarrange(plt1,plt2,plt3,heights=c(1.75,2,0.75),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
-      save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_",hor,"_change-incert"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+      save.plot(dpi=300,plt,Filename = paste0(v,"_",i,"_",hor,"_change-incert"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
     }
   }
 }
@@ -333,7 +333,7 @@ for(c in idx_ref_bas){
   plt4=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var=v,indic = i,idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=storyl,type="bas")
   
   plt=ggarrange(plt4,ggarrange(plt1,plt2,plt3,nrow=2,ncol=2,align="v",labels="B"),nrow=2,ncol=1,align="v",labels="A",heights=c(1.5,1))
-  save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_chronique_",basHy$name[c]),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+  save.plot(dpi=300,plt,Filename = paste0(v,"_",i,"_chronique_",basHy$name[c]),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
 }
 
 
@@ -366,7 +366,7 @@ plt2=plt2+
   labs(title=NULL)
 
 plt=ggarrange(plt1,plt2,heights=c(0.5,0.5),nrow=2,ncol=1,align="v",labels=c("A","B"))
-save.plot(dpi=96,plt,Filename = paste0(v,"_2085_rcp85_storyline"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+save.plot(dpi=300,plt,Filename = paste0(v,"_2085_rcp85_storyline"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
 
 
 
@@ -388,7 +388,7 @@ plt2=plt2+
   labs(title=NULL)
 
 plt=ggarrange(plt1,plt2,heights=c(0.5,0.5),nrow=2,ncol=1,align="v",labels=c("C","D"))
-save.plot(dpi=96,plt,Filename = paste0(v,"_2085_rcp85_storyline"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+save.plot(dpi=300,plt,Filename = paste0(v,"_2085_rcp85_storyline"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
 
 
 ######################################################
@@ -417,7 +417,7 @@ plt2=plt2+
   theme(legend.key = element_rect(color="grey",size=0.1),legend.title = element_text(face = "bold",size = 12),legend.text = element_text(face = "bold",size = 8))
 
 plt=ggarrange(plt1,plt2,heights=c(0.5,0.5),nrow=2,ncol=1,align="v",labels=c("A","B"))
-save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_2085_comparison_method"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+save.plot(dpi=300,plt,Filename = paste0(v,"_",i,"_2085_comparison_method"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
 
 
 #############################################################################
