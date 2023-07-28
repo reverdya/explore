@@ -1593,37 +1593,37 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       geom_hline(yintercept = 0)+
       geom_ribbon(data=chain_band,aes(x=pred,ymin=min,ymax=max,fill=eff),alpha=0.3,linetype="dotted",color="gray40")+#raw chain band
       scale_fill_discrete("Variabilité naturelle",type= as.vector(col_3rcp_shade[color_select]))+
-      guides(fill=guide_legend(order=4,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
+      guides(fill=guide_legend(order=4,nrow=1, byrow=TRUE,title.theme=element_text(size = 10),reverse=T,label = F))+
       new_scale_fill()+
       geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.6)+#uncertainty band
       scale_fill_discrete("Dispersion liée aux modèles",type= as.vector(col_3rcp[color_select]))+
-      guides(fill=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
+      guides(fill=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 10),reverse=T,label = F))+
       scale_x_continuous("",limits=xlim2,expand=c(0,0),minor_breaks = seq(xlim2[1],xlim2[2],10))+
-      theme_bw(base_size = 16)+
+      theme_bw(base_size = 12)+
       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
       theme(legend.key.width = unit(1.5,"cm"))+
-      theme(legend.title = element_text(size=13))+
+      theme(legend.title = element_text(size=10))+
       theme( legend.margin = margin(-2, 0, -2, 0))+
       facet_wrap(~factor(eff,levels=c(rev(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]]))),nrow = length(unique(data$eff)),strip.position = "top",labeller = as_labeller(rcp.labs))+#has to be top, otherwise cannot vertically align
       theme(strip.text = element_text(face="bold", size=8,margin = margin(0.1,0.1,0.1,0.1, "cm")))+
-      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=10)
+      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "1"), vjust=1, hjust=-2,parse=T,size=6)
   }else{
     plt1=ggplot(data)+
       geom_hline(yintercept = 0)+
       geom_ribbon(aes(x=pred,ymin=binf,ymax=bsup,fill=eff),alpha=0.6)+#uncertainty band
       scale_fill_discrete("Dispersion liée aux modèles",type= as.vector(col_3rcp[color_select]))+
-      guides(fill=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),reverse=T,label = F))+
+      guides(fill=guide_legend(order=3,nrow=1, byrow=TRUE,title.theme=element_text(size = 4),reverse=T,label = F))+
       scale_x_continuous("",limits=xlim2,expand=c(0,0))+
-      theme_bw(base_size = 16)+
+      theme_bw(base_size = 12)+
       theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
       theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
       theme(legend.key.width = unit(1.5,"cm"))+
-      theme(legend.title = element_text(size=13))+
+      theme(legend.title = element_text(size=10))+
       theme( legend.margin = margin(-2, 0, -2, 0))+
       facet_wrap(~factor(eff,levels="rcp85"),nrow = length(unique(data$eff)),strip.position = "top",labeller = as_labeller(rcp.labs))+
       theme(strip.text = element_text(face="bold", size=8,margin = margin(0.1,0.1,0.1,0.1, "cm")))+
-      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "a"), vjust=1, hjust=-2,parse=T,size=10)
+      geom_text(data=a_label,aes(x=-Inf, y = Inf, label = "1"), vjust=1, hjust=-2,parse=T,size=6)
   }
   if(!storyl){
     col_3rcp_darker=c(col_3rcp[1],darkenCol(col_3rcp[2],0.2),col_3rcp[3])
@@ -1631,12 +1631,12 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     plt1=plt1+
       geom_line(aes(x=pred,y=med,group=eff,color=eff),size=0.8)+#RCP mean
       scale_color_discrete("Moyenne d'ensemble",type= as.vector(col_3rcp_darker[color_select]),labels=NULL)+
-      guides(color=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 13)))
+      guides(color=guide_legend(order=2,nrow=1, byrow=TRUE,title.theme=element_text(size = 10)))
   }else{
     plt1=plt1+
       geom_line(data=story,aes(x=pred,y=val,group=name,linetype=name),colour="black",size=1)+
       scale_linetype_manual("Storylines",values=c("HadGEM2-ES/CCLM4-8-17"="dotted","EC-EARTH/HadREM3-GA7"="dotdash","CNRM-CM5/ALADIN63"="dashed","HadGEM2-ES/ALADIN63"="solid"))+
-      guides(linetype=guide_legend(order=2,title.theme=element_text(size = 13),keywidth=unit(3, 'cm')))
+      guides(linetype=guide_legend(order=2,title.theme=element_text(size = 10),keywidth=unit(3, 'cm')))
   }  
   
   if(var!="tasAdjust"){
@@ -1655,7 +1655,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     plt1=plt1+
       geom_line(data=Obs,aes(x=pred,y=val,size="aa"),alpha=1,color="gray40")+
       scale_size_manual("Observations",values = c("aa"=1))+
-      guides(size=guide_legend(order=1,nrow=1, byrow=TRUE,title.theme=element_text(size = 13),label=F))
+      guides(size=guide_legend(order=1,nrow=1, byrow=TRUE,title.theme=element_text(size = 10),label=F))
   }
 
   if(pred=="temp"){
@@ -1711,16 +1711,16 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   plt2=ggplot(data)+
     geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=cat),color="transparent",size=5,shape=21)+
     # binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les chaînes sur\nle signe de la tendance",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T,oob=squish,limits=c(0,100),breaks=c(20,40,60,80),labels=~ if(length(.x) == 2) {c("- à 100%","+ à 100%")} else {c("- à 80%","- à 60%","+ à 60%","+ à 80%")})+#that way because stepsn deforms colors
-    scale_fill_manual("Accord entre plus de 80% des\nprojections sur le signe du changement",values = c("Négatif"=precip_5[1],"Pas d'accord"="grey85","Positif"=precip_5[5]))+
+    scale_fill_manual("Accord de plus de 80% des projections\nsur le signe du changement",values = c("Négatif"=precip_5[1],"Pas d'accord"="grey85","Positif"=precip_5[5]),guide = guide_legend(direction = "horizontal",title.position = "top"),labels=c("Négatif","Non","Positif"))+
     scale_y_discrete("",labels=rev(rcp.labs))+
-    theme_bw(base_size = 16)+
-    theme(legend.title = element_text(size=13))+
+    theme_bw(base_size = 12)+
+    theme(legend.title = element_text(size=10))+
     theme(panel.grid.major.y = element_blank(),panel.grid.minor.y = element_blank(),panel.border = element_blank(),axis.ticks = element_blank(),axis.text.x = element_blank())+
     theme(axis.text.y = element_text(face="bold"))+
     theme(legend.key.height = unit(0.5,"cm"))+
     scale_x_continuous("",limits=xlim2,expand=c(0,0))+
     ylab("")+
-    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=8)
+    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(2))", vjust=1, hjust=-2,parse=T,size=6)
   
   if(pred=="time"){
     plt2=plt2+
@@ -1765,11 +1765,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     scale_fill_discrete("",type = vec_color,labels=labels_var)+
     scale_alpha_manual("",values=c(0.7,rep(1,length(vec_color)-1)),labels=labels_var)+
     scale_x_continuous("",limits = xlim2,expand=c(0,0))+
-    scale_y_continuous(paste0("Partition de variance (%)"),limits = c(0,100),expand=c(0,0))+
-    theme_bw(base_size = 16)+
-    theme(legend.title = element_text(size=13))+
+    scale_y_continuous(paste0("Partition de\nvariance (%)"),limits = c(0,100),expand=c(0,0))+
+    theme_bw(base_size = 12)+
+    theme(legend.title = element_text(size=10))+
     theme(panel.border = element_blank(),axis.ticks.x = element_blank(),axis.text.x = element_blank(),axis.line.y = element_line(colour = "black"),axis.line.x=element_blank())+
-    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=8)+
+    annotate("text",  x=-Inf, y = Inf, label = "atop(bold(3))", vjust=1, hjust=-2,parse=T,size=6)+
     theme(legend.position="right",legend.justification="left", legend.box.spacing = unit(0, "pt"))
   if(pred=="time"){
     plt3=plt3+
@@ -2988,7 +2988,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 
 ## Will not work for predictor temperature (cannot do average +- 30 years)
 
-map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",ref0=1990,zoom=NULL){
+map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",ref0=1990,zoom=NULL,LIM_COL=NULL){
 
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -3058,27 +3058,37 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
   exut[exut$quant==quant[3],]$sign_agree="Non concerné"
   
   #Setting limits for color scale
-  if(var!="tasAdjust"){
-    q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
-    q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){
-      if(zoom=="FR"){
-        n=nrow(exut)/nrow(ref_FR)
-        exut$mask=rep(ref_FR$mask_weird_values,n)
-        q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
-        q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+  if(is.null(LIM_COL)){
+    if(var!="tasAdjust"){
+      q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
+      q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
+      if(ind_name=="VCN3"){
+        if(zoom=="FR"){
+          n=nrow(exut)/nrow(ref_FR)
+          exut$mask=rep(ref_FR$mask_weird_values,n)
+          q99pos=quantile(exut$val[exut$val>=0&exut$mask],probs=freq_col,na.rm=T)
+          q99neg=abs(quantile(exut$val[exut$val<=0&exut$mask],probs=(1-freq_col),na.rm=T))
+        }
       }
+      lim_col=max(q99pos,q99neg,na.rm=T)
+      lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
+    }else{
+      # q99=quantile(exut$val,probs=freq_col)
+      # q01=quantile(exut$val,probs=(1-freq_col))
+      # lim_col=as.numeric(c(q01,q99))
+      # lim_col=round(lim_col)#arrondi au 1 le plus proche
+      lim_col=c(1,5) #forced to allow comparison with QUALYPSO
+      br=seq(lim_col[1],lim_col[2],length.out=11)
     }
-    lim_col=max(q99pos,q99neg,na.rm=T)
-    lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
   }else{
-    # q99=quantile(exut$val,probs=freq_col)
-    # q01=quantile(exut$val,probs=(1-freq_col))
-    # lim_col=as.numeric(c(q01,q99))
-    # lim_col=round(lim_col)#arrondi au 1 le plus proche
-    lim_col=c(1,5) #forced to allow comparison with QUALYPSO
-    br=seq(lim_col[1],lim_col[2],length.out=11)
+    if(var!="tasAdjust"){
+      lim_col=LIM_COL
+    }else{
+      lim_col=c(1,5) #forced to allow comparison with QUALYPSO
+      br=seq(lim_col[1],lim_col[2],length.out=11)
+    }
   }
+  
   
   if(!pix){
     plt=base_map_outlets(data = exut,val_name = "val",alpha_name = "sign_agree",zoom=zoom,ind_name=ind_name)+
@@ -3880,7 +3890,7 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
       scen_rep=scen_rep*100
     }
     if(length(scen_rep)==0){
-      scen_rep=rep(NA,length(Xfut))
+      scen_rep=rep(NA,length(unique(exut$idx)))
     }
     exut[exut$type==storylines$type[j],]$val=scen_rep
   }

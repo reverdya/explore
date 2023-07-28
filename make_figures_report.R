@@ -37,10 +37,6 @@ labels_rcp=c("RCP 2.6","RCP 4.5","RCP 8.5")#check coherence of order with Qualyp
 nbcores=detectCores()-2
 ref_year=1990
 
-storylines=data.frame(gcm=c("HadGEM2-ES","HadGEM2-ES","CNRM-CM5","EC-EARTH"),rcm=c("ALADIN63","CCLM4-8-17","ALADIN63","HadREM3-GA7"),bc=rep("ADAMONT",4),type=c("HadGEM2-ES/ALADIN63","HadGEM2-ES/CCLM4-8-17","CNRM-CM5/ALADIN63","EC-EARTH/HadREM3-GA7"))#using shorter model names than in meteo
-
-
-
 
 ############
 #MAIN HYDRO#
@@ -107,7 +103,6 @@ ref_FR$mask_weird_values=(sqrt(lst.QUALYPSOOUT[[1]]$INTERNALVAR)*100)<200#catchm
 space="LO"
 ref=ref_LO
 for (i in unique(simu_lst$indic)){
-  preds="time"
   load(file=paste0(path_data_hydro,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time_",space,".RData"))
   lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
   pred_name="temps"
@@ -128,7 +123,6 @@ for (i in unique(simu_lst$indic)){
 space="FR"
 ref=ref_FR
 for (i in unique(simu_lst$indic)){
-  preds="time"
   load(file=paste0(path_data_hydro,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time_",space,".RData"))
   lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
   pred_name="temps"
@@ -184,6 +178,48 @@ for (i in unique(simu_lst$indic)){
     
     
   }
+}
+
+
+################################################
+## Chroniques hydro
+
+bv_sample_FR=c("W323000000","A850061001")
+bv_selec_FR=ref_FR[ref_FR$code %in% bv_sample_FR,]
+
+space="FR"
+ref=ref_FR
+storyl=F
+i="QA"
+load(file=paste0(path_data_hydro,"Qualypso/",i,"/",i,"_list_QUALYPSOOUT_time_",space,".RData"))
+lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+pred_name="temps"
+predict="time"
+pred_unit=""
+xlim=c(1990,2105)
+  
+for(c in 1:nrow(bv_selec_FR)){
+  idx=bv_selec_FR$idx[c]
+  plt1=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name =  bv_selec_FR$name[c],bv_full_name =  bv_selec_FR$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var="Q")
+  plt1=plt1+
+    labs(title=NULL)+
+    theme_bw(base_size = 12)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank(),axis.title.x=element_blank())
+  plt2=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name =  bv_selec_FR$name[c],bv_full_name =  bv_selec_FR$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var="Q")
+  plt2=plt2+
+    labs(title=NULL)+
+    theme_bw(base_size = 12)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank(),axis.title.x=element_blank())
+  plt3=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="hm",plain_nameEff = "HM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name =  bv_selec_FR$name[c],bv_full_name =  bv_selec_FR$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var="Q")
+  plt3=plt3+
+    labs(title=NULL)+
+    theme_bw(base_size = 12)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank(),axis.title.x=element_blank())
+  
+  plt4=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name =  bv_selec_FR$code[c],bv_full_name =  bv_selec_FR$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var="Q",indic = i,idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=storyl)
+
+  plt=ggarrange(plt4,ggarrange(plt1,plt2,plt3,nrow=2,ncol=2,align="v",labels="B"),nrow=2,ncol=1,align="v",labels="A",heights=c(1.5,1))
+  save.plot(dpi=96,plt,Filename = paste0(i,"_chronique_",bv_selec_FR$code[c]),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
 }
 
 
@@ -255,3 +291,181 @@ for(v in unique(simu_lst$var)){
     }
   }
 }
+
+
+
+################################################
+## Chroniques meteo
+
+basHy=read.csv(paste0(path_sig,"processed/SAFRAN_ref_basHy.csv"))
+colnames(basHy)=c("id","code","name")
+idx_ref_bas=c(3,5)
+
+storyl=F
+v="prtotAdjust"
+i="seassum_JJA"
+load(file=paste0(path_data_meteo,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_bas.RData"))
+lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+pred_name="temps"
+predict="time"
+pred_unit=""
+xlim=c(1990,2105)
+
+
+for(c in idx_ref_bas){
+  idx=c
+  plt1=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var=v)
+  plt1=plt1+
+    labs(title=NULL)+
+    theme_bw(base_size = 12)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank(),axis.title.x=element_blank())
+  plt2=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var=v)
+  plt2=plt2+
+    labs(title=NULL)+
+    theme_bw(base_size = 12)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank(),axis.title.x=element_blank())
+  plt3=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var=v)
+  plt3=plt3+
+    labs(title=NULL)+
+    theme_bw(base_size = 12)+
+    theme( axis.line = element_line(colour = "black"),panel.border = element_blank(),axis.title.x=element_blank())
+  
+  plt4=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var=v,indic = i,idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=storyl,type="bas")
+  
+  plt=ggarrange(plt4,ggarrange(plt1,plt2,plt3,nrow=2,ncol=2,align="v",labels="B"),nrow=2,ncol=1,align="v",labels="A",heights=c(1.5,1))
+  save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_chronique_",basHy$name[c]),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+}
+
+
+######################################################
+## Storylines meteo
+
+storylines=data.frame(gcm=c("HadGEM2-ES","HadGEM2-ES","CNRM-CM5-LR","EC-EARTH"),rcm=c("ALADIN63","CCLM4-8-17","ALADIN63","HadREM3-GA7-05"),bc=rep("ADAMONT",4),type=c("HadGEM2-ES/ALADIN63","HadGEM2-ES/CCLM4-8-17","CNRM-CM5/ALADIN63","EC-EARTH/HadREM3-GA7"))#using longer model names than in hydro
+pred_name="temps"
+predict="time"
+pred_unit=""
+xlim=c(1990,2105)
+horiz=2085
+horiz3=c(2030,2050,2085)
+freq_col=0.99
+
+v="tasAdjust"
+i="seasmean_DJF"
+load(file=paste0(path_data_meteo,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
+lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+plt1=map_storyline(lst.QUALYPSOOUT = lst.QUALYPSOOUT,RCP = "rcp85",RCP_plainname="RCP8.5",horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v,storylines=storylines)
+plt1=plt1+
+  labs(title=NULL)
+
+v="tasAdjust"
+i="seasmean_JJA"
+load(file=paste0(path_data_meteo,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
+lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+plt2=map_storyline(lst.QUALYPSOOUT = lst.QUALYPSOOUT,RCP = "rcp85",RCP_plainname="RCP8.5",horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v,storylines=storylines)
+plt2=plt2+
+  labs(title=NULL)
+
+plt=ggarrange(plt1,plt2,heights=c(0.5,0.5),nrow=2,ncol=1,align="v",labels=c("A","B"))
+save.plot(dpi=96,plt,Filename = paste0(v,"_2085_rcp85_storyline"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+
+
+
+
+v="prtotAdjust"
+i="seassum_DJF"
+load(file=paste0(path_data_meteo,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
+lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+plt1=map_storyline(lst.QUALYPSOOUT = lst.QUALYPSOOUT,RCP = "rcp85",RCP_plainname="RCP8.5",horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v,storylines=storylines)
+plt1=plt1+
+  labs(title=NULL)
+
+v="prtotAdjust"
+i="seassum_JJA"
+load(file=paste0(path_data_meteo,"Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
+lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+plt2=map_storyline(lst.QUALYPSOOUT = lst.QUALYPSOOUT,RCP = "rcp85",RCP_plainname="RCP8.5",horiz = horiz,pred = predict,pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v,storylines=storylines)
+plt2=plt2+
+  labs(title=NULL)
+
+plt=ggarrange(plt1,plt2,heights=c(0.5,0.5),nrow=2,ncol=1,align="v",labels=c("C","D"))
+save.plot(dpi=96,plt,Filename = paste0(v,"_2085_rcp85_storyline"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+
+
+######################################################
+## Map comparison basic method with QUALYPSO
+
+v="prtotAdjust"
+i="seassum_JJA"
+pred_name="temps"
+predict="time"
+pred_unit=""
+xlim=c(1990,2105)
+hor=2085
+freq_col=0.99
+
+plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out =NA,freq_col=freq_col,pix=T,var=v,nbcores=nbcores)
+plt1=plt1+
+  labs(title=NULL)+
+  guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
+  theme(legend.box = "horizontal")+
+  theme(legend.key = element_rect(color="grey",size=0.1),legend.title = element_text(face = "bold",size = 12),legend.text = element_text(face = "bold",size = 8))
+plt2=map_3quant_3rcp_1horiz_basic(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz=horiz,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out = NA,freq_col=freq_col,pix=T,var=v,ref0=ref_year,LIM_COL = 75)
+plt2=plt2+
+  labs(title=NULL)+
+  guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
+  theme(legend.box = "horizontal")+
+  theme(legend.key = element_rect(color="grey",size=0.1),legend.title = element_text(face = "bold",size = 12),legend.text = element_text(face = "bold",size = 8))
+
+plt=ggarrange(plt1,plt2,heights=c(0.5,0.5),nrow=2,ncol=1,align="v",labels=c("A","B"))
+save.plot(dpi=96,plt,Filename = paste0(v,"_",i,"_2085_comparison_method"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7)
+
+
+#############################################################################
+## Illustration spline VS 30 years smoothing
+
+basHy=read.csv(paste0(path_sig,"processed/SAFRAN_ref_basHy.csv"))
+v="prtotAdjust"
+i="seassum_DJF"
+r="rcp26"
+g="CNRM-CM5-LR"
+rc="ALADIN63"
+b="ADAMONT"
+idx_basHy=1
+path_data=path_data_meteo
+
+scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i&simu_lst$rcp==r&simu_lst$gcm==g&simu_lst$rcm==rc&simu_lst$bc==b,]
+c=1
+pth_tmp=list.files(paste0(path_data,"indic/",scenAvail$var[c],"/bas/"),full.names=T,pattern=glob2rx(paste0(scenAvail$var[c],"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c][[1]],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+nc=load_nc(pth_tmp)
+res=ncvar_get(nc,varid=scenAvail$var[c])
+full_years=nc$dim$time$vals
+full_years=year(as.Date(full_years,origin="1950-01-01"))
+nc_close(nc)#for some reason stays opened otherwise
+rm(nc)
+gc()
+res2=data.frame(matrix(nrow=dim(res)[length(dim(res))],ncol=2))
+res2[,1]=full_years
+j=1
+res2[,j+1]=res[basHy$X[j],]
+colnames(res2)[1]="year"
+data=res2
+rm(res)
+rm(res2)
+gc()
+
+colnames(data)=c("year","val")
+data$mean30=c(rep(NA,15),rollmean(data$val,k=31,align="center"),rep(NA,15))
+data$spline=predict(stats::smooth.spline(data$year,data$val,spar=1.1),data$year)$y
+
+plt=ggplot(data)+
+  geom_line(aes(x=year,y=val,color="val",size="val"))+
+  geom_line(aes(x=year,y=mean30,color="mean30",size="mean30"))+
+  geom_line(aes(x=year,y=spline,color="spline",size="spline"))+
+  scale_color_manual("",values=c("val"=ipcc_6col[5],"mean30"=ipcc_6col[3],"spline"=ipcc_6col[5]),labels=c("Projection","Moyenne glissante 30 ans","Modèle spline"))+
+  scale_size_manual("",values=c("val"=0.5,"mean30"=2,"spline"=2),labels=c("Projection","Moyenne glissante 30 ans","Modèle spline"))+
+  theme_bw(base_size = 18)+
+  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+  scale_x_continuous("")+
+  scale_y_continuous("Pr_DJF (mm)",limits = c(min(data$val,na.rm=T),max(data$val,na.rm=T)),expand = c(0,0))+
+  theme(legend.title = element_text(face="bold",size=18))
+save.plot(dpi=300,plt,Filename = paste0("Illustration_lissage_",v,"_",i,"_",r,"_",g,"_",rc,"_",b,"_",basHy$name[idx_basHy]),Folder =path_fig,Format = "jpeg")
