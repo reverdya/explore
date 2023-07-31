@@ -154,7 +154,7 @@ for (i in unique(simu_lst$indic)){
       guides(fill = guide_bins(override.aes=list(size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
       theme(strip.text = element_text(size = 8, face = "bold"))
     plt3$layers[[3]]$aes_params$size= 1
-    plt=ggarrange(plt1,plt2,plt3,heights=c(3,2,2),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
+    plt=ggarrange(plt1,plt2,plt3,heights=c(2,3,2),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
     # save.plot(dpi=96,plt,Filename = paste0(i,"_",hor,"_FR_Effect"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7) #pdf does not allow to play with quality apparently
     save.plot(dpi=300,plt,Filename = paste0(i,"_",hor,"_FR_Effect"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
     
