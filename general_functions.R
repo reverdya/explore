@@ -8,7 +8,6 @@ library(ggplot2) #plots
 library(ggrepel)# labels
 library(ggpubr) #ggarrange
 library(ggpattern) #pattern fill
-# library(ggforce) #geom_circle
 library(ncdf4) #netcdf
 library(tictoc) #runtime
 library(lubridate) #date management
@@ -40,6 +39,12 @@ library(onewaytests)#bf.test
 library(forcats)#fct_rev
 
 
+
+##################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+## Diverse
 
 #############################################################
 #Save a graph in svg, pdf or jpeg format (size in cm)
@@ -325,10 +330,20 @@ rle2 <- function (x)  {
 }
 
 
+
+
+##################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+## Qualypso formating
+
+
+
 #############################################################
-## Prepare specific climate response for QUALYPSO
+## Prepare specific climate response for QUALYPSO in 2 D called by prepare_clim_resp
 ## Y the nS x nY or nG x nS x nY indicator, can take in NA
-## X the predictor (vector or same size as Y)
+## Xmat the predictor (vector or same size as Y)
 ## typeChangeVariable "rel" or "abs"
 ## spar the spline smoothing in case of spline (vector of  size nS)
 ## type the type of smoothing applied: spline (classic but can pick each spar, log_spline (log transform, spline , then unlog)
@@ -418,6 +433,7 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
     }
   }
   
+  ## if values below -100% using log and storing warning
   if(typeChangeVariable=='rel'& any(phiStar<(-1))){
     warning_store="logSpline"
     for(iS in 1:nS){
@@ -453,12 +469,14 @@ prepare_clim_resp_2D=function(Y, Xmat, Xfut, Xref, typeChangeVariable, spar,type
     warning_store="NA"
   }
   
+  ##  checking from problem of variance between chain and storing warning
   tmp=pivot_longer(data.frame(t(etaStar)),cols=everything(),names_to = "rhs",values_to = "lhs")
   pval=bf.test(lhs ~ rhs,tmp,na.rm=T,verbose = F)$p.value
   if(pval<=0.05){
     warning_store=paste0(warning_store,"_interchain-p:",pval)
   }
   
+  ##  checking from problem of variance between first and last period of chain (if time predictor) and storing warning
   if(any(Xmat==2045,na.rm = T)){
     pval=vector(mode="numeric",length=nS)
     for(iS in 1:nS){
@@ -631,6 +649,7 @@ reconstruct_chains=function(lst.QUALYPSOOUT,idx_Pred=NULL,idx_Space=NULL){
 ## Format Global temperature for use in Qualypso
 ## path_temp the path to the file with France temperatures
 ##simu_lst the list of simulations
+## cat is "meteo" or "hydro"
 
 
 prep_global_tas=function(path_temp,simu_lst,cat="meteo"){
@@ -660,73 +679,13 @@ prep_global_tas=function(path_temp,simu_lst,cat="meteo"){
   return(list(mat_Globaltas=mat_Globaltas,gcm_years=gcm_years))
 }
 
-###################################
-## Format Global température for use in Qualypso, to be used inside code run_QUalypso
-## spline calculated with data between 1860 and 1900
-## Difference to 1860-1900 average and rcp/gcm matching + spline smoothing
-## path_data the root of the path
-##simu_lst the list of simulations
-#first_data_year and last_data_year the first an last years with data for simu all year round
-
-## This is outdated by prep_global_tas that uses Meteo France methodology
-# 
-# prep_global_tas_old=function(path_temp,ref_year=1990,simu_lst,var="meteo"){
-#   ## Prepare temperatures RCP/GCM
-#   paths=list.files(path_temp,pattern=glob2rx("global_tas*"),full.names = T)
-#   for ( i in 1:length(paths)){
-#     tas_glob=read.csv(paths[i],skip=3,sep="",header=F)
-#     if(grepl("HadGEM2-ES",paths[i],fixed=T)){# -999 values in 1859
-#       tas_glob=tas_glob[-1,]
-#     }
-#     tas_glob=data.frame(year=tas_glob[,1],tas=apply(tas_glob[,-1],MARGIN = 1,mean))# mean of 12 months
-#     colnames(tas_glob)[2]=paste0(strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][5],"_",strsplit(strsplit(paths[i],"/")[[1]][9],"_")[[1]][4])#rcp_gcm name
-#     tas_glob=tas_glob[tas_glob$year>=1860&tas_glob$year<=2100,]
-#     if(i==1){
-#       mat_Globaltas_gcm=tas_glob
-#     }else{
-#       mat_Globaltas_gcm=merge(mat_Globaltas_gcm,tas_glob,by="year")
-#     }
-#   }
-#   mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) smooth.spline(mat_Globaltas_gcm[,1],x,spar=1)$y)
-#   mat_Globaltas_gcm[,-1]=apply(mat_Globaltas_gcm[,-1],2,function(x) x-x[mat_Globaltas_gcm[,1]==ref_year])
-#   
-#   gcm_years=mat_Globaltas_gcm$year
-#   
-#   ## Format global temperature for Qualypso
-#   if(var=="hydro"){
-#     colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp85_CNRM-CM5-LR"]="rcp85_CNRM-CM5"
-#     colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp45_CNRM-CM5-LR"]="rcp45_CNRM-CM5"
-#     colnames(mat_Globaltas_gcm)[colnames(mat_Globaltas_gcm)=="rcp26_CNRM-CM5-LR"]="rcp26_CNRM-CM5"
-#   }
-#   mat_Globaltas=vector(length=nrow(simu_lst),mode="list")
-#   vec_global_tas_gcm=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][2]))
-#   vec_global_tas_rcp=unlist(lapply(colnames(mat_Globaltas_gcm)[-1],function(x) strsplit(x,"_")[[1]][1]))
-#   for (i in 1:nrow(simu_lst)){
-#     mat_Globaltas[[i]]= mat_Globaltas_gcm[,which(vec_global_tas_gcm==simu_lst[i,]$gcm & vec_global_tas_rcp==sub(".","",simu_lst[i,]$rcp,fixed=T))+1]
-#   }
-#   mat_Globaltas=t(do.call(cbind,mat_Globaltas))
-#   
-#   ## Calculate 1860-1990 warming from HADCRUT5 with spline
-#   nc=load_nc(paste0(path_temp,"HadCRUT.5.0.1.0.analysis.summary_series.global.annual.nc"))
-#   res=ncvar_get(nc,varid="tas_mean")
-#   full_years=nc$dim$time$vals
-#   full_years=year(as.Date(full_years,origin="1850-01-01"))
-#   nc_close(nc)#for some reason stays opened otherwise
-#   rm(nc)
-#   gc()
-#   
-#   tas_obs=smooth.spline(x=full_years,y=res,spar=1)$y
-#   warming_1990=tas_obs[full_years==1990]-tas_obs[full_years==1875]
-#   mat_Globaltas=mat_Globaltas+warming_1990
-#   mat_Globaltas_gcm[,-1]=mat_Globaltas_gcm[,-1]+warming_1990
-#   
-#   return(list(mat_Globaltas=mat_Globaltas,mat_Globaltas_gcm=mat_Globaltas_gcm,gcm_years=gcm_years,warming_1990=warming_1990))
-# }
-
-
 
 ###########################################################
-## Plot raw indicator and spline (2 functions necessary)
+## Plot raw indicator and spline  (extract_chains + plot_spline)
+## scenAvail the list of available simulations
+## ref_cities a dataframe with the information of the name and location of the place plotted
+## type is "cities" or "basins" depending if considering pixels SAFRAN or agence de bassin
+## cat is "meteo" or "hydro"
 
 extract_chains=function(scenAvail,ref_cities,type="cities",cat="meteo"){
  
@@ -1033,15 +992,22 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
 
 
 
+##################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+## Times series
+
+
 
 
 
 ##############################################################################
 ## Time series of main effect from QUALYPSOOUT object or main effect + mu
 ##returns a ggplot 2 object
-## QUALYPSOOUT a Qualypso output object
+## lst.QUALYPSOOUT a Qualypso output object
+## idx the index of the place of interest in lst.QUALYPSOOUT
 ## nameEff the effect name as in QUALYPSOOUT
-## CIlevel the uncertainties percentiles
 ## includeMean if True then adds mean change to effect
 ## include RCP if RCP given then adds mean change of an RCP to effect, cannot be combined with includeMean=T or used if effect is already RCP
 ## plain_nameEff the plain language name of the effect
@@ -1052,8 +1018,9 @@ plot_spline=function(all_chains,type,pred,scenAvail,globaltas=NULL,SPAR,rcp,spli
 ## bv_name the name of the watershed
 ## bc_full_name plain language name of the watershed
 ## pre_unit the unit of the predictor
-## folder_out the saving folder
-## incert=TRUE adds confidence interval equivalent to Vtot-Vint
+## folder_out the saving folder (if NA returns the object)
+## var the variable of interest
+## xlim the limits on the xaxis
 
 plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE,includeRCP=NULL,plain_nameEff,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,var="toto"){
   
@@ -1185,16 +1152,23 @@ plotQUALYPSOeffect_ggplot=function(lst.QUALYPSOOUT,idx,nameEff,includeMean=FALSE
 
 #############################################################################
 ## Make the summarize plot of a time series
-## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+## Time series of main effect from QUALYPSOOUT object or main effect + mu
+##returns a ggplot 2 object
+## lst.QUALYPSOOUT a Qualypso output object
+## idx the index of the place of interest in lst.QUALYPSOOUT
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the of the indicator
+## ind_name the name of the indicator
 ## ind_name_full the plain language name of the indicator
 ## bv_name the name of the watershed
 ## bc_full_name plain language name of the watershed
-## pred_unit the unit of the predictor
-## folder_out the saving folder
-## xlim the starting value (often 1990 or 0.7°C)
+## pre_unit the unit of the predictor
+## folder_out the saving folder (if NA returns the object)
+## var the variable of interest
+##indic the indicator of interest
+## xlim the limits on the xaxis
+## storyl=T adding the storyline insted of the mean
+## idx_pix (or idx_row and idx_col) the idx of the pixel in SAFRAN
 
 
 plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,xlim,var="toto",indic="titi",idx_pix="tata",idx_row="tata",idx_col="tata",path_hadcrut=NULL,path_processed,storyl=F,type=NULL){
@@ -1229,11 +1203,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   if(pred=="temp"){
     colnames(med)="rcp85"
   }
-  med$pred=Xfut
+  med$pred=Xfut# the mean
   med=pivot_longer(data=med,cols=!pred,names_to = "eff",values_to = "med")
   
-  Binf=NULL
-  Bsup=NULL
+  Binf=NULL# the lower uncertainty
+  Bsup=NULL# the upper uncertainty
   for (r in 1:nEff){
     if(pred=="time"){
       idx_rcp=which(scenAvail$rcp==lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[iEff]][r])
@@ -1316,6 +1290,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     }
   }
   colnames(chains)=c("pred","val","eff","chain")
+  #chain the projections for illustrating IV
   if(pred=="temp"){
     data$pred=T_coef[1]*data$pred+T_coef[2]
     chains$pred=T_coef[1]*chains$pred+T_coef[2]
@@ -1323,6 +1298,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   data=data[data$pred>=xlim[1],]
   
 
+  ## Extracting th obervations
   if(pred=="time"){
     chains=chains[chains$pred>=xlim[1] & chains$pred<=2098,]
     xlim2=c(1950,xlim[2])
@@ -1337,13 +1313,6 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       if(var=="tasAdjust"|var=="prtotAdjust"|var=="prsnAdjust"){
         full_years=nc$dim$Time$vals
         full_years=year(as.Date(full_years,origin="1958-07-31"))
-        # if(var=="tasAdjust"){
-        #   res=ncvar_get(nc,varid="Tair")
-        # }else if(var=="prtotAdjust"){
-        #   res=ncvar_get(nc,varid="Rain")
-        # }else if(var=="prsnAdjust"){
-        #   res=ncvar_get(nc,varid="Snow")
-        # }
         res=ncvar_get(nc,varid=var)
         Obs=res[idx_pix,]
       }
@@ -1369,17 +1338,6 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     sp=lst.QUALYPSOOUT[[1]]$listOption$spar
     if(var!="tasAdjust"){
       if(var=="Q"){
-        # hms=unique(Obs$hm)
-        # obs_hm=Obs[Obs$hm==hms[1],]
-        # tmp=data.frame(obs_hm$year,(obs_hm$val-obs_hm$val[obs_hm$year==1990])/obs_hm$val[obs_hm$year==1990]*100,hms[1])
-        # colnames(tmp)=c("pred","val","hm")
-        # for(j in 2:length(hms)){
-        #   obs_hm=Obs[Obs$hm==hms[j],]
-        #   tmp2=data.frame(obs_hm$year,(obs_hm$val-obs_hm$val[obs_hm$year==1990])/obs_hm$val[obs_hm$year==1990]*100,hms[j])
-        #   colnames(tmp2)=c("pred","val","hm")
-        #   tmp=rbind(tmp,tmp2)
-        # }
-        # Obs=tmp
         if(all(is.na(Obs))){#some basins dont't have measurements
           Obs=data.frame(seq(1950,2020),rep(NA,length(seq(1950,2020))))
         }else{
@@ -1421,13 +1379,6 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
       if(var=="tasAdjust"|var=="prtotAdjust"|var=="prsnAdjust"){
         full_years=nc$dim$Time$vals
         full_years=year(as.Date(full_years,origin="1958-07-31"))
-        # if(var=="tasAdjust"){
-        #   res=ncvar_get(nc,varid="Tair")
-        # }else if(var=="prtotAdjust"){
-        #   res=ncvar_get(nc,varid="Rain")
-        # }else if(var=="prsnAdjust"){
-        #   res=ncvar_get(nc,varid="Snow")
-        # }
         res=ncvar_get(nc,varid=var)
         Obs=res[idx_pix,]
       }
@@ -1462,19 +1413,6 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
     sp=lst.QUALYPSOOUT[[1]]$listOption$spar
     if(var!="tasAdjust"){
       if(var=="Q"){
-        # hms=unique(Obs$hm)
-        # obs_hm=Obs[Obs$hm==hms[1],]
-        # tmp=data.frame(tas_obs[which(full_years2 %in% obs_hm$year)],(obs_hm$val-obs_hm$val[obs_hm$year==1990])/obs_hm$val[obs_hm$year==1990]*100,hms[1])
-        # colnames(tmp)=c("pred","val","hm")
-        # for(j in 2:length(hms)){
-        #   obs_hm=Obs[Obs$hm==hms[j],]
-        #   tmp2=data.frame(tas_obs[which(full_years2 %in% obs_hm$year)],(obs_hm$val-obs_hm$val[obs_hm$year==1990])/obs_hm$val[obs_hm$year==1990]*100,hms[j])
-        #   colnames(tmp2)=c("pred","val","hm")
-        #   tmp=rbind(tmp,tmp2)
-        # }
-        # Obs=tmp
-        
-        
         idx_na=which(!is.na(Obs$val))
         tas_obs=tas_obs[which(full_years2 %in% full_years)]
         if(all(is.na(Obs))){#some basins dont't have measurements
@@ -1710,7 +1648,6 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   
   plt2=ggplot(data)+
     geom_point(aes(x=pred,y=factor(rcp,levels=c("rcp26","rcp45","rcp85")),fill=cat),color="transparent",size=5,shape=21)+
-    # binned_scale(aesthetics = "fill",scale_name = "toto",name="Accord entre les chaînes sur\nle signe de la tendance",ggplot2:::binned_pal(scales::manual_pal(precip_5)),guide="coloursteps",show.limits = T,oob=squish,limits=c(0,100),breaks=c(20,40,60,80),labels=~ if(length(.x) == 2) {c("- à 100%","+ à 100%")} else {c("- à 80%","- à 60%","+ à 60%","+ à 80%")})+#that way because stepsn deforms colors
     scale_fill_manual("Accord de plus de 80% des projections\nsur le signe du changement",values = c("Négatif"=precip_5[1],"Pas d'accord"="grey85","Positif"=precip_5[5]),guide = guide_legend(direction = "horizontal",title.position = "top"),labels=c("Négatif","Non","Positif"))+
     scale_y_discrete("",labels=rev(rcp.labs))+
     theme_bw(base_size = 12)+
@@ -1761,7 +1698,6 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   
   plt3=ggplot(data)+
     geom_ribbon(aes(x=Xfut,ymin=0,ymax=val,fill=var,alpha=var))+
-    # geom_line(data=data[data$var!="int",],aes(x=Xfut,y=val,group=var),color="black",linetype="dashed",size=0.5)+
     scale_fill_discrete("",type = vec_color,labels=labels_var)+
     scale_alpha_manual("",values=c(0.7,rep(1,length(vec_color)-1)),labels=labels_var)+
     scale_x_continuous("",limits = xlim2,expand=c(0,0))+
@@ -1793,15 +1729,22 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
 
 #############################################################################
 ## Make boxplot of chain dispersion for an horizon and all RCP
-## QUALYPSOOUT a Qualypso output object (effects order should be coherent with color coding inside this function)
+##returns a ggplot 2 object
+## lst.QUALYPSOOUT a Qualypso output object
+## idx the index of the place of interest in lst.QUALYPSOOUT
 ## pred the predictor name in the file
 ## pred_name the plain language name of the predictor
-## ind_name the of the indicator
+## ind_name the name of the indicator
 ## ind_name_full the plain language name of the indicator
 ## bv_name the name of the watershed
 ## bc_full_name plain language name of the watershed
-## pred_unit the unit of the predictor
-## folder_out the saving folder
+## pre_unit the unit of the predictor
+## folder_out the saving folder (if NA returns the object)
+## var the variable of interest
+##indic the indicator of interest
+## horiz the predictor horizons for plotting
+##  title : keep or not the title
+## storyl : add storyline
 
 
 plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name,ind_name_full,bv_name,bv_full_name,pred_unit,folder_out,var="toto",indic="titi",horiz=c(2030,2050,2085),title=T,storyl=F){
@@ -1844,7 +1787,7 @@ plotQUALYPSO_boxplot_horiz_rcp=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_n
   med$horiz=Xfut
   med=pivot_longer(data=med,cols=!horiz,names_to = "rcp",values_to = "val")
   med=med[med$horiz %in% horiz,]
-  med$horiz=paste0("h_",med$horiz)
+  med$horiz=paste0("h_",med$horiz)#mean
   
   phiStar.corr=list()
   for (r in 1:nrcp){
@@ -2425,6 +2368,12 @@ plotQUALYPSO_regime=function(lst_lst.QUALYPSOOUT=lst_lst.QUALYPSOOUT,idx=idx,pre
 
 
 
+##################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+## Maps
+
 
 
 ########################################################
@@ -2470,7 +2419,7 @@ background_for_maps=function(path_river,path_fr){
 
 
 base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL,ind_name=NULL){
-  if(zoom=="FR"&ind_name=="VCN3"){
+  if(zoom=="FR"&ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
     n=nrow(data)/nrow(ref_FR)
     data$mask=rep(ref_FR$mask_weird_values,n)
     data=data[data$mask,]
@@ -2596,8 +2545,11 @@ base_map_grid=function(data,val_name,pattern_name=NULL,facet_vert_name=NULL,face
 ## ind_name_full the plain language name of the indicator
 ## pred_unit the unit of the predictor
 ## folder_out the saving folder
+## freq_col for scaling the color scale limits
+## pix=T using safran grid
+## zoom LO ou FR
 
-map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6,zoom=NULL){
+map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",zoom=NULL){
   
   ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
   rcp_names=lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]
@@ -2626,7 +2578,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   exut$quant=rep(rep(quant,each=nrow(exut)/9),times=3)
   exut$val=0
   exut$sign=0
-  exut$sign_agree="Pas d'accord"
+  exut$sign_agree="Pas d'accord"#accord sur le signe
 
   for(r in rcp_names){
     ieff_this_rcp=which(lst.QUALYPSOOUT[[1]]$listScenarioInput$listEff[[ieff_rcp]]==r)
@@ -2660,9 +2612,9 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
         warning("Lower bound forced to -100%")
         chg_q5[chg_q5<(-1)]=-1
       }
-      exut$val[exut$rcp==r & exut$quant==quant[2]]=chg_mean*100
-      exut$val[exut$rcp==r & exut$quant==quant[1]]=chg_q5*100
-      exut$val[exut$rcp==r & exut$quant==quant[3]]=chg_q95*100
+      exut$val[exut$rcp==r & exut$quant==quant[2]]=chg_mean*100#moyenne
+      exut$val[exut$rcp==r & exut$quant==quant[1]]=chg_q5*100#incertitude
+      exut$val[exut$rcp==r & exut$quant==quant[3]]=chg_q95*100#incertitude
     }else{
       exut$val[exut$rcp==r & exut$quant==quant[2]]=chg_mean
       exut$val[exut$rcp==r & exut$quant==quant[1]]=chg_q5
@@ -2695,7 +2647,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){
+    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
       if(zoom=="FR"){
         n=nrow(exut)/nrow(ref_FR)
         exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -2770,7 +2722,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
 ## rcp_name the name of the wanted rcp
 ## folder_out the saving folder
 
-map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",nbcores=6,path_temp=NULL,cat="meteo",zoom=NULL){
+map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,freq_col=0.99,pix=F,var="toto",path_temp=NULL,cat="meteo",zoom=NULL){
   
   if(pred=="time"){
     ieff_rcp=which(colnames(lst.QUALYPSOOUT[[1]]$listScenarioInput$scenAvail)=="rcp")
@@ -2903,7 +2855,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){
+    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
       if(zoom=="FR"){
         n=nrow(exut)/nrow(ref_FR)
         exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -2979,7 +2931,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
 
 
 #############################################################################################
-## Map of 3 quantiles by 3 RCP for one horizon of time using basic mean and q5/q95
+## Map of 3 quantiles by 3 RCP for one horizon of time using basic mean and q5/q95 : as MF would do (30years rolling mean and not balanced)
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
 ## horiz a temporal horizon
 ## ind_name the name of the indicator
@@ -3062,7 +3014,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-      if(ind_name=="VCN3"){
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3073,10 +3025,6 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
       lim_col=max(q99pos,q99neg,na.rm=T)
       lim_col=round(lim_col/25)*25#arrondi au 25 le plus proche
     }else{
-      # q99=quantile(exut$val,probs=freq_col)
-      # q01=quantile(exut$val,probs=(1-freq_col))
-      # lim_col=as.numeric(c(q01,q99))
-      # lim_col=round(lim_col)#arrondi au 1 le plus proche
       lim_col=c(1,5) #forced to allow comparison with QUALYPSO
       br=seq(lim_col[1],lim_col[2],length.out=11)
     }
@@ -3134,7 +3082,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
 
 
 #######################################################################
-## Map of effects GCM or RCM (température or time)
+## Map of effects GCM or RCM ...(température or time)
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
 ## includeMean if true adds mean change to effect or if include RCP is non null adds RCP
 ## name_eff "gcm" ou "rcm"...
@@ -3228,7 +3176,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   if(var!="tasAdjust"|(is.null(includeRCP)&includeMean==F)){
     q99pos=quantile(tmp[tmp>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){
+    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
       if(zoom=="FR"){
         n=length(tmp)/nrow(ref_FR)
         tmp_mask=rep(ref_FR$mask_weird_values,n)
@@ -3344,9 +3292,9 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
 
 
 ############################################################################
-## Map mean change or internal variability or total variability or res var
+## Map  uncertainty linked to IV, total var, res. var.,  all but IV or mean change or change rcp85
 ## lst.QUALYPSOOUT a list of QUALYPSOOUT by watershed
-## vartype the variable to be plotted (one of varint, mean, vartot)
+## vartype the variable to be plotted (one of varint,  vartot, varres, incert, mean, rcp85)
 ## pred_name the plain language name of the predictor
 ## pred the predictor name in the file
 ## ind_name the name of the indicator
@@ -3444,7 +3392,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-      if(ind_name=="VCN3"){
+      if(ind_name=="VCN3"){#some basins have been removed from figures but stay in color, scale otherwise (problematic VCN3 basins)
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3476,7 +3424,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
-      if(ind_name=="VCN3"){
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3501,7 +3449,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
-      if(ind_name=="VCN3"){
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3526,7 +3474,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
-      if(ind_name=="VCN3"){
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3552,7 +3500,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
-      if(ind_name=="VCN3"){
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3577,7 +3525,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-      if(ind_name=="VCN3"){
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3698,7 +3646,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   
   lim_col1=as.numeric(round(quantile((exut[exut$source!="IVout",]$val),probs=0.99,na.rm=T)/5)*5)
-  if(ind_name=="VCN3"){
+  if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
     if(zoom=="FR"){
       n=nrow(exut)/nrow(ref_FR)
       exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3707,7 +3655,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   if(lim_col1==0){lim_col1=5}
   lim_col2=as.numeric(round(quantile((exut[exut$source=="IVout",]$val),probs=c(0.01,0.99),na.rm=T)/5)*5)
-  if(ind_name=="VCN3"){
+  if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
     if(zoom=="FR"){
       n=nrow(exut)/nrow(ref_FR)
       exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3732,7 +3680,6 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
     facet_wrap(vars(factor(source,levels=c("rv","rcp","gcm","rcm","bc","hm"))),labeller=labs_part_labeller )+
     theme(strip.text = element_text(size = 8, face = "bold"))
   
-  exut$cat="Variabilité interne"
   if(!pix){
     plt2=base_map_outlets(data = exut[exut$source=="IVout",],val_name = "val",zoom=zoom,ind_name=ind_name)+
       guides(fill = guide_bins(override.aes=list(shape=22,size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold"),title.position = "right"))+
@@ -3745,12 +3692,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   plt2=plt2+
     binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale\nissue de la dispersion\nentre les modèles (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
-    facet_grid(. ~ cat)+
-    theme(strip.text = element_text(size = 8, face = "bold"))
   
-  
-  # plt=ggarrange(plt1,ggarrange(ggplot()+theme_void(),plt2,ggplot()+theme_void(),heights=c(0.25,0.5,0.25),nrow=3),widths=c(0.6,0.4),ncol=2)
-  # plt=ggarrange(plt1,plt2,ncol=2,widths=c(0.68,0.32))
   plt=ggarrange(plt1,plt2,nrow=2,heights=c(0.61,0.39))
   if(title==T){
     plt=annotate_figure(plt, top = text_grob(paste0("Partition de variance du ",ind_name_full,"\npour le prédicteur ",pred_name," (",horiz,pred_unit,")"), face = "bold", size = 18,hjust=0.5))+
@@ -3768,7 +3710,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
 
 
 ##################################################################
-## Emergence dates for reference in predictor temperature maps
+## Emergence dates boxplots for reference in predictor temperature maps
 
 plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4),cat){
   simu_lst$rcp="rcp85"
@@ -3802,7 +3744,6 @@ plot_emergence=function(path_temp,ref_year=1990,simu_lst,temp_ref=c(1.5,2,3,4),c
   
   plt1=ggplot(data)+
     stat_summary(fun.data = custom_boxplot,geom = "boxplot",aes(x=1,y=val),lwd=1.2,width=0.02)+
-    # geom_point(aes(x=1,y=val),size=3,alpha=0.7)+
     xlab("")+
     ylab("")+
     theme_bw(base_size = 18)+
@@ -3900,7 +3841,7 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){
+    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
       if(zoom=="FR"){
         n=nrow(exut)/nrow(ref_FR)
         exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3967,7 +3908,7 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
 
 
 ################################################################
-## Map of spline log, variance problems and <100%
+## Map of warnings due to limits of application of QUALYPSO: spline log, variance problems and <100% 
 
 map_limitations=function(lst.QUALYPSOOUT,pred,pred_name,pred_unit,ind_name,ind_name_full,folder_out,pix,var,zoom=NULL){
   

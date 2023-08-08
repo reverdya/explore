@@ -38,6 +38,7 @@ indic="yearmean"
 ######
 
 
+## Temlpérature globale corrigée
 
 load(file=paste0(path_data2,"raw/Global_temp/T_GLO_RibesSA2021.Rdata"))
 T_glo = X_Consc[,"be","all","histssp585","cons"]
@@ -47,13 +48,17 @@ T_glo_spline=smooth.spline(x=years_glo,y = T_glo,spar=0.8)$y
 plot(years_glo,T_glo)
 lines(years_glo,T_glo_spline,lwd=2)
 
+## Temlpérature FR corrigée
+
 load(file=paste0(path_data2,"raw/Global_temp/T_FR_RibesESD2022.Rdata"))
 T_FR = CX_fulls[,"be","loc-ANN","all","histssp585","cons"]
 years_FR=as.numeric(names(T_FR))
 T_FR_spline=smooth.spline(x=years_FR,y = T_FR,spar=0.8)$y
 plot(years_FR,T_FR)
 lines(years_FR,T_FR_spline,lwd=2)
-T_FR_spline1990=T_FR_spline-T_FR_spline[years_FR==1990]
+T_FR_spline1990=T_FR_spline-T_FR_spline[years_FR==1990] #changement rapport à 1990
+
+## Relation FR et globale
 
 plot(T_FR_spline1990,T_glo_spline)
 T_lm=lm(T_glo_spline~T_FR_spline1990)
@@ -61,6 +66,10 @@ abline(T_lm,lwd=2)
 print(summary(T_lm))
 T_coef=c(T_lm$coefficients[[2]],T_lm$coefficients[[1]])
 save(T_coef,file=paste0(pth_save,"T_coef_spline1990toGlob.Rdata"))
+
+
+
+## Telmpératures FR par chaîne (données Explore2)
 
 nc=load_nc(pth_mask)
 mask=ncvar_get(nc,varid="masque")

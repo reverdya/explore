@@ -9,7 +9,7 @@ base_url_1=https://climatedata.umr-cnrm.fr/public/dcsc/projects/DRIAS/DRIAS2020_
 base_url_2=https://climatedata.umr-cnrm.fr/public/dcsc/projects/DRIAS/EXPLORE2-Atmos_NEW/
 
 cd /mnt/c/Users/reverdya/Documents/Docs/2_Data/raw/
-#mkdir meteo/
+mkdir meteo/
 cd meteo/
 mkdir raw/
 mkdir indic/

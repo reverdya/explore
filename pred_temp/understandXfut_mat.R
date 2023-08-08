@@ -34,7 +34,7 @@ load(file=paste0(path_data,"processed/pred_temp.Rdata"))
 load(file=paste0(path_data,"processed/T_coef_spline1990toGlob.Rdata"))
 
 
-
+## Figure illustrative du prédicteur temps
 
 df=data.frame(time=pred_temp[[1]]$year,x1=pred_temp[[46]]$temp_spline,x2=pred_temp[[47]]$temp_spline,y1=pred_temp[[46]]$temp_raw,y2=pred_temp[[47]]$temp_raw)
 df[,"y1"]=log10(df[,"y1"]-279)*2.1+0.75 #fake local indicator from global temperature
@@ -79,24 +79,7 @@ plt2=ggplot(df)+
   annotate("text", x = 1990, y = 4.5, label = "1990",fontface = "bold",size=3)
 plt2
 
-# X_1990_obs=0.6
-# df$Dx1_PI=df$Dx1+X_1990_obs
-# df$Dx2_PI=df$Dx2+X_1990_obs
-# 
-# plt3=ggplot(df)+
-#   geom_line(aes(x=time,y=Dx1_PI),color="red",size=1.2)+
-#   geom_line(aes(x=time,y=Dx2_PI),color="blue",size=1.2)+
-#   geom_vline(xintercept=1990,color="black",lty="dotted",size=1.2)+
-#   scale_x_continuous(limits=c(1965,2105),expand=c(0,0))+
-#   scale_y_continuous(limits=c(-0.5,6),expand=c(0,0))+
-#   xlab("Temps")+
-#   ylab("Niveau de réchauffement (°C)")+
-#   theme_bw(base_size = 12)+
-#   theme(plot.title = element_text( face="bold", size=12,hjust=0.5))+
-#   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-#   ggtitle("Réchauffement planétaire en fonction\ndu temps (référence 1875)")+
-#   annotate("text", x = 1990, y = 4.5, label = "1990",fontface = "bold",size=3)
-# plt3
+
 
 plt4=ggplot(df)+
   geom_line(aes(x=time,y=y1),color="red",size=1.2)+
@@ -243,17 +226,7 @@ plt9
 plt=ggarrange(plt1,plt2,plt4,plt5,plt6,plt7,plt7_bis,plt8,plt9,ncol=3,nrow=3,align="v")
 plt
 save.plot(plt,Filename = "schema_predictor_T",Folder = path_fig,Format = "jpeg")
-# plt=ggarrange(plt1+theme_bw(base_size = 6),
-#               plt1_bis+theme_bw(base_size = 6),
-#               plt2+theme_bw(base_size = 6),
-#               plt3+theme_bw(base_size = 6),
-#               plt4+theme_bw(base_size = 6),
-#               plt5+theme_bw(base_size = 6),
-#               plt7+theme_bw(base_size = 6),
-#               ncol=3,nrow=3,align="v")
-# save.plot(plt,Filename = "schema_predictor_T",Folder = path_fig,Format = "svg")
 
-## Easier to cut and rearrange from jpeg
 
 #########################
 ## Plot GCM Temperatures
