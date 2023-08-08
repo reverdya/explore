@@ -35,8 +35,6 @@ vector_to_grid=function(x_old,y_old,old,idx){
   tmp=merge(grid,tmp,by=c("x","y"),all=T)
   tmp=tmp[order(tmp$x),]
   tmp=tmp[order(tmp$y),]
-  #toto_x=matrix(tmp$x,nrow=143,ncol=134)
-  #toto_y=matrix(tmp$y,nrow=143,ncol=134)
   return(matrix(tmp$val,nrow=143,ncol=134))
 }
 
@@ -51,7 +49,7 @@ varids_old=c("Rain","Snow","Tair")
 
 
 for(f in length(lst_f)){
-# for(f in c(2,3)){
+
   
   nc_old=nc_open(lst_f[f])
   old=ncvar_get(nc_old,varids_old[f])
@@ -67,7 +65,7 @@ for(f in length(lst_f)){
   new=abind(new,along = 3)
   rm(old)
   gc()
-  # new=array(rep(NA,143*134*23011),dim = c(143,134,23011))
+
   
   nc_new=nc_open(paste0(path_data,"safran_new_ETP.nc"))
   x=nc_new$dim$X

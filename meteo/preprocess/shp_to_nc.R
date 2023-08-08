@@ -20,6 +20,7 @@ source('C:/Users/reverdya/Documents/Docs/1_code/explore/general_functions.R',enc
 ####################
 
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
+path_meteo="C:/Users/reverdya/Documents/Docs/2_data/raw/meteo/"
 
 ###########
 #FUNCTIONS#
@@ -117,6 +118,7 @@ fr_8km_bas[!is.na(fr_8km_bas)]=1
 ########################################################################
 # if ran several times need to manually delete the new netcdf
 
+##Create netcdf of mask
 file.copy(paste0(path_sig,"raw/SAFRAN_mask_France.nc"),paste0(path_sig,"processed/SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc"),overwrite=T)
 nc=nc_open(paste0(path_sig,"processed/SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc"),write = T)
 sect=ncdim_def( "sect", "", 1:dim(fr_8km_sect_hyd)[3])
@@ -138,6 +140,8 @@ ncvar_put(nc,varid='Departments',vals = fr_8km_dep)
 ncvar_put(nc,varid='Watersheds',vals = fr_8km_bv)
 ncvar_put(nc,varid='Basins_hydro',vals = fr_8km_bas)
 nc_close(nc)
+
+file.copy(paste0(path_sig,"processed/SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc"),paste0(path_meteo,"SAFRAN_mask_bas_sect-hydro_bv_deptmt.nc"),overwrite=T)
 
 ## Make reference files
 ref_dep=data.frame(code=deptmt$CODE_DEPT,name=deptmt$NOM_DEPT)

@@ -95,8 +95,6 @@ for (v in names(Var)){
 simu_lst=data.frame(sapply(simu_lst,unlist))
 simu_lst=simu_lst[!(simu_lst$gcm=="IPSL-CM5A-MR"&simu_lst$rcm=="WRF381P"),]
 simu_lst=simu_lst[!(simu_lst$gcm=="CNRM-CM5"&simu_lst$rcm=="RACMO22E"),]
-# simu_lst[simu_lst$rcm=="REMO2009",]$rcm="REMO"# the 2 versions of REMO have been signaled as identical
-# simu_lst[simu_lst$rcm=="REMO2015",]$rcm="REMO"
 save(simu_lst,file=paste0(path_data,"simu_lst.Rdata"))
 
 ###################################################################################
@@ -152,8 +150,8 @@ for (i in 1:nrow(ref_cities)){
 }
 
 ## by nature this plot will be rotated
-# plot(refs$mask)
-# points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
+plot(refs$mask)
+points(ref_cities$col,nrow(refs$mask)-ref_cities$row,pch=19)
 
 ref_cities=ref_cities[c(1,3,7),]
 
@@ -170,8 +168,8 @@ for (i in 1:nrow(ref_snow)){
 }
 
 ## by nature this plot will be rotated
-# plot(refs$mask)
-# points(ref_snow$col,nrow(refs$mask)-ref_snow$row,pch=19)
+plot(refs$mask)
+points(ref_snow$col,nrow(refs$mask)-ref_snow$row,pch=19)
 
 ###############################################################################################
 ## Plot raw indicator , and its spline for all models and selection of places by RCP for time

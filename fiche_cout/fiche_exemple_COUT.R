@@ -12,8 +12,6 @@ gc()
 library(knitr)
 library(markdown)
 library(rmarkdown)
-#library(tinytex) # for pdf
-#library(cowplot)##grid plot of png in knitr
 library(bookdown)# figure numbers
 library(gridExtra)#multiplot
 
