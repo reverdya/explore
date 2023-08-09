@@ -2419,7 +2419,7 @@ background_for_maps=function(path_river,path_fr){
 
 
 base_map_outlets=function(data,val_name,alpha_name=NULL,zoom=NULL,ind_name=NULL){
-  if(zoom=="FR"&ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+  if(zoom=="FR"&ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
     n=nrow(data)/nrow(ref_FR)
     data$mask=rep(ref_FR$mask_weird_values,n)
     data=data[data$mask,]
@@ -2647,7 +2647,7 @@ map_3quant_3rcp_1horiz=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_unit,i
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
       if(zoom=="FR"){
         n=nrow(exut)/nrow(ref_FR)
         exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -2855,7 +2855,7 @@ map_3quant_1rcp_3horiz=function(lst.QUALYPSOOUT,horiz,rcp_name, rcp_plainname,pr
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
       if(zoom=="FR"){
         n=nrow(exut)/nrow(ref_FR)
         exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3014,7 +3014,7 @@ map_3quant_3rcp_1horiz_basic=function(lst.QUALYPSOOUT,horiz,pred_name,pred,pred_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3176,7 +3176,7 @@ map_main_effect=function(lst.QUALYPSOOUT,includeMean=FALSE,includeRCP=NULL,horiz
   if(var!="tasAdjust"|(is.null(includeRCP)&includeMean==F)){
     q99pos=quantile(tmp[tmp>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(tmp[tmp<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
       if(zoom=="FR"){
         n=length(tmp)/nrow(ref_FR)
         tmp_mask=rep(ref_FR$mask_weird_values,n)
@@ -3424,7 +3424,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
-      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3449,7 +3449,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
-      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3474,7 +3474,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
-      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3500,7 +3500,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99=quantile(exut$val,probs=freq_col,na.rm=T)
       q01=quantile(exut$val,probs=1-freq_col,na.rm=T)
-      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3525,7 +3525,7 @@ map_one_var=function(lst.QUALYPSOOUT,vartype,horiz,pred,pred_name,pred_unit,ind_
     if(var!="tasAdjust"){
       q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
       q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+      if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
         if(zoom=="FR"){
           n=nrow(exut)/nrow(ref_FR)
           exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3646,7 +3646,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   
   lim_col1=as.numeric(round(quantile((exut[exut$source!="IVout",]$val),probs=0.99,na.rm=T)/5)*5)
-  if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+  if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
     if(zoom=="FR"){
       n=nrow(exut)/nrow(ref_FR)
       exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3655,7 +3655,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
   }
   if(lim_col1==0){lim_col1=5}
   lim_col2=as.numeric(round(quantile((exut[exut$source=="IVout",]$val),probs=c(0.01,0.99),na.rm=T)/5)*5)
-  if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+  if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
     if(zoom=="FR"){
       n=nrow(exut)/nrow(ref_FR)
       exut$mask=rep(ref_FR$mask_weird_values,n)
@@ -3841,7 +3841,7 @@ map_storyline=function(lst.QUALYPSOOUT,RCP,RCP_plainname,horiz,pred,pred_name,pr
   if(var!="tasAdjust"){
     q99pos=quantile(exut$val[exut$val>=0],probs=freq_col,na.rm=T)
     q99neg=abs(quantile(exut$val[exut$val<=0],probs=(1-freq_col),na.rm=T))
-    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-repsect of hypothesis
+    if(ind_name=="VCN3"){#masking weird values of VCN3 probably due to non-respect of normality hypothesis
       if(zoom=="FR"){
         n=nrow(exut)/nrow(ref_FR)
         exut$mask=rep(ref_FR$mask_weird_values,n)
