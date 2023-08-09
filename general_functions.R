@@ -3691,7 +3691,7 @@ map_var_part=function(lst.QUALYPSOOUT,horiz,pred,pred_name,pred_unit,ind_name,in
       theme(legend.title.align=0.5) 
   }
   plt2=plt2+
-    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale\nissue de la dispersion\nentre les modèles (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)+#that way because stepsn deforms colors
+    binned_scale(aesthetics = "fill",scale_name = "toto",name="Pourcentage de la\nvariance totale\nissue de la dispersion\nentre les modèles (%)",ggplot2:::binned_pal(scales::manual_pal(ipcc_yelred_5)),guide="coloursteps",limits=lim_col2,breaks=seq(lim_col2[1],lim_col2[2],length.out=6),show.limits = T,labels= c(paste0("< ",lim_col2[1]),round(seq(lim_col2[1]+(lim_col2[2]-lim_col2[1])/5,lim_col2[2]-(lim_col2[2]-lim_col2[1])/5,length.out=4),1),paste0("> ",lim_col2[2])),oob=squish)#that way because stepsn deforms colors
   
   plt=ggarrange(plt1,plt2,nrow=2,heights=c(0.61,0.39))
   if(title==T){

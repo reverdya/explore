@@ -158,7 +158,7 @@ for (i in unique(simu_lst$indic)){
     # save.plot(dpi=96,plt,Filename = paste0(i,"_",hor,"_FR_Effect"),Folder =path_fig,Format = "pdf",Width = 21,Height = 29.7) #pdf does not allow to play with quality apparently
     save.plot(dpi=300,plt,Filename = paste0(i,"_",hor,"_FR_Effect"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
     
-    plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",nbcores=nbcores,zoom=space)
+    plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = i,ind_name_full=i,folder_out = NA,freq_col=freq_col,pix=F,var="Q",zoom=space)
     plt1=plt1+
       labs(title=NULL)+
       guides(fill = guide_bins(override.aes=list(shape=22,size=5),axis = FALSE,show.limits = T,reverse=TRUE,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
@@ -197,7 +197,7 @@ pred_name="temps"
 predict="time"
 pred_unit=""
 xlim=c(1990,2105)
-  
+
 for(c in 1:nrow(bv_selec_FR)){
   idx=bv_selec_FR$idx[c]
   plt1=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name =  bv_selec_FR$name[c],bv_full_name =  bv_selec_FR$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var="Q")
@@ -215,7 +215,7 @@ for(c in 1:nrow(bv_selec_FR)){
     labs(title=NULL)+
     theme_bw(base_size = 12)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank(),axis.title.x=element_blank())
-  
+
   plt4=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = i,ind_name_full=i,bv_name =  bv_selec_FR$code[c],bv_full_name =  bv_selec_FR$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var="Q",indic = i,idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=storyl)
 
   plt=ggarrange(plt4,ggarrange(plt1,plt2,plt3,nrow=2,ncol=2,align="v",labels="B"),nrow=2,ncol=1,align="v",labels="A",heights=c(1.5,1))
@@ -270,10 +270,10 @@ for(v in unique(simu_lst$var)){
         theme(strip.text = element_text(size = 8, face = "bold"))
       plt=ggarrange(plt1,plt2,plt3,heights=c(2,3,1),nrow=3,ncol=1,align="v",labels=c("A","B","C"))
       save.plot(dpi=300,plt,Filename = paste0(v,"_",i,"_",hor,"_Effect"),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
+
       
       
-      
-      plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out =NA,freq_col=freq_col,pix=T,var=v,nbcores=nbcores)
+      plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out =NA,freq_col=freq_col,pix=T,var=v)
       plt1=plt1+
         labs(title=NULL)+
         guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
@@ -329,9 +329,9 @@ for(c in idx_ref_bas){
     labs(title=NULL)+
     theme_bw(base_size = 12)+
     theme( axis.line = element_line(colour = "black"),panel.border = element_blank(),axis.title.x=element_blank())
-  
+
   plt4=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred=predict,pred_name = pred_name,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),bv_name = basHy$name[c],bv_full_name = basHy$name[c],pred_unit = pred_unit,folder_out=NA,xlim=xlim,var=v,indic = i,idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=storyl,type="bas")
-  
+
   plt=ggarrange(plt4,ggarrange(plt1,plt2,plt3,nrow=2,ncol=2,align="v",labels="B"),nrow=2,ncol=1,align="v",labels="A",heights=c(1.5,1))
   save.plot(dpi=300,plt,Filename = paste0(v,"_",i,"_chronique_",basHy$name[c]),Folder =path_fig,Format = "jpeg",Width = 21,Height = 29.7)
 }
@@ -403,7 +403,7 @@ xlim=c(1990,2105)
 hor=2085
 freq_col=0.99
 
-plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out =NA,freq_col=freq_col,pix=T,var=v,nbcores=nbcores)
+plt1=map_3quant_3rcp_1horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = hor,pred_name = pred_name,pred = predict,pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),folder_out =NA,freq_col=freq_col,pix=T,var=v)
 plt1=plt1+
   labs(title=NULL)+
   guides(fill=guide_colorbar(barwidth = 1.5, barheight = 7.5,label.theme = element_text(size = 8, face = "bold"),title.theme=element_text(size = 12, face = "bold")))+
