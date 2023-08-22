@@ -1644,7 +1644,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   data$cat[data$val>=80]="Positif"
   data$cat[data$val<=20]="Négatif"
   data$cat=factor(data$cat,levels=c("Positif","Pas d'accord","Négatif"))
-  if((data$pred[2]-data$pred[1])==10){#even spacing
+  if((unique(data$pred)[2]-unique(data$pred)[1])==10){#even spacing
     data=data[data$pred!=2085,]
   }
 
