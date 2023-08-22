@@ -154,7 +154,7 @@ plt_raw_time=ggplot(data[data$rcp==r&data$type=="raw",])+#Warnings okay
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   scale_x_continuous("")+
-  scale_y_continuous(paste0("Précipitation estivales (mm)"))+
+  scale_y_continuous(paste0("Précipitations estivales\nmodélisées (mm)"))+
   guides(color = guide_legend(override.aes = list(size = 1.7)))+
   facet_grid(gcm~bc)+
   theme(panel.spacing.x = unit(0.5, "lines"))+
@@ -258,7 +258,7 @@ plt_rcm_change=plt_rcm_change+
   ylab("[%]")+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
-  scale_color_discrete("",type=plasma(4))
+  scale_color_discrete("RCM",type=plasma(4))
 
 plt_bc_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_bc_change=plt_bc_change+
@@ -266,7 +266,7 @@ plt_bc_change=plt_bc_change+
   ylab("[%]")+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)+
-  scale_color_discrete("",type=kovesi.rainbow(4)[c(1,4)])
+  scale_color_discrete("BC",type=kovesi.rainbow(4)[c(1,4)])
 
 
 ###############################################
