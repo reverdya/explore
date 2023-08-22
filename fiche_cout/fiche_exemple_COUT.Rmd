@@ -205,7 +205,7 @@ map_part
 
 ```{r mapgcmeff,dpi=300,fig.width =30/2.54,fig.height = 13.3/2.54, fig.cap="Carte des effets principaux des GCMs pour le module annuel de débit sur la France métropolitaine en 2050, par rapport à la référence 1990. Points à l'exutoire."}
 
-#map_gcmeff
+map_gcmeff
 
 ```
 
@@ -229,7 +229,7 @@ map_part
 
 ```{r mapgcmch,dpi=300,fig.width =30/2.54,fig.height = 13.3/2.54, fig.cap="Carte des changements relatifs pour le module annuel de débit en fonction du GCM sur la France métropolitaine en 2050, par rapport à la référence 1990. Les valeurs sont les moyennes d'ensemble complet pour un GCM donné. Points à l'exutoire."}
 
-map_gcmchang
+#map_gcmchang
 
 ```
 
