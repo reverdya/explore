@@ -52,22 +52,11 @@ nbcores=detectCores()-2
 #MAIN#
 ######
 
-#######################################################################################
-## Extract indexes of reference "cities"
+#########################################################################################
+## Reference basins
 
-ref_cities=read.xlsx(paste0(path_sig,"French_cities_coord.xlsx"))
-ref_cities$col=ref_cities$row=ref_cities$xcoord
-for (i in 1:nrow(ref_cities)){
-  dist=sqrt((refs$lon-ref_cities$xcoord[i])^2+(refs$lat-ref_cities$ycoord[i])^2)
-  min_dist=as.vector(which(dist==min(dist),arr.ind = T))
-  ref_cities$row[i]=min_dist[1]
-  ref_cities$col[i]=min_dist[2]
-}
-ref_cities$idx=(ref_cities$col-1)*nrow(refs$mask)+ref_cities$row
-tmp=c(1:length(as.vector(refs$mask)))
-tmp=tmp[as.logical(refs$mask)]
-ref_cities$idx_masked=which(tmp %in% ref_cities$idx)
-
+basHy=read.csv(paste0(path_sig2,"processed/SAFRAN_ref_basHy.csv"))
+colnames(basHy)=c("id","code","name")
 
 
 names_eff=colnames(simu_lst)[4:7]
@@ -82,8 +71,7 @@ for(i in 1:length(lst_names_eff)){
 SPAR=1.1
 v=unique(simu_lst$var)[2]
 i=unique(simu_lst[simu_lst$var==v,]$indic)[2]
-cities=1
-
+bas=1#rhone-mediterannée-corse
 
 clim_resp=vector(length=nrow(simu_lst),mode="list")
 clim_resp_spline=vector(length=nrow(simu_lst),mode="list")
@@ -91,7 +79,7 @@ scenAvail=simu_lst[simu_lst$var==v & simu_lst$indic==i,]
 all_chains=vector(length=nrow(scenAvail),mode="list")
 for(c in 1:nrow(scenAvail)){# for each chain
   
-  pth_tmp=list.files(paste0(path_data,"indic/",v,"/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
+  pth_tmp=list.files(paste0(path_data,"indic/",v,"/bas/"),full.names=T,pattern=glob2rx(paste0(v,"*",scenAvail$rcp[c],"*",scenAvail$gcm[c],"*",scenAvail$rcm[c],"*",scenAvail$bc[c],"*",strsplit(scenAvail$indic[c],"_")[[1]][1],"*",scenAvail$period[c],"*")))
   nc=load_nc(pth_tmp)
   res=ncvar_get(nc,varid=v)
   full_years=nc$dim$time$vals
@@ -103,15 +91,15 @@ for(c in 1:nrow(scenAvail)){# for each chain
   }
   rm(nc)
   gc()
-  res2=data.frame(matrix(nrow=dim(res)[3],ncol=2))
+  res2=data.frame(matrix(nrow=length(full_years),ncol=2))
   res2[,1]=full_years
-  res2[,2]=res[ref_cities$row[1],ref_cities$col[1],]
+  res2[,2]=res[bas,]
   colnames(res2)[1]="year"
   all_chains[[c]]=res2
 }
 
 
-ClimateProjections=lapply(all_chains, function(x) x[,c(1,cities+1)])
+ClimateProjections=lapply(all_chains, function(x) x[,c(1,2)])
 Y=t(Reduce(function(...) merge(...,by="year", all=T), ClimateProjections))
 Y=Y[,Y[1,]<=2100]
 X=Y[1,]
@@ -166,26 +154,26 @@ plt_raw_time=ggplot(data[data$rcp==r&data$type=="raw",])+#Warnings okay
   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
   scale_x_continuous("")+
-  scale_y_continuous(paste0("Réponse climatique (mm)"))+
+  scale_y_continuous(paste0("Précipitation estivales (mm)"))+
   guides(color = guide_legend(override.aes = list(size = 1.7)))+
   facet_grid(gcm~bc)+
   theme(panel.spacing.x = unit(0.5, "lines"))+
   theme(strip.text.y = element_text(size = 9))
 
-plt_spline_time=ggplot(data[data$rcp==r&(data$type=="raw"|data$type=="spline"),])+#Warnings okay
-  geom_line(aes(x=year,y=val,size=type,color=rcm))+
-  scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur","Réponse climatique"))+
-  scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
-  #scale_linetype("")+
-  theme_bw(base_size = 18)+
-  theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
-  theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
-  scale_x_continuous("")+
-  scale_y_continuous(paste0("Réponse climatique (mm)"))+
-  guides(color = guide_legend(override.aes = list(size = 1.7)))+
-  facet_grid(gcm~bc)+
-  theme(panel.spacing.x = unit(0.5, "lines"))+
-  theme(strip.text.y = element_text(size = 9))
+# plt_spline_time=ggplot(data[data$rcp==r&(data$type=="raw"|data$type=="spline"),])+#Warnings okay
+#   geom_line(aes(x=year,y=val,size=type,color=rcm))+
+#   scale_size_manual("",values=c(0.7,1.7),label=c("Indicateur","Réponse climatique"))+
+#   scale_color_manual("RCM",values=brewer.paired(length(unique(data$rcm))))+
+#   #scale_linetype("")+
+#   theme_bw(base_size = 18)+
+#   theme(plot.title = element_text( face="bold",  size=20,hjust=0.5))+
+#   theme( axis.line = element_line(colour = "black"),panel.border = element_blank())+
+#   scale_x_continuous("")+
+#   scale_y_continuous(paste0("Réponse climatique (mm)"))+
+#   guides(color = guide_legend(override.aes = list(size = 1.7)))+
+#   facet_grid(gcm~bc)+
+#   theme(panel.spacing.x = unit(0.5, "lines"))+
+#   theme(strip.text.y = element_text(size = 9))
 
 plt_spline_time_rel=ggplot(data[data$rcp==r&(data$type=="raw_rel"|data$type=="spline_rel"),])+#Warnings okay
   geom_line(aes(x=year,y=val,size=type,color=rcm))+
@@ -207,56 +195,56 @@ plt_spline_time_rel=ggplot(data[data$rcp==r&(data$type=="raw_rel"|data$type=="sp
 
 v="prtotAdjust"
 i="seassum_JJA"
-load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
+load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_bas.RData"))
 lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
 pred_name="temps"
 pred_unit=""
 xlim=c(1990,2100)
 b=1
-idx_col=ref_cities$col[cities]
-idx_row=ref_cities$row[cities]
-idx=ref_cities$idx_masked[1]#grenoble
 
-plt_bilan=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=c(1990,2105),var="prtotAdjust",indic="seassum_JJA",idx_row = idx_row,idx_col = idx_col,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=F,type=NULL)
+idx=1#Rhone-mediterrannée -corse
+
+plt_bilan=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=c(1990,2105),var="prtotAdjust",indic="seassum_JJA",idx_pix = idx,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=F,type="bas")
 
 
 ##################################################################################
 ## Boxplot per horizon and RCP
 
 
-plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,var="prtotAdjust",indic="yearsum",horiz = c(2030,2050,2085),title=F)
+plt_bxplt=plotQUALYPSO_boxplot_horiz_rcp(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,var="prtotAdjust",indic="yearsum",horiz = c(2030,2050,2085),title=F)
 
 #####################################
 ## Effet GCM, effet RCM, effet BC
 
-plt_gcm_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
-plt_gcm_effect=plt_gcm_effect+
-  labs(title=NULL)+
-  ylab("[%]")+
-  theme(axis.title.x = element_blank())+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
-
-plt_rcm_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
-plt_rcm_effect=plt_rcm_effect+
-  labs(title=NULL)+
-  ylab("[%]")+
-  theme(axis.title.x = element_blank())+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
-  scale_color_discrete("",type=plasma(4))
-
-plt_bc_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
-plt_bc_effect=plt_bc_effect+
-  labs(title=NULL)+
-  ylab("[%]")+
-  theme(axis.title.x = element_blank())+
-  annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)+
-  scale_color_discrete("",type=kovesi.rainbow(4)[c(1,4)])
-
+# plt_gcm_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+# plt_gcm_effect=plt_gcm_effect+
+#   labs(title=NULL)+
+#   ylab("[%]")+
+#   theme(axis.title.x = element_blank())+
+#   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
+# 
+# 
+# plt_rcm_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+# plt_rcm_effect=plt_rcm_effect+
+#   labs(title=NULL)+
+#   ylab("[%]")+
+#   theme(axis.title.x = element_blank())+
+#   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
+#   scale_color_discrete("",type=plasma(4))
+# 
+# plt_bc_effect=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=xlim)
+# plt_bc_effect=plt_bc_effect+
+#   labs(title=NULL)+
+#   ylab("[%]")+
+#   theme(axis.title.x = element_blank())+
+#   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(c))", vjust=1, hjust=-2,parse=T,size=10)+
+#   scale_color_discrete("",type=kovesi.rainbow(4)[c(1,4)])
+# 
 
 #######################################
 ## Changements RCM, GCM, BC, HM
 
-plt_gcm_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
+plt_gcm_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="gcm",plain_nameEff = "GCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_gcm_change=plt_gcm_change+
   labs(title=NULL)+
   ylab("[%]")+
@@ -264,7 +252,7 @@ plt_gcm_change=plt_gcm_change+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
   
 
-plt_rcm_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
+plt_rcm_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_rcm_change=plt_rcm_change+
   labs(title=NULL)+
   ylab("[%]")+
@@ -272,7 +260,7 @@ plt_rcm_change=plt_rcm_change+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(b))", vjust=1, hjust=-2,parse=T,size=10)+
   scale_color_discrete("",type=plasma(4))
 
-plt_bc_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
+plt_bc_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="bc",plain_nameEff = "BC",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_bc_change=plt_bc_change+
   labs(title=NULL)+
   ylab("[%]")+
@@ -306,20 +294,20 @@ map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz =
 map_quant_horiz=map_quant_horiz+
   labs(title=NULL)
 
-map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
-map_rcmeff=map_rcmeff+
-  labs(title=NULL)+
-  guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
-
-map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
-map_gcmeff=map_gcmeff+
-  labs(title=NULL)+
-  guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
-
-map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2085,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
-map_rcmchang=map_rcmchang+
-  labs(title=NULL)+
-  guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+# map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
+# map_rcmeff=map_rcmeff+
+#   labs(title=NULL)+
+#   guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+# 
+# map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
+# map_gcmeff=map_gcmeff+
+#   labs(title=NULL)+
+#   guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
+# 
+# map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2085,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
+# map_rcmchang=map_rcmchang+
+#   labs(title=NULL)+
+#   guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
 
 map_gcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2085,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_gcmchang=map_gcmchang+

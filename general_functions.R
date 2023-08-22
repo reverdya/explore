@@ -1314,7 +1314,7 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         full_years=nc$dim$Time$vals
         full_years=year(as.Date(full_years,origin="1958-07-31"))
         res=ncvar_get(nc,varid=var)
-        if(length(dim(res==3))){
+        if(length(dim(res))==3){
           Obs=res[idx_row,idx_col,]
         }else{
           Obs=res[idx_pix,]
@@ -1644,8 +1644,10 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
   data$cat[data$val>=80]="Positif"
   data$cat[data$val<=20]="Négatif"
   data$cat=factor(data$cat,levels=c("Positif","Pas d'accord","Négatif"))
-  data=data[data$pred!=2085,]
-  
+  if((data$pred[2]-data$pred[1])==10){#even spacing
+    data=data[data$pred!=2085,]
+  }
+
   if(pred=="temp"){
     data$pred=T_coef[1]*data$pred+T_coef[2]
   }
