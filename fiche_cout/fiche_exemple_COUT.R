@@ -272,6 +272,9 @@ plt_bc_change=plt_bc_change+
 ###############################################
 ## Maps
 
+load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
+lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
+
 mask_fr=as.vector(refs$mask)
 mask_fr=mask_fr[mask_fr!=0]
 
