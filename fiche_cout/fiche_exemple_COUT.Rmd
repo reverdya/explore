@@ -105,7 +105,7 @@ plt_spline_time_rel
 
 ```{r eff, fig.cap="Effets principaux des différents a) GCMs, b) RCMs, c) BCs (corrections de biais) et d) HMs (modèles hydrologiques). Les effets BC et HM sont fictifs et donnés à titre illustratif, n'étant pas encore disponibles. Module annuel de la Seine à Poses. Tous les RCP sont considérés."}
 
-#grid.arrange(plt_gcm_effect,plt_rcm_effect,plt_bc_effect,ncol=2)
+grid.arrange(plt_gcm_effect,plt_rcm_effect,plt_bc_effect,ncol=2)
 
 ```
 
@@ -130,7 +130,7 @@ plt_spline_time_rel
 
 ```{r change, fig.cap="Changement relatif moyen des différents a) GCMs, b) RCMs, c) BCs (corrections de biais) et d) HMs (modèles hydrologiques). Les changements BC et HM sont fictifs et donnés à titre illustratif, n'étant pas encore disponibles. Module annuel de la Seine à Poses. Tous les RCP sont considérés."}
 
-grid.arrange(plt_gcm_change,plt_rcm_change,plt_bc_change,ncol=2)
+#grid.arrange(plt_gcm_change,plt_rcm_change,plt_bc_change,ncol=2)
 
 ```
 

@@ -250,7 +250,7 @@ plt_gcm_change=plt_gcm_change+
   ylab("[%]")+
   theme(axis.title.x = element_blank())+
   annotate("text",  x=-Inf, y = Inf, label = "atop(bold(a))", vjust=1, hjust=-2,parse=T,size=10)
-  
+
 
 plt_rcm_change=plotQUALYPSOeffect_ggplot(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,nameEff="rcm",plain_nameEff = "RCM",pred="time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = basHy$name[1],bv_full_name = basHy$name[1],pred_unit = pred_unit,folder_out=NA,xlim=xlim,includeRCP = "rcp85")
 plt_rcm_change=plt_rcm_change+
