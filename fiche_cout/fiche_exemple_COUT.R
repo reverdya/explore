@@ -30,6 +30,9 @@ path_fig="C:/Users/reverdya/Documents/Docs/3_figures/"
 path_Rmd="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_cout/fiche_exemple_COUT.Rmd"
 path_Rmd_faster="C:/Users/reverdya/Documents/Docs/1_code/explore/fiche_cout/fiche_exemple_COUT_faster.Rmd"
 path_sig="C:/Users/reverdya/Documents/Docs/2_data/SIG/raw/French_cities/"
+path_sig2="C:/Users/reverdya/Documents/Docs/2_data/SIG/"
+path_temp="C:/Users/reverdya/Documents/Docs/2_Data/processed/"
+path_hadcrut="C:/Users/reverdya/Documents/Docs/2_Data/raw/Global_temp/"
 
 load(file=paste0(path_data,"simu_lst.Rdata"))
 load(file=paste0(path_data,"refs.Rdata"))
@@ -78,7 +81,7 @@ for(i in 1:length(lst_names_eff)){
 ## Raw and spline times series
 SPAR=1.1
 v=unique(simu_lst$var)[2]
-i=unique(simu_lst[simu_lst$var==v,]$indic)[17]
+i=unique(simu_lst[simu_lst$var==v,]$indic)[2]
 cities=1
 
 
@@ -95,7 +98,7 @@ for(c in 1:nrow(scenAvail)){# for each chain
   if(scenAvail$bc[c]=="ADAMONT"){
     full_years=year(as.Date(full_years,origin="1950-01-01"))
   }
-  if(scenAvail$bc[c]=="R2D2"){
+  if(scenAvail$bc[c]=="CDFt"){
     full_years=year(as.Date(full_years,origin="1850-01-01"))
   }
   rm(nc)
@@ -203,16 +206,18 @@ plt_spline_time_rel=ggplot(data[data$rcp==r&(data$type=="raw_rel"|data$type=="sp
 ## Mean change and variance partition per RCP
 
 v="prtotAdjust"
-i="yearsum"
-load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time_allyears.RData"))
+i="seassum_JJA"
+load(file=paste0("C:/Users/reverdya/Documents/Docs/2_data/processed/Explore2-meteo/Qualypso/",v,"/",i,"/",v,"_",i,"_list_QUALYPSOOUT_time.RData"))
 lst.QUALYPSOOUT=lst.QUALYPSOOUT_time
 pred_name="temps"
 pred_unit=""
 xlim=c(1990,2100)
 b=1
-idx=ref_cities$idx_masked[cities]
+idx_col=ref_cities$col[cities]
+idx_row=ref_cities$row[cities]
 
-plt_bilan=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=c(1990,2100),simpler=T,var="prtotAdjust",indic="yearsum",idx_pix=idx)
+plt_bilan=plotQUALYPSO_summary_change(lst.QUALYPSOOUT = lst.QUALYPSOOUT,idx=idx,pred = "time",pred_name = pred_name,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),bv_name = ref_cities$name[cities],bv_full_name = ref_cities$name[cities],pred_unit = pred_unit,folder_out=NA,xlim=c(1990,2105),var="prtotAdjust",indic="seassum_JJA",idx_row = idx_row,idx_col = idx_col,path_hadcrut=path_hadcrut,path_processed=path_temp,storyl=F,type=NULL)
+
 
 ##################################################################################
 ## Boxplot per horizon and RCP
@@ -278,6 +283,13 @@ plt_bc_change=plt_bc_change+
 ###############################################
 ## Maps
 
+mask_fr=as.vector(refs$mask)
+mask_fr=mask_fr[mask_fr!=0]
+
+path_river=paste0(path_sig2,"processed/CoursEau_idx1_wgs84.shp")
+path_fr=paste0(path_sig2,"/raw/IGN/contours_FR/gadm36_FRA_0.shp")
+background_for_maps(path_river,path_fr)
+
 map_iv=map_one_var(lst.QUALYPSOOUT = lst.QUALYPSOOUT,vartype="varint",horiz = 2085,pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_iv=map_iv+
   labs(title=NULL)+
@@ -289,26 +301,26 @@ map_part=map_part+
   labs(title=NULL)+
   guides(fill=guide_colorbar(title="[%]",barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = "bold"),title.theme=element_text(size = 14, face = "bold")))
 
-map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),rcp_name = "rcp85",rcp_plainname="RCP 8.5",folder_out = NA,freq_col=0.99,pix=T,var=v,nbcores=nbcores)
+map_quant_horiz=map_3quant_1rcp_3horiz(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = c(2030,2050,2085),pred_name = pred_name,pred = "time",pred_unit = pred_unit,ind_name = paste0(v,"_",i),ind_name_full=paste0(v,"_",i),rcp_name = "rcp85",rcp_plainname="RCP 8.5",folder_out = NA,freq_col=0.99,pix=T,var=v)
 map_quant_horiz=map_quant_horiz+
   labs(title=NULL)
 
-map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
+map_rcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_rcmeff=map_rcmeff+
   labs(title=NULL)+
   guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
 
-map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
+map_gcmeff=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,horiz = 2085,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_gcmeff=map_gcmeff+
   labs(title=NULL)+
   guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
 
-map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2050,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
+map_rcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2085,name_eff = "rcm",name_eff_plain = "RCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_rcmchang=map_rcmchang+
   labs(title=NULL)+
   guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))
 
-map_gcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2050,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
+map_gcmchang=map_main_effect(lst.QUALYPSOOUT = lst.QUALYPSOOUT,includeRCP = "rcp85",horiz = 2085,name_eff = "gcm",name_eff_plain = "GCM",pred = "time",pred_name = pred_name,pred_unit = pred_unit,ind_name = paste0(v,"-",i),ind_name_full=paste0(v,"-",i),folder_out = NA,pix=T)
 map_gcmchang=map_gcmchang+
   labs(title=NULL)+
   guides(fill=guide_colorbar(barwidth = 2, barheight = 20,label.theme = element_text(size = 11, face = c("bold"),color=c("black")),title.theme=element_text(size = 14, face = "bold")))

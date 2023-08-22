@@ -1314,7 +1314,11 @@ plotQUALYPSO_summary_change=function(lst.QUALYPSOOUT,idx,pred,pred_name,ind_name
         full_years=nc$dim$Time$vals
         full_years=year(as.Date(full_years,origin="1958-07-31"))
         res=ncvar_get(nc,varid=var)
-        Obs=res[idx_pix,]
+        if(length(dim(res==3))){
+          Obs=res[idx_row,idx_col,]
+        }else{
+          Obs=res[idx_pix,]
+        }
       }
       if(var=="evspsblpotAdjust"){
         full_years=nc$dim$time$vals
